@@ -107,7 +107,8 @@ class SignalExplorerDialog(QDialog):
                 if channel_name.endswith('.inf'):
                     channel_name = channel_name[:-4]  # Remove .inf extension
             else:
-                channel_name = "Unknown Channel"
+                # If no path, use "Dummy" as channel name
+                channel_name = "Dummy"
             
             # Create channel group if it doesn't exist
             if channel_name not in channel_groups:
