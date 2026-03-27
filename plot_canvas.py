@@ -1,0 +1,382 @@
+# plot_canvas.py
+import numpy as np
+import matplotlib.pyplot as plt
+from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.widgets import RectangleSelector
+from PyQt5.QtCore import Qt
+
+class InteractivePlotCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=8.27, height=11.69):
+        # Create figure with specified dimensions (default A4 portrait)
+        self.fig = Figure(figsize=(width, height), dpi=100)
+        super().__init__(self.fig)
+        self.setParent(parent)
+        self.setStyleSheet("background-color: white; border: 1px solid black;")
+        
+        self.subplot_count = 1
+        self.axes = []
+        self.rect_selectors = []
+        self.current_xlim = None  # Track shared x-limits
+        self.current_ylim_dict = {}  # Track individual y-limits for each subplot
+        self.x_data_range = (0, 10)  # Full data range
+        
+        # Store custom margins
+        self.custom_margins = {
+            'left': 0.125,
+            'bottom': 0.1,
+            'right': 0.9,
+            'top': 0.9,
+            'wspace': 0.2,
+            'hspace': 0.2
+        }
+        
+        # Track last clicked subplot
+        self.last_clicked_subplot = None
+        
+        # Enable mouse tracking for interactive features
+        self.setMouseTracking(True)
+        
+        # Create initial plots
+        self.update_plots(1)
+        
+        # Add context menu support
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
+    
+        # Add regular click event handler for subplot detection
+        self.fig.canvas.mpl_connect('button_press_event', self.on_regular_click)
+    
+    def update_plots(self, subplot_count):
+        self.subplot_count = max(1, min(6, subplot_count))
+        self.fig.clear()
+        self.axes = []
+        self.rect_selectors = []
+        
+        if self.subplot_count == 1:
+            ax = self.fig.add_subplot(111)
+            self.axes = [ax]
+        else:
+            self.axes = [self.fig.add_subplot(self.subplot_count, 1, i+1) 
+                        for i in range(self.subplot_count)]
+        
+        # Plot different data for each subplot
+        x = np.linspace(0, 10, 1000)  # More points for better zooming
+        plot_types = [
+            lambda x: np.sin(x) * np.exp(-x/10),           # Damped sine
+            lambda x: np.cos(x) * np.exp(-x/8),            # Damped cosine
+            lambda x: np.sin(2*x) * np.exp(-x/12),         # Higher frequency
+            lambda x: np.sin(x) * np.cos(x),               # Modulated wave
+            lambda x: np.exp(-x/5) * np.sin(3*x),          # Exponential decay
+            lambda x: np.sin(x**0.5)                       # Non-linear frequency
+        ]
+        
+        for i, ax in enumerate(self.axes):
+            # Use different data for each subplot
+            y_func = plot_types[i % len(plot_types)]
+            y = y_func(x)
+            
+            ax.plot(x, y, linewidth=2, label=f'Data {i+1}', picker=True)
+            
+            # Only show x-label on the bottom subplot
+            if i == len(self.axes) - 1:  # Last subplot
+                ax.set_xlabel('Time (s)')
+            else:
+                ax.set_xlabel('')  # Hide x-label for upper subplots
+            
+            # Remove title and show y-label on all subplots
+            ax.set_title('')  # No title
+            ax.set_ylabel('Amplitude')
+            ax.legend(fontsize=8)
+            ax.grid(True, alpha=0.3)
+            
+            # Restore previous y-limits if they exist
+            if i in self.current_ylim_dict:
+                ax.set_ylim(self.current_ylim_dict[i])
+            
+            # Add rectangle selector for zooming
+            selector = RectangleSelector(
+                ax, self.on_select, useblit=True,
+                button=[1], minspanx=5, minspany=5, spancoords='pixels',
+                interactive=True
+            )
+            self.rect_selectors.append(selector)
+        
+        # Apply shared x-limits if they exist
+        if self.current_xlim is not None:
+            for ax in self.axes:
+                ax.set_xlim(self.current_xlim)
+        
+        # Apply custom margins instead of tight_layout
+        self.fig.subplots_adjust(
+            left=self.custom_margins['left'],
+            right=self.custom_margins['right'],
+            top=self.custom_margins['top'],
+            bottom=self.custom_margins['bottom'],
+            wspace=self.custom_margins['wspace'],
+            hspace=self.custom_margins['hspace']
+        )
+        self.draw()
+    
+    def on_select(self, eclick, erelease):
+        """Handle rectangle selection for zooming"""
+        if eclick.xdata is None or erelease.xdata is None:
+            return
+            
+        # Get the limits from the selection
+        x1, x2 = sorted([eclick.xdata, erelease.xdata])
+        y1, y2 = sorted([eclick.ydata, erelease.ydata])
+        
+        # Prevent identical limits (causes warnings)
+        if abs(x2 - x1) < 1e-10:
+            x2 = x1 + 0.1
+        if abs(y2 - y1) < 1e-10:
+            y2 = y1 + 0.1
+        
+        # Store the shared x-limits
+        self.current_xlim = (x1, x2)
+        
+        # Apply the same x-limits to all subplots and update y-limits
+        for i, ax in enumerate(self.axes):
+            ax.set_xlim(x1, x2)
+            ax.set_ylim(y1, y2)
+            # Store y-limits for this subplot
+            self.current_ylim_dict[i] = (y1, y2)
+        
+        self.draw()
+        
+        # Clear all rectangle selectors to make them disappear
+        for selector in self.rect_selectors:
+            selector.clear()
+        self.fig.canvas.draw_idle()
+        
+    def on_regular_click(self, event):
+        """Store which subplot was last clicked for context menu use"""
+        if event.inaxes in self.axes:
+            # Find which subplot was clicked
+            for i, ax in enumerate(self.axes):
+                if event.inaxes == ax:
+                    self.last_clicked_subplot = i
+                    break
+    
+    def set_x_limits(self, x_min, x_max):
+        """Unified function to set x-limits for all subplots"""
+        # Ensure valid limits
+        x_min = max(self.x_data_range[0], x_min)
+        x_max = min(self.x_data_range[1], x_max)
+        
+        if x_min >= x_max:
+            x_min, x_max = self.x_data_range
+            
+        # Store and apply limits
+        self.current_xlim = (x_min, x_max)
+        for ax in self.axes:
+            ax.set_xlim(x_min, x_max)
+        
+        self.draw()
+    
+    def reset_x_zoom(self):
+        """Reset to original x-view (full data range)"""
+        self.set_x_limits(self.x_data_range[0], self.x_data_range[1])
+    
+    def reset_y_zoom(self):
+        """Reset y-axis to show only visible data in current x-range"""
+        if self.current_xlim is not None:
+            x_min, x_max = self.current_xlim
+        else:
+            x_min, x_max = self.x_data_range  # Default range
+            
+        # Reset y-limits for each subplot based on visible data
+        self.current_ylim_dict.clear()
+        
+        for i, ax in enumerate(self.axes):
+            # Get the line data
+            lines = ax.get_lines()
+            if lines:
+                line = lines[0]  # First line (our data)
+                x_data = line.get_xdata()
+                y_data = line.get_ydata()
+                
+                # Find indices within current x-range
+                mask = (x_data >= x_min) & (x_data <= x_max)
+                if np.any(mask):
+                    visible_y = y_data[mask]
+                    if len(visible_y) > 0:
+                        y_margin = (visible_y.max() - visible_y.min()) * 0.05  # 5% margin
+                        y_min = visible_y.min() - y_margin if y_margin > 0 else visible_y.min() - 0.1
+                        y_max = visible_y.max() + y_margin if y_margin > 0 else visible_y.max() + 0.1
+                        ax.set_ylim(y_min, y_max)
+                        self.current_ylim_dict[i] = (y_min, y_max)
+        
+        self.draw()
+    
+    def round_x_to_grid(self):
+        """Round current x-axis limits to nearest grid values"""
+        if self.current_xlim is None:
+            current_x_min, current_x_max = self.x_data_range
+        else:
+            current_x_min, current_x_max = self.current_xlim
+        
+        # Define grid intervals (you can adjust these as needed)
+        grid_intervals = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0]
+        
+        # Find the best grid interval based on current zoom level
+        range_size = current_x_max - current_x_min
+        target_interval = range_size / 10  # Aim for about 10 grid lines
+        
+        # Find closest grid interval
+        best_interval = min(grid_intervals, key=lambda x: abs(x - target_interval))
+        
+        # Round to nearest grid points
+        rounded_min = round(current_x_min / best_interval) * best_interval
+        rounded_max = round(current_x_max / best_interval) * best_interval
+        
+        # Ensure we don't go beyond reasonable bounds
+        rounded_min = max(self.x_data_range[0], rounded_min)
+        rounded_max = min(self.x_data_range[1], rounded_max)
+        
+        # Make sure min < max
+        if rounded_min >= rounded_max:
+            # If they're too close, expand slightly
+            center = (rounded_min + rounded_max) / 2
+            rounded_min = center - best_interval/2
+            rounded_max = center + best_interval/2
+            rounded_min = max(self.x_data_range[0], rounded_min)
+            rounded_max = min(self.x_data_range[1], rounded_max)
+        
+        # Apply rounded limits using unified function
+        self.set_x_limits(rounded_min, rounded_max)
+    
+    def pan_horizontal(self, direction):
+        """Pan horizontally left (-1) or right (+1)"""
+        # Get current limits or set default if none
+        if self.current_xlim is None:
+            # Set initial zoom for panning (full range)
+            current_x_min, current_x_max = self.x_data_range
+        else:
+            current_x_min, current_x_max = self.current_xlim
+            
+        range_size = current_x_max - current_x_min
+        
+        # Pan by 1% of current range
+        pan_amount = range_size * 0.01 * direction
+        
+        new_min = current_x_min + pan_amount
+        new_max = current_x_max + pan_amount
+        
+        # Boundary checking
+        if new_min < self.x_data_range[0]:
+            new_min = self.x_data_range[0]
+            new_max = new_min + range_size
+        elif new_max > self.x_data_range[1]:
+            new_max = self.x_data_range[1]
+            new_min = new_max - range_size
+        
+        # Apply new limits using unified function
+        self.set_x_limits(new_min, new_max)
+    
+    def get_canvas_size_mm(self):
+        """Get the current canvas size in mm"""
+        width_inch = self.fig.get_size_inches()[0]
+        height_inch = self.fig.get_size_inches()[1]
+        # Convert inches to mm (1 inch = 25.4 mm)
+        width_mm = width_inch * 25.4
+        height_mm = height_inch * 25.4
+        return width_mm, height_mm
+
+    def set_custom_margins(self, margins):
+        """
+        Set custom margins that will be preserved when updating plots.
+        
+        Args:
+            margins (dict): Dictionary containing margin values for left, right, top, bottom, wspace, hspace
+        """
+        self.custom_margins.update(margins)
+        # Apply immediately if we have a figure
+        if hasattr(self, 'fig') and self.fig:
+            self.fig.subplots_adjust(
+                left=margins['left'],
+                right=margins['right'],
+                top=margins['top'],
+                bottom=margins['bottom'],
+                wspace=margins['wspace'],
+                hspace=margins['hspace']
+            )
+            self.draw()
+            
+    def reset_default_margins(self):
+        """Reset margins to default values"""
+        self.custom_margins = {
+            'left': 0.125,
+            'bottom': 0.1,
+            'right': 0.9,
+            'top': 0.9,
+            'wspace': 0.2,
+            'hspace': 0.2
+        }
+        self.fig.subplots_adjust(
+            left=self.custom_margins['left'],
+            right=self.custom_margins['right'],
+            top=self.custom_margins['top'],
+            bottom=self.custom_margins['bottom'],
+            wspace=self.custom_margins['wspace'],
+            hspace=self.custom_margins['hspace']
+        )
+        self.draw()
+
+    def get_current_margins(self):
+        """Get current custom margins"""
+        return self.custom_margins.copy()
+        
+    def show_context_menu(self, position):
+        """Show context menu when right-clicking on the canvas"""
+        # Create context menu
+        menu = QMenu(self)
+        
+        # Add action to show data label for the specific subplot
+        action = menu.addAction("Show Data Label")
+        action.triggered.connect(lambda: self.show_data_label_for_clicked_subplot(position))
+        
+        menu.exec_(self.mapToGlobal(position))
+        
+    def show_data_label_for_clicked_subplot(self, position):
+        """Show data label for the specific subplot that was right-clicked"""
+        # Use the stored last clicked subplot
+        if self.last_clicked_subplot is not None and self.last_clicked_subplot < len(self.axes):
+            ax = self.axes[self.last_clicked_subplot]
+            # Get the line data and its label
+            lines = ax.get_lines()
+            if lines:
+                line = lines[0]  # First line (our data)
+                label = line.get_label()
+                message = f"Subplot {self.last_clicked_subplot + 1}\n"
+                message += f"Data Label: {label}"
+                QMessageBox.information(self, "Data Information", message)
+            else:
+                message = f"Subplot {self.last_clicked_subplot + 1}\n"
+                message += "No data label found"
+                QMessageBox.information(self, "Data Information", message)
+        else:
+            # Fallback: show all labels if no subplot was clicked recently
+            if self.subplot_count == 1:
+                ax = self.axes[0]
+                lines = ax.get_lines()
+                if lines:
+                    label = lines[0].get_label()
+                    message = f"Subplot 1\nData Label: {label}"
+                else:
+                    message = "Subplot 1\nNo data label found"
+                QMessageBox.information(self, "Data Information", message)
+            else:
+                message = "Data labels for all subplots:\n\n"
+                for i, ax in enumerate(self.axes):
+                    lines = ax.get_lines()
+                    if lines:
+                        label = lines[0].get_label()
+                        message += f"Subplot {i+1}:\n"
+                        message += f"  Label: {label}\n\n"
+                    else:
+                        message += f"Subplot {i+1}:\n"
+                        message += f"  Label: No data label\n\n"
+                QMessageBox.information(self, "Data Labels", message)
