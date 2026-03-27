@@ -576,3 +576,21 @@ class InteractivePlotCanvas(FigureCanvas):
                     existing_signals.append(signal_data)
         
         return existing_signals
+    
+    def find_signal_by_name(self, signal_name, channel_name=None):
+        """Find a signal by name in the dummy signals structure"""
+        # Search through all channels
+        for channel in self.dummy_signals:
+            # If channel name is specified, match it
+            if channel_name and channel['name'] != channel_name:
+                continue
+                
+            # Search through all groups in this channel
+            for group in channel['groups']:
+                # Search through all signals in this group
+                for signal in group['signals']:
+                    if signal['name'] == signal_name:
+                        return signal
+        
+        # Signal not found
+        return None
