@@ -104,8 +104,10 @@ class InteractivePlotCanvas(FigureCanvas):
             else:
                 ax.set_xlabel('')  # Hide x-label for upper subplots
             
-            # Remove title and show y-label on all subplots
+            # Remove title (as requested)
             ax.set_title('')  # No title
+            
+            # Show y-label on all subplots
             ax.set_ylabel('Amplitude')
             ax.legend(fontsize=8)
             ax.grid(True, alpha=0.3)
@@ -151,17 +153,18 @@ class InteractivePlotCanvas(FigureCanvas):
         # Plot the signal
         if signal_data and 'x' in signal_data and 'y' in signal_data:
             ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
-            ax.set_title(signal_data['name'])
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
-            ax.set_title(f'Subplot {subplot_index+1}')
         
         # Set labels
         if subplot_index == len(self.axes) - 1:  # Last subplot
             ax.set_xlabel('Time (s)')
         else:
             ax.set_xlabel('')  # Hide x-label for upper subplots
+        
+        # Remove title (as requested)
+        ax.set_title('')  # No title
         
         ax.set_ylabel('Amplitude')
         ax.legend(fontsize=8)
@@ -196,19 +199,18 @@ class InteractivePlotCanvas(FigureCanvas):
             for signal_data in signal_data_list:
                 if signal_data and 'x' in signal_data and 'y' in signal_data:
                     ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
-            
-            # Set title to show multiple signals
-            ax.set_title(f"Multiple Signals")
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
-            ax.set_title(f'Subplot {subplot_index+1}')
         
         # Set labels
         if subplot_index == len(self.axes) - 1:  # Last subplot
             ax.set_xlabel('Time (s)')
         else:
             ax.set_xlabel('')  # Hide x-label for upper subplots
+        
+        # Remove title (as requested)
+        ax.set_title('')  # No title
         
         ax.set_ylabel('Amplitude')
         ax.legend(fontsize=8)
