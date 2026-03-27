@@ -459,8 +459,12 @@ class InteractivePlotCanvas(FigureCanvas):
         # Use the stored last clicked subplot
         if self.last_clicked_subplot is not None:
             from signal_explorer import SignalExplorerDialog
-            # Create a dialog with dummy signals
-            dialog = SignalExplorerDialog(self.dummy_signals, parent=self)
+            
+            # Get existing signals for this subplot to show in the dialog
+            existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
+            
+            # Create a dialog with dummy signals and existing signals
+            dialog = SignalExplorerDialog(self.dummy_signals, existing_signals, parent=self)
             if dialog.exec_() == dialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
                 if selected_signals:
@@ -469,3 +473,30 @@ class InteractivePlotCanvas(FigureCanvas):
         else:
             # If no subplot was clicked, show a message
             QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")
+    
+    def get_existing_signals_for_subplot(self, subplot_index):
+        """Get the list of existing signals for a specific subplot"""
+        existing_signals = []
+        
+        if subplot_index < 0 or subplot_index >= len(self.axes):
+            return existing_signals
+            
+        ax = self.axes[subplot_index]
+        lines = ax.get_lines()
+        
+        # Collect all lines from this subplot that are not rectangle selectors
+        for line in lines:
+            # Skip lines with '_nolegend_' label (these are from rectangle selectors)
+            if line.get_label() != '_nolegend_':
+                x_data = line.get_xdata()
+                y_data = line.get_ydata()
+                if len(x_data) > 0 and len(y_data) > 0:
+                    # Create a simple representation of the signal
+                    signal_data = {
+                        'name': line.get_label() if line.get_label() else f'Signal_{subplot_index+1}',
+                        'x': x_data,
+                        'y': y_data
+                    }
+                    existing_signals.append(signal_data)
+        
+        return existing_signals
