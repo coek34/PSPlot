@@ -111,7 +111,12 @@ class SignalExplorerDialog(QDialog):
                 for signal_data in group_data['signals']:
                     signal_name = signal_data['name']
                     signal_item = QTreeWidgetItem(group_parent, [signal_name])
-                    signal_item.setData(0, Qt.UserRole, signal_data)  # Store signal data
+                    # Store channel and group information along with signal data
+                    signal_item.setData(0, Qt.UserRole, {
+                        'signal_data': signal_data,
+                        'channel_name': channel_name,
+                        'group_name': group_name
+                    })
         
         # Expand all items
         self.signal_tree.expandAll()
@@ -152,7 +157,11 @@ class SignalExplorerDialog(QDialog):
                 for signal_data in signals:
                     signal_name = signal_data['name']
                     signal_item = QTreeWidgetItem(group_parent, [signal_name])
-                    signal_item.setData(0, Qt.UserRole, signal_data)
+                    signal_item.setData(0, Qt.UserRole, {
+                        'signal_data': signal_data,
+                        'channel_name': channel_name,
+                        'group_name': group_name
+                    })
         
         # Expand all items in selected signals tree
         self.selected_signals_tree.expandAll()
@@ -180,10 +189,12 @@ class SignalExplorerDialog(QDialog):
     
     def add_to_selected_signals(self, signal_name, signal_data):
         """Add signal to selected signals tree with hierarchical structure"""
-        # Create a hierarchical structure for the selected signal
-        channel_name = "Current"
-        group_name = "Selected"
+        # Extract channel and group information
+        channel_name = signal_data['channel_name']
+        group_name = signal_data['group_name']
+        signal_info = signal_data['signal_data']
         
+        # Create a hierarchical structure for the selected signal
         # Find or create channel parent
         channel_parent = None
         for i in range(self.selected_signals_tree.topLevelItemCount()):
@@ -246,8 +257,14 @@ class SignalExplorerDialog(QDialog):
         """Handle dialog accept"""
         selected_signals = self.get_selected_signals()
         if selected_signals:
-            # Emit signal for each selected signal
+            # Emit signal for each selected signal with channel and group info
             for signal_data in selected_signals:
-                self.signal_selected.emit(signal_data['name'], signal_data['name'])
+                # Extract the actual signal data
+                actual_signal_data = signal_data['signal_data']
+                channel_name = signal_data['channel_name']
+                group_name = signal_data['group_name']
+                signal_name = actual_signal_data['name']
+                # Emit with signal name and channel name
+                self.signal_selected.emit(signal_name, channel_name)
         # Call parent accept to close dialog
         super().accept()
