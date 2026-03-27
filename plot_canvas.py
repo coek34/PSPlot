@@ -117,7 +117,7 @@ class InteractivePlotCanvas(FigureCanvas):
             )
             self.rect_selectors.append(selector)
         
-        # Apply shared x-limits if they exist
+        # Apply shared x-limits if they exist (this preserves x-limits when changing subplot count)
         if self.current_xlim is not None:
             for ax in self.axes:
                 ax.set_xlim(self.current_xlim)
