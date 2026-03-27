@@ -55,7 +55,7 @@ class PageWidget(QWidget):
                             self.subplot_signals[i] = {
                                 'x': x_data,
                                 'y': y_data,
-                                'label': line.get_label() if line.get_label() else f'Subplot {i+1}'
+                                'name': line.get_label() if line.get_label() else f'Subplot {i+1}'
                             }
         
         # Update the plots

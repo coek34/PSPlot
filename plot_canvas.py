@@ -152,7 +152,9 @@ class InteractivePlotCanvas(FigureCanvas):
         
         # Plot the signal
         if signal_data and 'x' in signal_data and 'y' in signal_data:
-            ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
+            # Ensure signal_data has a 'name' field
+            name = signal_data.get('name', 'Signal')
+            ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
@@ -198,7 +200,9 @@ class InteractivePlotCanvas(FigureCanvas):
         if signal_data_list:
             for signal_data in signal_data_list:
                 if signal_data and 'x' in signal_data and 'y' in signal_data:
-                    ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
+                    # Ensure signal_data has a 'name' field
+                    name = signal_data.get('name', 'Signal')
+                    ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
