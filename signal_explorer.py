@@ -58,13 +58,13 @@ class SignalExplorerDialog(QDialog):
         self.selected_signals_list.setHeaderLabels(["Signal"])
         self.selected_signals_list.setRootIsDecorated(False)
         self.selected_signals_list.setAlternatingRowColors(True)
+        # Connect double-click to remove signal
+        self.selected_signals_list.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
         
         right_layout.addWidget(self.selected_signals_list)
         
         # Buttons
         button_layout = QHBoxLayout()
-        add_button = QPushButton("Add Selected")
-        add_button.clicked.connect(self.add_selected_signals)
         clear_button = QPushButton("Clear Selected")
         clear_button.clicked.connect(self.clear_selected_signals)
         ok_button = QPushButton("OK")
@@ -72,7 +72,6 @@ class SignalExplorerDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         
-        button_layout.addWidget(add_button)
         button_layout.addWidget(clear_button)
         button_layout.addStretch()
         button_layout.addWidget(ok_button)
@@ -90,27 +89,37 @@ class SignalExplorerDialog(QDialog):
         """Populate the signal tree with available signals from imported data"""
         self.signal_tree.clear()
         
-        # Process each imported signal
+        # Create a "Dummy" parent node
+        dummy_parent = QTreeWidgetItem(self.signal_tree, ["Dummy"])
+        dummy_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+        dummy_parent.setExpanded(True)  # Expand by default
+        
+        # Process each imported signal and add to dummy parent
         for i, signal_data in enumerate(self.imported_data):
             if not signal_data.get('name'):
                 continue
                 
             signal_name = signal_data['name']
-            signal_item = QTreeWidgetItem(self.signal_tree, [signal_name])
+            signal_item = QTreeWidgetItem(dummy_parent, [signal_name])
             signal_item.setData(0, Qt.UserRole, signal_data)  # Store signal data
-            # No checkbox - just a list of signals
         
         # Expand all items
         self.signal_tree.expandAll()
         
     def on_signal_double_clicked(self, item, column):
         """Handle double-click on signal item"""
-        if item.parent() is None:
+        # Only process if it's a child of the dummy parent (not the parent itself)
+        if item.parent() is not None and item.parent().text(0) == "Dummy":
             # This is a signal item
             signal_data = item.data(0, Qt.UserRole)
             if signal_data:
                 # Add to selected signals list
                 self.add_to_selected_signals(item.text(0), signal_data)
+    
+    def on_selected_signal_double_clicked(self, item, column):
+        """Handle double-click on selected signal - remove it"""
+        # Remove the item from the selected signals list
+        self.selected_signals_list.takeTopLevelItem(self.selected_signals_list.indexOfTopLevelItem(item))
     
     def add_to_selected_signals(self, signal_name, signal_data):
         """Add signal to selected signals list"""
@@ -127,12 +136,6 @@ class SignalExplorerDialog(QDialog):
     def clear_selected_signals(self):
         """Clear all selected signals"""
         self.selected_signals_list.clear()
-    
-    def add_selected_signals(self):
-        """Add all selected signals from the left panel to the right panel"""
-        # This would typically be implemented to move selected items from left to right
-        # For now, we'll just show a message
-        pass
     
     def get_selected_signals(self):
         """Get the list of selected signals"""
