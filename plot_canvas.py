@@ -183,6 +183,9 @@ class InteractivePlotCanvas(FigureCanvas):
         self.rect_selectors[subplot_index] = selector
         
         self.draw()
+        
+        # Automatically round x to grid after adding signal
+        self.round_x_to_grid()
     
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals to a specific subplot"""
@@ -205,8 +208,7 @@ class InteractivePlotCanvas(FigureCanvas):
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
-            
-        
+   	 
         # Set labels
         if subplot_index == len(self.axes) - 1:  # Last subplot
             ax.set_xlabel('Time (s)')
@@ -233,6 +235,9 @@ class InteractivePlotCanvas(FigureCanvas):
         self.rect_selectors[subplot_index] = selector
         
         self.draw()
+        
+        # Automatically round x to grid after adding signals
+        self.round_x_to_grid()
     
     def on_select(self, eclick, erelease):
         """Handle rectangle selection for zooming"""
