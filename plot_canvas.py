@@ -198,6 +198,7 @@ class InteractivePlotCanvas(FigureCanvas):
         
         # Plot all signals
         if signal_data_list:
+            
             for signal_data in signal_data_list:
                 if signal_data and 'x' in signal_data and 'y' in signal_data:
                     # Ensure signal_data has a 'name' field
@@ -206,6 +207,7 @@ class InteractivePlotCanvas(FigureCanvas):
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
+            
         
         # Set labels
         if subplot_index == len(self.axes) - 1:  # Last subplot
