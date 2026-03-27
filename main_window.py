@@ -265,6 +265,11 @@ class MainWindow(QMainWindow):
                 subplot_count = key - Qt.Key_1 + 1
                 current_page.update_plots(subplot_count)
                 self.plot_count_label.setText(f"Plots: {subplot_count}")
+                
+                # Automatically round x to grid after changing subplot count
+                # This preserves current x-limits but applies grid rounding
+                if current_page.plot_canvas:
+                    current_page.plot_canvas.round_x_to_grid()
             event.accept()
             return
             
