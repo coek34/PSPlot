@@ -70,3 +70,7 @@ class PageWidget(QWidget):
             print(f"Margin adjustment error: {e}")
             # Optionally show a message box to user
             QMessageBox.warning(self, "Margin Error", f"Failed to adjust margins: {e}")
+            
+    def set_subplot_signal(self, subplot_index, signal_data):
+        """Set signal data for a specific subplot"""
+        self.plot_canvas.set_subplot_signal(subplot_index, signal_data)

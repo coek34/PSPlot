@@ -47,6 +47,38 @@ class InteractivePlotCanvas(FigureCanvas):
     
         # Add regular click event handler for subplot detection
         self.fig.canvas.mpl_connect('button_press_event', self.on_regular_click)
+        
+        # Dummy signals data
+        self.dummy_signals = self.generate_dummy_signals()
+    
+    def generate_dummy_signals(self):
+        """Generate dummy signals for plotting"""
+        signals = []
+        x = np.linspace(0, 10, 1000)
+        
+        # Generate 12 different signals
+        for i in range(12):
+            # Different signal types
+            if i % 4 == 0:
+                # Sine wave
+                y = np.sin(x * (i+1)) * np.exp(-x/10)
+            elif i % 4 == 1:
+                # Cosine wave
+                y = np.cos(x * (i+1)) * np.exp(-x/8)
+            elif i % 4 == 2:
+                # Exponential decay
+                y = np.exp(-x/(i+1)) * np.sin(x * (i+1))
+            else:
+                # Combined signal
+                y = np.sin(x) * np.cos(x * (i+1)) * np.exp(-x/5)
+            
+            signals.append({
+                'name': f'Signal_{i+1}',
+                'x': x,
+                'y': y
+            })
+        
+        return signals
     
     def update_plots(self, subplot_count):
         self.subplot_count = max(1, min(6, subplot_count))
@@ -62,22 +94,9 @@ class InteractivePlotCanvas(FigureCanvas):
                         for i in range(self.subplot_count)]
         
         # Plot different data for each subplot
-        x = np.linspace(0, 10, 1000)  # More points for better zooming
-        plot_types = [
-            lambda x: np.sin(x) * np.exp(-x/10),           # Damped sine
-            lambda x: np.cos(x) * np.exp(-x/8),            # Damped cosine
-            lambda x: np.sin(2*x) * np.exp(-x/12),         # Higher frequency
-            lambda x: np.sin(x) * np.cos(x),               # Modulated wave
-            lambda x: np.exp(-x/5) * np.sin(3*x),          # Exponential decay
-            lambda x: np.sin(x**0.5)                       # Non-linear frequency
-        ]
-        
         for i, ax in enumerate(self.axes):
-            # Use different data for each subplot
-            y_func = plot_types[i % len(plot_types)]
-            y = y_func(x)
-            
-            ax.plot(x, y, linewidth=2, label=f'Data {i+1}', picker=True)
+            # Initially plot nothing (blank plot)
+            ax.plot([], [], linewidth=2, label=f'Subplot {i+1}')
             
             # Only show x-label on the bottom subplot
             if i == len(self.axes) - 1:  # Last subplot
@@ -117,6 +136,49 @@ class InteractivePlotCanvas(FigureCanvas):
             wspace=self.custom_margins['wspace'],
             hspace=self.custom_margins['hspace']
         )
+        self.draw()
+    
+    def set_subplot_signal(self, subplot_index, signal_data):
+        """Set a signal to a specific subplot"""
+        if subplot_index < 0 or subplot_index >= len(self.axes):
+            return
+            
+        ax = self.axes[subplot_index]
+        
+        # Clear existing plot
+        ax.clear()
+        
+        # Plot the signal
+        if signal_data and 'x' in signal_data and 'y' in signal_data:
+            ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
+            ax.set_title(signal_data['name'])
+        else:
+            # Plot default signal if no data provided
+            ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
+            ax.set_title(f'Subplot {subplot_index+1}')
+        
+        # Set labels
+        if subplot_index == len(self.axes) - 1:  # Last subplot
+            ax.set_xlabel('Time (s)')
+        else:
+            ax.set_xlabel('')  # Hide x-label for upper subplots
+        
+        ax.set_ylabel('Amplitude')
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+        
+        # Restore previous y-limits if they exist
+        if subplot_index in self.current_ylim_dict:
+            ax.set_ylim(self.current_ylim_dict[subplot_index])
+        
+        # Add rectangle selector for zooming
+        selector = RectangleSelector(
+            ax, self.on_select, useblit=True,
+            button=[1], minspanx=5, minspany=5, spancoords='pixels',
+            interactive=True
+        )
+        self.rect_selectors[subplot_index] = selector
+        
         self.draw()
     
     def on_select(self, eclick, erelease):
@@ -335,48 +397,24 @@ class InteractivePlotCanvas(FigureCanvas):
         menu = QMenu(self)
         
         # Add action to show data label for the specific subplot
-        action = menu.addAction("Show Data Label")
-        action.triggered.connect(lambda: self.show_data_label_for_clicked_subplot(position))
+        action = menu.addAction("Add/Change Data")
+        action.triggered.connect(lambda: self.show_signal_selector(position))
         
         menu.exec_(self.mapToGlobal(position))
         
-    def show_data_label_for_clicked_subplot(self, position):
-        """Show data label for the specific subplot that was right-clicked"""
+    def show_signal_selector(self, position):
+        """Show signal selector dialog for the clicked subplot"""
         # Use the stored last clicked subplot
-        if self.last_clicked_subplot is not None and self.last_clicked_subplot < len(self.axes):
-            ax = self.axes[self.last_clicked_subplot]
-            # Get the line data and its label
-            lines = ax.get_lines()
-            if lines:
-                line = lines[0]  # First line (our data)
-                label = line.get_label()
-                message = f"Subplot {self.last_clicked_subplot + 1}\n"
-                message += f"Data Label: {label}"
-                QMessageBox.information(self, "Data Information", message)
-            else:
-                message = f"Subplot {self.last_clicked_subplot + 1}\n"
-                message += "No data label found"
-                QMessageBox.information(self, "Data Information", message)
+        if self.last_clicked_subplot is not None:
+            from signal_explorer import SignalExplorerDialog
+            # Create a dialog with dummy signals
+            dialog = SignalExplorerDialog(self.dummy_signals, parent=self)
+            if dialog.exec_() == dialog.Accepted:
+                selected_signals = dialog.get_selected_signals()
+                if selected_signals:
+                    # Get the first selected signal and plot it
+                    signal_data = selected_signals[0]
+                    self.set_subplot_signal(self.last_clicked_subplot, signal_data)
         else:
-            # Fallback: show all labels if no subplot was clicked recently
-            if self.subplot_count == 1:
-                ax = self.axes[0]
-                lines = ax.get_lines()
-                if lines:
-                    label = lines[0].get_label()
-                    message = f"Subplot 1\nData Label: {label}"
-                else:
-                    message = "Subplot 1\nNo data label found"
-                QMessageBox.information(self, "Data Information", message)
-            else:
-                message = "Data labels for all subplots:\n\n"
-                for i, ax in enumerate(self.axes):
-                    lines = ax.get_lines()
-                    if lines:
-                        label = lines[0].get_label()
-                        message += f"Subplot {i+1}:\n"
-                        message += f"  Label: {label}\n\n"
-                    else:
-                        message += f"Subplot {i+1}:\n"
-                        message += f"  Label: No data label\n\n"
-                QMessageBox.information(self, "Data Labels", message)
+            # If no subplot was clicked, show a message
+            QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")

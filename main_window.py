@@ -119,26 +119,6 @@ class MainWindow(QMainWindow):
         reset_margins_action.triggered.connect(self.reset_current_margins)
         view_menu.addAction(reset_margins_action)
     
-    # def import_pscad_data(self):
-        # """Import PSCAD data using the data import dialog"""
-        # dialog = DataImportDialog(self)
-        # if dialog.exec_() == QDialog.Accepted:
-            # # Get the imported data
-            # self.imported_data = dialog.get_imported_data()
-            
-            # if self.imported_data:
-                # # Show a message with the imported data
-                # message = "Imported data channels:\n"
-                # for data in self.imported_data:
-                    # message += f"  Channel {data['channel']}: {data['label']} from {os.path.basename(data['path'])}\n"
-                
-                # QMessageBox.information(self, "Import Complete", message)
-                # print("Imported data channels:")
-                # for data in self.imported_data:
-                    # print(f"  Channel {data['channel']}: {data['label']} from {data['path']}")
-            # else:
-                # QMessageBox.information(self, "Import Info", "No data was imported")
-
     def import_pscad_data(self):
         """Import PSCAD data using the data import dialog"""
         dialog = DataImportDialog(self, existing_data=self.imported_data)
@@ -415,4 +395,3 @@ class MainWindow(QMainWindow):
                 print(f"Error exporting {page_filename}: {e}")
         
         QMessageBox.information(self, "Export Complete", f"Exported {len(self.pages)} pages to {directory}")
-
