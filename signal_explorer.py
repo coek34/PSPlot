@@ -98,7 +98,7 @@ class SignalExplorerDialog(QDialog):
             signal_name = signal_data['name']
             signal_item = QTreeWidgetItem(self.signal_tree, [signal_name])
             signal_item.setData(0, Qt.UserRole, signal_data)  # Store signal data
-            signal_item.setCheckState(0, Qt.Unchecked)
+            # No checkbox - just a list of signals
         
         # Expand all items
         self.signal_tree.expandAll()
