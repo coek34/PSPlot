@@ -89,45 +89,29 @@ class SignalExplorerDialog(QDialog):
         layout.addLayout(button_layout)
         
     def populate_tree(self):
-        """Populate the signal tree with available signals from imported data, grouped by channel"""
+        """Populate the signal tree with available signals organized in channels, groups, and signals"""
         self.signal_tree.clear()
         
-        # Create a dictionary to group signals by channel
-        channel_groups = {}
-        
-        # Process each imported signal and group by channel
-        for signal_data in self.imported_data:
-            if not signal_data.get('name'):
-                continue
-                
-            # Extract channel from path (filename without extension)
-            path = signal_data.get('path', '')
-            if path:
-                channel_name = os.path.basename(path)
-                if channel_name.endswith('.inf'):
-                    channel_name = channel_name[:-4]  # Remove .inf extension
-            else:
-                # If no path, use "Dummy" as channel name
-                channel_name = "Dummy"
-            
-            # Create channel group if it doesn't exist
-            if channel_name not in channel_groups:
-                channel_groups[channel_name] = []
-            
-            channel_groups[channel_name].append(signal_data)
-        
-        # Add channel groups to tree
-        for channel_name, signals in channel_groups.items():
+        # Process each imported signal and organize by channel -> group -> signal
+        for channel_data in self.imported_data:
             # Create channel parent node
+            channel_name = channel_data['name']
             channel_parent = QTreeWidgetItem(self.signal_tree, [channel_name])
             channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
             channel_parent.setExpanded(True)
             
-            # Add signals to channel
-            for signal_data in signals:
-                signal_name = signal_data['name']
-                signal_item = QTreeWidgetItem(channel_parent, [signal_name])
-                signal_item.setData(0, Qt.UserRole, signal_data)  # Store signal data
+            # Add groups to channel
+            for group_data in channel_data['groups']:
+                group_name = group_data['name']
+                group_parent = QTreeWidgetItem(channel_parent, [group_name])
+                group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+                group_parent.setExpanded(True)
+                
+                # Add signals to group
+                for signal_data in group_data['signals']:
+                    signal_name = signal_data['name']
+                    signal_item = QTreeWidgetItem(group_parent, [signal_name])
+                    signal_item.setData(0, Qt.UserRole, signal_data)  # Store signal data
         
         # Expand all items
         self.signal_tree.expandAll()
@@ -147,8 +131,8 @@ class SignalExplorerDialog(QDialog):
     
     def on_signal_double_clicked(self, item, column):
         """Handle double-click on signal item"""
-        # Only process if it's a child of a channel parent (not the channel parent itself)
-        if item.parent() is not None:
+        # Only process if it's a child of a group parent (not the channel or group parent itself)
+        if item.parent() is not None and item.parent().parent() is not None:
             # This is a signal item
             signal_data = item.data(0, Qt.UserRole)
             if signal_data:
