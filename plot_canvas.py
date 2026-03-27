@@ -49,7 +49,7 @@ class InteractivePlotCanvas(FigureCanvas):
         signals = []
         x = np.linspace(0, 10, 1000)
         
-        # Generate 12 different signals
+        # Generate 12 different signals (8 in Dummy, 4 in Dummy2)
         for i in range(12):
             # Different signal types
             if i % 4 == 0:
