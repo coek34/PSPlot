@@ -156,4 +156,5 @@ class SignalExplorerDialog(QDialog):
             # Emit signal for each selected signal
             for signal_data in selected_signals:
                 self.signal_selected.emit(signal_data['name'], signal_data['name'])
+        # Call parent accept to close dialog
         super().accept()
