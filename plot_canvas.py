@@ -23,14 +23,7 @@ class InteractivePlotCanvas(FigureCanvas):
         self.x_data_range = (0, 10)  # Full data range
         
         # Store custom margins
-        self.custom_margins = {
-            'left': 0.125,
-            'bottom': 0.1,
-            'right': 0.9,
-            'top': 0.9,
-            'wspace': 0.2,
-            'hspace': 0.2
-        }
+        self.custom_margins = None  # Start with None to use tight_layout by default
         
         # Track last clicked subplot
         self.last_clicked_subplot = None
@@ -129,15 +122,20 @@ class InteractivePlotCanvas(FigureCanvas):
             for ax in self.axes:
                 ax.set_xlim(self.current_xlim)
         
-        # Apply custom margins instead of tight_layout
-        self.fig.subplots_adjust(
-            left=self.custom_margins['left'],
-            right=self.custom_margins['right'],
-            top=self.custom_margins['top'],
-            bottom=self.custom_margins['bottom'],
-            wspace=self.custom_margins['wspace'],
-            hspace=self.custom_margins['hspace']
-        )
+        # Apply custom margins or use tight_layout
+        if self.custom_margins is not None:
+            self.fig.subplots_adjust(
+                left=self.custom_margins['left'],
+                right=self.custom_margins['right'],
+                top=self.custom_margins['top'],
+                bottom=self.custom_margins['bottom'],
+                wspace=self.custom_margins['wspace'],
+                hspace=self.custom_margins['hspace']
+            )
+        else:
+            # Use tight_layout for minimal whitespace by default
+            self.fig.tight_layout(pad=2.0)
+        
         self.draw()
     
     def set_subplot_signal(self, subplot_index, signal_data):
@@ -409,7 +407,7 @@ class InteractivePlotCanvas(FigureCanvas):
         Args:
             margins (dict): Dictionary containing margin values for left, right, top, bottom, wspace, hspace
         """
-        self.custom_margins.update(margins)
+        self.custom_margins = margins
         # Apply immediately if we have a figure
         if hasattr(self, 'fig') and self.fig:
             self.fig.subplots_adjust(
@@ -423,29 +421,15 @@ class InteractivePlotCanvas(FigureCanvas):
             self.draw()
             
     def reset_default_margins(self):
-        """Reset margins to default values"""
-        self.custom_margins = {
-            'left': 0.125,
-            'bottom': 0.1,
-            'right': 0.9,
-            'top': 0.9,
-            'wspace': 0.2,
-            'hspace': 0.2
-        }
-        self.fig.subplots_adjust(
-            left=self.custom_margins['left'],
-            right=self.custom_margins['right'],
-            top=self.custom_margins['top'],
-            bottom=self.custom_margins['bottom'],
-            wspace=self.custom_margins['wspace'],
-            hspace=self.custom_margins['hspace']
-        )
+        """Reset to use tight_layout instead of custom margins"""
+        self.custom_margins = None
+        self.fig.tight_layout(pad=2.0)
         self.draw()
 
     def get_current_margins(self):
-        """Get current custom margins"""
-        return self.custom_margins.copy()
-        
+        """Get current custom margins or None if using tight_layout"""
+        return self.custom_margins
+    
     def show_context_menu(self, position):
         """Show context menu when right-clicking on the canvas"""
         # Create context menu
