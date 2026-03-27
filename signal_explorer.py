@@ -42,6 +42,8 @@ class SignalExplorerDialog(QDialog):
         self.signal_tree.setRootIsDecorated(True)
         self.signal_tree.setAlternatingRowColors(True)
         self.signal_tree.itemDoubleClicked.connect(self.on_signal_double_clicked)
+        # Enable multi-selection
+        self.signal_tree.setSelectionMode(QTreeWidget.MultiSelection)
         
         left_layout.addWidget(self.signal_tree)
         

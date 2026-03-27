@@ -181,6 +181,53 @@ class InteractivePlotCanvas(FigureCanvas):
         
         self.draw()
     
+    def set_subplot_signals(self, subplot_index, signal_data_list):
+        """Set multiple signals to a specific subplot"""
+        if subplot_index < 0 or subplot_index >= len(self.axes):
+            return
+            
+        ax = self.axes[subplot_index]
+        
+        # Clear existing plot
+        ax.clear()
+        
+        # Plot all signals
+        if signal_data_list:
+            for signal_data in signal_data_list:
+                if signal_data and 'x' in signal_data and 'y' in signal_data:
+                    ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=signal_data['name'])
+            
+            # Set title to show multiple signals
+            ax.set_title(f"Multiple Signals")
+        else:
+            # Plot default signal if no data provided
+            ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
+            ax.set_title(f'Subplot {subplot_index+1}')
+        
+        # Set labels
+        if subplot_index == len(self.axes) - 1:  # Last subplot
+            ax.set_xlabel('Time (s)')
+        else:
+            ax.set_xlabel('')  # Hide x-label for upper subplots
+        
+        ax.set_ylabel('Amplitude')
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+        
+        # Restore previous y-limits if they exist
+        if subplot_index in self.current_ylim_dict:
+            ax.set_ylim(self.current_ylim_dict[subplot_index])
+        
+        # Add rectangle selector for zooming
+        selector = RectangleSelector(
+            ax, self.on_select, useblit=True,
+            button=[1], minspanx=5, minspany=5, spancoords='pixels',
+            interactive=True
+        )
+        self.rect_selectors[subplot_index] = selector
+        
+        self.draw()
+    
     def on_select(self, eclick, erelease):
         """Handle rectangle selection for zooming"""
         if eclick.xdata is None or erelease.xdata is None:
@@ -412,9 +459,8 @@ class InteractivePlotCanvas(FigureCanvas):
             if dialog.exec_() == dialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
                 if selected_signals:
-                    # Get the first selected signal and plot it
-                    signal_data = selected_signals[0]
-                    self.set_subplot_signal(self.last_clicked_subplot, signal_data)
+                    # Plot all selected signals in the same subplot
+                    self.set_subplot_signals(self.last_clicked_subplot, selected_signals)
         else:
             # If no subplot was clicked, show a message
             QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")
