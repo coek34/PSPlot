@@ -306,23 +306,31 @@ class InteractivePlotCanvas(FigureCanvas):
         self.current_ylim_dict.clear()
         
         for i, ax in enumerate(self.axes):
-            # Get the line data
+            # Collect y-data from all lines in this subplot
+            all_visible_y = []
+            
+            # Get all the line data
             lines = ax.get_lines()
-            if lines:
-                line = lines[0]  # First line (our data)
-                x_data = line.get_xdata()
-                y_data = line.get_ydata()
-                
-                # Find indices within current x-range
-                mask = (x_data >= x_min) & (x_data <= x_max)
-                if np.any(mask):
-                    visible_y = y_data[mask]
-                    if len(visible_y) > 0:
-                        y_margin = (visible_y.max() - visible_y.min()) * 0.05  # 5% margin
-                        y_min = visible_y.min() - y_margin if y_margin > 0 else visible_y.min() - 0.1
-                        y_max = visible_y.max() + y_margin if y_margin > 0 else visible_y.max() + 0.1
-                        ax.set_ylim(y_min, y_max)
-                        self.current_ylim_dict[i] = (y_min, y_max)
+            for line in lines:
+                # Skip lines with '_nolegend_' label (these are from rectangle selectors)
+                if line.get_label() != '_nolegend_':
+                    x_data = line.get_xdata()
+                    y_data = line.get_ydata()
+                    
+                    # Find indices within current x-range
+                    mask = (x_data >= x_min) & (x_data <= x_max)
+                    if np.any(mask):
+                        visible_y = y_data[mask]
+                        all_visible_y.extend(visible_y)
+            
+            # Calculate y-limits based on all visible data
+            if all_visible_y:
+                y_array = np.array(all_visible_y)
+                y_margin = (y_array.max() - y_array.min()) * 0.05  # 5% margin
+                y_min = y_array.min() - y_margin if y_margin > 0 else y_array.min() - 0.1
+                y_max = y_array.max() + y_margin if y_margin > 0 else y_array.max() + 0.1
+                ax.set_ylim(y_min, y_max)
+                self.current_ylim_dict[i] = (y_min, y_max)
         
         self.draw()
     
