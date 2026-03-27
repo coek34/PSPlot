@@ -109,7 +109,7 @@ class InteractivePlotCanvas(FigureCanvas):
             
             # Show y-label on all subplots
             ax.set_ylabel('Amplitude')
-            ax.legend(fontsize=8)
+            ax.legend(fontsize=8, loc='upper right')
             ax.grid(True, alpha=0.3)
             
             # Restore previous y-limits if they exist
@@ -153,7 +153,7 @@ class InteractivePlotCanvas(FigureCanvas):
         # Plot the signal
         if signal_data and 'x' in signal_data and 'y' in signal_data:
             # Ensure signal_data has a 'name' field
-            name = signal_data.get('name', 'Signal')
+            name = signal_data.get('name', f'Signal_{subplot_index+1}')
             ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
             # Plot default signal if no data provided
@@ -169,7 +169,7 @@ class InteractivePlotCanvas(FigureCanvas):
         ax.set_title('')  # No title
         
         ax.set_ylabel('Amplitude')
-        ax.legend(fontsize=8)
+        ax.legend(fontsize=8, loc='upper right')
         ax.grid(True, alpha=0.3)
         
         # Restore previous y-limits if they exist
@@ -201,7 +201,7 @@ class InteractivePlotCanvas(FigureCanvas):
             for signal_data in signal_data_list:
                 if signal_data and 'x' in signal_data and 'y' in signal_data:
                     # Ensure signal_data has a 'name' field
-                    name = signal_data.get('name', 'Signal')
+                    name = signal_data.get('name', f'Signal_{subplot_index+1}')
                     ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
             # Plot default signal if no data provided
@@ -217,7 +217,7 @@ class InteractivePlotCanvas(FigureCanvas):
         ax.set_title('')  # No title
         
         ax.set_ylabel('Amplitude')
-        ax.legend(fontsize=8)
+        ax.legend(fontsize=8, loc='upper right')
         ax.grid(True, alpha=0.3)
         
         # Restore previous y-limits if they exist

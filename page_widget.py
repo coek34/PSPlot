@@ -56,7 +56,7 @@ class PageWidget(QWidget):
                             signal_data = {
                                 'x': x_data,
                                 'y': y_data,
-                                'name': line.get_label() if line.get_label() else f'Subplot {i+1}'
+                                'name': line.get_label() if line.get_label() else f'Signal_{i+1}'
                             }
                             self.subplot_signals[i].append(signal_data)
         
