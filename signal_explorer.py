@@ -48,7 +48,7 @@ class SignalExplorerDialog(QDialog):
         
         left_layout.addWidget(self.signal_tree)
         
-        # Right panel - Selected signals
+        # Right panel - Selected signals (with same hierarchical structure)
         right_panel = QFrame()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(5, 5, 5, 5)
@@ -57,14 +57,14 @@ class SignalExplorerDialog(QDialog):
         selected_label.setFont(QFont("Arial", 10, QFont.Bold))
         right_layout.addWidget(selected_label)
         
-        self.selected_signals_list = QTreeWidget()
-        self.selected_signals_list.setHeaderLabels(["Signal"])
-        self.selected_signals_list.setRootIsDecorated(False)
-        self.selected_signals_list.setAlternatingRowColors(True)
+        self.selected_signals_tree = QTreeWidget()
+        self.selected_signals_tree.setHeaderLabels(["Signals"])
+        self.selected_signals_tree.setRootIsDecorated(True)
+        self.selected_signals_tree.setAlternatingRowColors(True)
         # Connect double-click to remove signal
-        self.selected_signals_list.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
+        self.selected_signals_tree.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
         
-        right_layout.addWidget(self.selected_signals_list)
+        right_layout.addWidget(self.selected_signals_tree)
         
         # Buttons
         button_layout = QHBoxLayout()
@@ -116,18 +116,46 @@ class SignalExplorerDialog(QDialog):
         # Expand all items
         self.signal_tree.expandAll()
         
-        # Add existing signals to the selected list
+        # Add existing signals to the selected list with same hierarchical structure
         self.populate_selected_signals()
     
     def populate_selected_signals(self):
-        """Populate the selected signals list with existing signals"""
-        self.selected_signals_list.clear()
+        """Populate the selected signals tree with existing signals organized in same hierarchy"""
+        self.selected_signals_tree.clear()
         
-        # Add existing signals to the selected list
+        # Create a mapping of existing signals by channel and group for easier organization
+        signal_mapping = {}
         for signal_data in self.existing_signals:
-            signal_name = signal_data.get('name', 'Unknown Signal')
-            selected_item = QTreeWidgetItem(self.selected_signals_list, [signal_name])
-            selected_item.setData(0, Qt.UserRole, signal_data)
+            # For existing signals, we'll create a simple structure
+            # Since we don't have channel/group info for existing signals, we'll put them in a "Current" channel
+            channel_name = "Current"
+            if channel_name not in signal_mapping:
+                signal_mapping[channel_name] = {'groups': {}}
+            
+            group_name = "Selected"
+            if group_name not in signal_mapping[channel_name]['groups']:
+                signal_mapping[channel_name]['groups'][group_name] = []
+            
+            signal_mapping[channel_name]['groups'][group_name].append(signal_data)
+        
+        # Add the existing signals to the tree with hierarchical structure
+        for channel_name, channel_data in signal_mapping.items():
+            channel_parent = QTreeWidgetItem(self.selected_signals_tree, [channel_name])
+            channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            channel_parent.setExpanded(True)
+            
+            for group_name, signals in channel_data['groups'].items():
+                group_parent = QTreeWidgetItem(channel_parent, [group_name])
+                group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+                group_parent.setExpanded(True)
+                
+                for signal_data in signals:
+                    signal_name = signal_data['name']
+                    signal_item = QTreeWidgetItem(group_parent, [signal_name])
+                    signal_item.setData(0, Qt.UserRole, signal_data)
+        
+        # Expand all items in selected signals tree
+        self.selected_signals_tree.expandAll()
     
     def on_signal_double_clicked(self, item, column):
         """Handle double-click on signal item"""
@@ -136,38 +164,82 @@ class SignalExplorerDialog(QDialog):
             # This is a signal item
             signal_data = item.data(0, Qt.UserRole)
             if signal_data:
-                # Add to selected signals list
+                # Add to selected signals tree with hierarchical structure
                 self.add_to_selected_signals(item.text(0), signal_data)
     
     def on_selected_signal_double_clicked(self, item, column):
         """Handle double-click on selected signal - remove it"""
-        # Remove the item from the selected signals list
-        self.selected_signals_list.takeTopLevelItem(self.selected_signals_list.indexOfTopLevelItem(item))
+        # Remove the item from the selected signals tree
+        parent = item.parent()
+        if parent:
+            # Remove the item from its parent
+            parent.removeChild(item)
+        else:
+            # If it's a top-level item, remove from the tree
+            self.selected_signals_tree.takeTopLevelItem(self.selected_signals_tree.indexOfTopLevelItem(item))
     
     def add_to_selected_signals(self, signal_name, signal_data):
-        """Add signal to selected signals list"""
-        # Check if signal already exists
-        for i in range(self.selected_signals_list.topLevelItemCount()):
-            existing_item = self.selected_signals_list.topLevelItem(i)
-            if existing_item.text(0) == signal_name:
-                return  # Already selected
+        """Add signal to selected signals tree with hierarchical structure"""
+        # Create a hierarchical structure for the selected signal
+        channel_name = "Current"
+        group_name = "Selected"
         
-        # Add to selected list
-        selected_item = QTreeWidgetItem(self.selected_signals_list, [signal_name])
-        selected_item.setData(0, Qt.UserRole, signal_data)
+        # Find or create channel parent
+        channel_parent = None
+        for i in range(self.selected_signals_tree.topLevelItemCount()):
+            if self.selected_signals_tree.topLevelItem(i).text(0) == channel_name:
+                channel_parent = self.selected_signals_tree.topLevelItem(i)
+                break
+        
+        if not channel_parent:
+            channel_parent = QTreeWidgetItem(self.selected_signals_tree, [channel_name])
+            channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            channel_parent.setExpanded(True)
+        
+        # Find or create group parent
+        group_parent = None
+        for i in range(channel_parent.childCount()):
+            if channel_parent.child(i).text(0) == group_name:
+                group_parent = channel_parent.child(i)
+                break
+        
+        if not group_parent:
+            group_parent = QTreeWidgetItem(channel_parent, [group_name])
+            group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            group_parent.setExpanded(True)
+        
+        # Add signal to group
+        signal_item = QTreeWidgetItem(group_parent, [signal_name])
+        signal_item.setData(0, Qt.UserRole, signal_data)
+        
+        # Expand the tree
+        self.selected_signals_tree.expandAll()
     
     def clear_selected_signals(self):
         """Clear all selected signals"""
-        self.selected_signals_list.clear()
+        self.selected_signals_tree.clear()
     
     def get_selected_signals(self):
         """Get the list of selected signals"""
         signals = []
-        for i in range(self.selected_signals_list.topLevelItemCount()):
-            item = self.selected_signals_list.topLevelItem(i)
-            signal_data = item.data(0, Qt.UserRole)
-            if signal_data:
-                signals.append(signal_data)
+        
+        # Recursively collect signals from the tree structure
+        def collect_signals_from_tree(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                # If this is a leaf node (signal), get its data
+                if child.childCount() == 0:
+                    signal_data = child.data(0, Qt.UserRole)
+                    if signal_data:
+                        signals.append(signal_data)
+                else:
+                    # Recursively process child nodes
+                    collect_signals_from_tree(child)
+        
+        # Process all top-level items
+        for i in range(self.selected_signals_tree.topLevelItemCount()):
+            collect_signals_from_tree(self.selected_signals_tree.topLevelItem(i))
+        
         return signals
     
     def accept(self):
