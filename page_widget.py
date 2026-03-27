@@ -11,7 +11,7 @@ class PageWidget(QWidget):
         self.height = height
         self.plot_canvas = None
         self.page_name = f"Page {page_index + 1}"
-        self.subplot_signals = [None] * 6  # Store signals for up to 6 subplots
+        self.subplot_signals = [[] for _ in range(6)]  # Store lists of signals for up to 6 subplots
         self.setup_ui()
         
     def setup_ui(self):
@@ -45,18 +45,20 @@ class PageWidget(QWidget):
                 if i < len(self.plot_canvas.axes):
                     ax = self.plot_canvas.axes[i]
                     lines = ax.get_lines()
-                    if lines:
-                        # Store the first line's data as a simple representation
-                        line = lines[0]
+                    # Clear the existing list for this subplot
+                    self.subplot_signals[i] = []
+                    # Save all lines from this subplot
+                    for line in lines:
                         x_data = line.get_xdata()
                         y_data = line.get_ydata()
                         if len(x_data) > 0 and len(y_data) > 0:
                             # Store a simple representation of the signal
-                            self.subplot_signals[i] = {
+                            signal_data = {
                                 'x': x_data,
                                 'y': y_data,
                                 'name': line.get_label() if line.get_label() else f'Subplot {i+1}'
                             }
+                            self.subplot_signals[i].append(signal_data)
         
         # Update the plots
         self.plot_canvas.update_plots(subplot_count)
@@ -64,10 +66,9 @@ class PageWidget(QWidget):
         # Restore signals to new subplots if they exist
         if self.plot_canvas and hasattr(self.plot_canvas, 'axes'):
             for i in range(min(subplot_count, 6)):
-                if i < len(self.plot_canvas.axes) and self.subplot_signals[i] is not None:
-                    signal_data = self.subplot_signals[i]
-                    # Plot the saved signal
-                    self.plot_canvas.set_subplot_signal(i, signal_data)
+                if i < len(self.plot_canvas.axes) and self.subplot_signals[i]:
+                    # Plot all signals for this subplot
+                    self.plot_canvas.set_subplot_signals(i, self.subplot_signals[i])
         
     def get_current_margins(self):
         """Get current subplot margins from the figure"""
@@ -107,4 +108,11 @@ class PageWidget(QWidget):
         self.plot_canvas.set_subplot_signal(subplot_index, signal_data)
         # Also store the signal for preservation
         if 0 <= subplot_index < 6:
-            self.subplot_signals[subplot_index] = signal_data
+            self.subplot_signals[subplot_index] = [signal_data]
+            
+    def set_subplot_signals(self, subplot_index, signal_data_list):
+        """Set multiple signals for a specific subplot"""
+        self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list)
+        # Also store the signals for preservation
+        if 0 <= subplot_index < 6:
+            self.subplot_signals[subplot_index] = signal_data_list
