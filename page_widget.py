@@ -47,18 +47,20 @@ class PageWidget(QWidget):
                     lines = ax.get_lines()
                     # Clear the existing list for this subplot
                     self.subplot_signals[i] = []
-                    # Save all lines from this subplot
+                    # Save all lines from this subplot that are not rectangle selectors
                     for line in lines:
-                        x_data = line.get_xdata()
-                        y_data = line.get_ydata()
-                        if len(x_data) > 0 and len(y_data) > 0:
-                            # Store a simple representation of the signal
-                            signal_data = {
-                                'x': x_data,
-                                'y': y_data,
-                                'name': line.get_label() if line.get_label() else f'Signal_{i+1}'
-                            }
-                            self.subplot_signals[i].append(signal_data)
+                        # Skip lines with '_nolegend_' label (these are from rectangle selectors)
+                        if line.get_label() != '_nolegend_':
+                            x_data = line.get_xdata()
+                            y_data = line.get_ydata()
+                            if len(x_data) > 0 and len(y_data) > 0:
+                                # Store a simple representation of the signal
+                                signal_data = {
+                                    'x': x_data,
+                                    'y': y_data,
+                                    'name': line.get_label() if line.get_label() else f'Signal_{i+1}'
+                                }
+                                self.subplot_signals[i].append(signal_data)
         
         # Update the plots
         self.plot_canvas.update_plots(subplot_count)
