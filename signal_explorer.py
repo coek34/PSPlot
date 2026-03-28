@@ -1,5 +1,4 @@
 # signal_explorer.py
-import os
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget, 
                             QTreeWidgetItem, QPushButton, QSplitter, QLabel,
                             QCheckBox, QGroupBox, QFrame, QMessageBox)

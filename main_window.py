@@ -207,22 +207,8 @@ class MainWindow(QMainWindow):
     
     def new_canvas(self):
         """Create a new canvas with selected size"""
-        # Get current page dimensions
-        current_page = self.get_current_page()
-        default_width = None
-        default_height = None
-        
-        if current_page:
-            # Convert inches back to mm for display
-            default_width = round(current_page.width * 25.4)
-            default_height = round(current_page.height * 25.4)
-        
-        dialog = CanvasSizeDialog(self, default_width, default_height)
-        if dialog.exec_() == QDialog.Accepted:
-            width, height, is_predefined = dialog.get_canvas_size()
-            
-            # Create new page with the selected size
-            self.add_new_page(width, height)
+        # For now, just create a new page with default size
+        self.add_new_page()
     
     def get_current_margins(self):
         """Get current subplot margins from the figure"""
