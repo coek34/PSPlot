@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLa
 from PyQt5.QtCore import Qt, pyqtSignal
 
 # Import from separate modules
-from canvas_size_dialog import CanvasSizeDialog
+# from canvas_size_dialog import CanvasSizeDialog
 from margin_dialog import MarginDialog
 from page_widget import PageWidget
 from plot_canvas import InteractivePlotCanvas
