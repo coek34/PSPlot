@@ -558,6 +558,8 @@ class InteractivePlotCanvas(FigureCanvas):
             # Get existing signals for this subplot to show in the dialog
             existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
             
+            print(f"DEBUG: Getting existing signals for subplot {self.last_clicked_subplot}: {existing_signals}")
+            
             # Create a dialog with dummy signals and existing signals
             dialog = SignalExplorerDialog(self.dummy_signals, existing_signals, parent=self)
             if dialog.exec_() == dialog.Accepted:
@@ -595,6 +597,7 @@ class InteractivePlotCanvas(FigureCanvas):
                     }
                     existing_signals.append(signal_data)
         
+        print(f"DEBUG: get_existing_signals_for_subplot returning: {existing_signals}")
         return existing_signals
     
     def find_signal_by_name(self, signal_name, channel_name=None):

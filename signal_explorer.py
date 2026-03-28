@@ -127,12 +127,15 @@ class SignalExplorerDialog(QDialog):
         """Populate the selected signals tree with existing signals organized in same hierarchy"""
         self.selected_signals_tree.clear()
         
+        print(f"DEBUG: populate_selected_signals called with existing_signals: {self.existing_signals}")
+        
         # Only populate if there are existing signals
         if self.existing_signals:
             # Create a mapping of existing signals by channel and group for easier organization
             signal_mapping = {}
             
             for signal_data in self.existing_signals:
+                print(f"DEBUG: Processing signal_data: {signal_data}")
                 # Extract channel and group information from the signal data
                 if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
                     channel_name = signal_data['channel_name']
@@ -142,6 +145,8 @@ class SignalExplorerDialog(QDialog):
                     channel_name = "Current"
                     group_name = "Selected"
                 
+                print(f"DEBUG: Extracted channel_name: {channel_name}, group_name: {group_name}")
+                
                 # Create the hierarchical structure
                 if channel_name not in signal_mapping:
                     signal_mapping[channel_name] = {'groups': {}}
@@ -150,6 +155,8 @@ class SignalExplorerDialog(QDialog):
                     signal_mapping[channel_name]['groups'][group_name] = []
                 
                 signal_mapping[channel_name]['groups'][group_name].append(signal_data)
+            
+            print(f"DEBUG: signal_mapping after processing: {signal_mapping}")
             
             # Add the existing signals to the tree with hierarchical structure
             for channel_name, channel_data in signal_mapping.items():
@@ -194,6 +201,7 @@ class SignalExplorerDialog(QDialog):
     
     def add_to_selected_signals(self, signal_name, signal_data):
         """Add signal to selected signals tree with hierarchical structure"""
+        print(f"DEBUG: add_to_selected_signals called with signal_data: {signal_data}")
         # Extract channel and group information
         if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
             channel_name = signal_data['channel_name']
@@ -202,6 +210,8 @@ class SignalExplorerDialog(QDialog):
             # If no channel/group info, put in a default structure
             channel_name = "Current"
             group_name = "Selected"
+        
+        print(f"DEBUG: Extracted channel_name: {channel_name}, group_name: {group_name}")
         
         # Create a hierarchical structure for the selected signal
         # Find or create channel parent
@@ -274,6 +284,7 @@ class SignalExplorerDialog(QDialog):
                 # This is already the correct format
                 actual_signals.append(signal_data)
         
+        print(f"DEBUG: get_selected_signals returning: {actual_signals}")
         return actual_signals
     
     def accept(self):
