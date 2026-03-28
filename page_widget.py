@@ -54,12 +54,30 @@ class PageWidget(QWidget):
                             x_data = line.get_xdata()
                             y_data = line.get_ydata()
                             if len(x_data) > 0 and len(y_data) > 0:
-                                # Store a simple representation of the signal
+                                # Store a representation of the signal with channel/group info if available
                                 signal_data = {
                                     'x': x_data,
                                     'y': y_data,
                                     'name': line.get_label() if line.get_label() else f'Signal_{i+1}'
                                 }
+                                
+                                # Try to get channel and group info from the existing signal data
+                                if i < len(self.subplot_signals) and self.subplot_signals[i]:
+                                    # Look for matching signal in existing signals
+                                    for existing_signal in self.subplot_signals[i]:
+                                        if existing_signal.get('name') == signal_data['name']:
+                                            signal_data['channel_name'] = existing_signal.get('channel_name', 'Unknown')
+                                            signal_data['group_name'] = existing_signal.get('group_name', 'Unknown')
+                                            break
+                                    else:
+                                        # If not found, use defaults
+                                        signal_data['channel_name'] = 'Unknown'
+                                        signal_data['group_name'] = 'Unknown'
+                                else:
+                                    # Use defaults if no existing signals
+                                    signal_data['channel_name'] = 'Unknown'
+                                    signal_data['group_name'] = 'Unknown'
+                                    
                                 self.subplot_signals[i].append(signal_data)
         
         # Update the plots
@@ -116,9 +134,9 @@ class PageWidget(QWidget):
                 self.subplot_signals[subplot_index] = [signal_data]
             else:
                 # If no channel/group info, create a minimal structure
-                minimal_signal = signal_data.copy()
-                minimal_signal['channel_name'] = 'Unknown'
-                minimal_signal['group_name'] = 'Unknown'
+                minimal_signal = signal_data.copy() if isinstance(signal_data, dict) else {'name': str(signal_data)}
+                minimal_signal['channel_name'] = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                minimal_signal['group_name'] = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
                 self.subplot_signals[subplot_index] = [minimal_signal]
             
     def set_subplot_signals(self, subplot_index, signal_data_list):
@@ -135,8 +153,8 @@ class PageWidget(QWidget):
                     processed_signals.append(signal_data)
                 else:
                     # If no channel/group info, create a minimal structure
-                    minimal_signal = signal_data.copy()
-                    minimal_signal['channel_name'] = 'Unknown'
-                    minimal_signal['group_name'] = 'Unknown'
+                    minimal_signal = signal_data.copy() if isinstance(signal_data, dict) else {'name': str(signal_data)}
+                    minimal_signal['channel_name'] = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                    minimal_signal['group_name'] = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
                     processed_signals.append(minimal_signal)
             self.subplot_signals[subplot_index] = processed_signals

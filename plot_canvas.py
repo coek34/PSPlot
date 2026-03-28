@@ -581,7 +581,7 @@ class InteractivePlotCanvas(FigureCanvas):
             QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")
     
     def get_existing_signals_for_subplot(self, subplot_index):
-        """Get the list of existing signals for a specific subplot"""
+        """Get the list of existing signals for a specific subplot with channel/group info"""
         existing_signals = []
         
         if subplot_index < 0 or subplot_index >= len(self.axes):
@@ -597,16 +597,53 @@ class InteractivePlotCanvas(FigureCanvas):
                 x_data = line.get_xdata()
                 y_data = line.get_ydata()
                 if len(x_data) > 0 and len(y_data) > 0:
-                    # Create a simple representation of the signal
+                    # Try to retrieve channel and group info from the line's properties
+                    # We'll store this info in the line's label when plotting
+                    signal_name = line.get_label() if line.get_label() else f'Signal_{subplot_index+1}'
+                    
+                    # Extract channel and group from the signal name if possible
+                    # For dummy signals, we can look them up
+                    channel_name = 'Unknown'
+                    group_name = 'Unknown'
+                    
+                    # Try to find the signal in our dummy signals to get channel/group info
+                    signal_info = self.find_signal_by_name_with_channel(signal_name)
+                    if signal_info:
+                        channel_name = signal_info['channel_name']
+                        group_name = signal_info['group_name']
+                    
+                    # Create a representation of the signal with channel/group info
                     signal_data = {
-                        'name': line.get_label() if line.get_label() else f'Signal_{subplot_index+1}',
+                        'name': signal_name,
                         'x': x_data,
-                        'y': y_data
+                        'y': y_data,
+                        'channel_name': channel_name,
+                        'group_name': group_name
                     }
                     existing_signals.append(signal_data)
         
         print(f"DEBUG get_existing_signals_for_subplot: Returning {len(existing_signals)} signals for subplot {subplot_index}")
         return existing_signals
+    
+    def find_signal_by_name_with_channel(self, signal_name):
+        """Find a signal by name in the dummy signals structure and return with channel info"""
+        # Search through all channels
+        for channel in self.dummy_signals:
+            channel_name = channel['name']
+            # Search through all groups in this channel
+            for group in channel['groups']:
+                group_name = group['name']
+                # Search through all signals in this group
+                for signal in group['signals']:
+                    if signal['name'] == signal_name:
+                        return {
+                            'signal': signal,
+                            'channel_name': channel_name,
+                            'group_name': group_name
+                        }
+        
+        # Signal not found
+        return None
     
     def find_signal_by_name(self, signal_name, channel_name=None):
         """Find a signal by name in the dummy signals structure"""
