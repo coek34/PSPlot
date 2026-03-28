@@ -190,7 +190,7 @@ class SignalExplorerDialog(QDialog):
                 group_name = signal_data.get('group_name', 'Unknown')
                 print(f"DEBUG on_signal_double_clicked: Adding signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
                 # Add to selected signals tree with hierarchical structure
-                self.add_to_selected_signals(item.text(0), signal_data)
+                self.add_to_selected_signals(signal_data)
     
     def on_selected_signal_double_clicked(self, item, column):
         """Handle double-click on selected signal - remove it"""
@@ -222,14 +222,15 @@ class SignalExplorerDialog(QDialog):
                         self.selected_signals_tree.takeTopLevelItem(i)
                         break
     
-    def add_to_selected_signals(self, signal_name, signal_data):
+    def add_to_selected_signals(self, signal_data):
         """Add signal to selected signals tree with hierarchical structure"""
-        print(f"DEBUG add_to_selected_signals: Adding signal - Name: {signal_data.get('name', 'Unknown')}")
         # Extract channel and group information
         if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
             channel_name = signal_data['channel_name']
             group_name = signal_data['group_name']
             signal_name = signal_data.get('name', 'Unknown')
+            if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
+                signal_name = signal_data['signal_data'].get('name', signal_name)
             print(f"DEBUG add_to_selected_signals: Channel='{channel_name}', Group='{group_name}', Signal='{signal_name}'")
         else:
             # If no channel/group info, put in a default structure
