@@ -1,5 +1,5 @@
 # canvas_size_dialog.py
-from PyQt5.QtWidgets import QDialog, QFormLayout, QComboBox, QPushButton, QHBoxLayout, QDoubleSpinBox, QLabel
+from PyQt5.QtWidgets import QDialog, QFormLayout, QComboBox, QPushButton, QHBoxLayout, QDoubleSpinBox, QLabel, QWidget
 from PyQt5.QtCore import Qt
 
 class CanvasSizeDialog(QDialog):
@@ -35,7 +35,8 @@ class CanvasSizeDialog(QDialog):
         layout.addRow("Size:", self.size_combo)
         
         # Custom size inputs
-        self.custom_layout = QFormLayout()
+        self.custom_widget = QWidget()
+        self.custom_layout = QFormLayout(self.custom_widget)
         self.width_spin = QDoubleSpinBox()
         self.width_spin.setRange(1, 10000)
         self.width_spin.setDecimals(1)
@@ -51,7 +52,7 @@ class CanvasSizeDialog(QDialog):
         self.custom_layout.addRow("Width:", self.width_spin)
         self.custom_layout.addRow("Height:", self.height_spin)
         
-        layout.addRow(self.custom_layout)
+        layout.addRow(self.custom_widget)
         
         # Buttons
         button_layout = QHBoxLayout()
@@ -67,14 +68,14 @@ class CanvasSizeDialog(QDialog):
         self.setLayout(layout)
         
         # Initially hide custom size inputs
-        self.custom_layout.setHidden(True)
+        self.custom_widget.setHidden(True)
         
     def on_size_changed(self, text):
         """Handle size selection change"""
         if text == "Custom":
-            self.custom_layout.setHidden(False)
+            self.custom_widget.setHidden(False)
         else:
-            self.custom_layout.setHidden(True)
+            self.custom_widget.setHidden(True)
             # Set custom spinboxes to predefined values
             sizes = {
                 "A4 Portrait": (210, 297),
