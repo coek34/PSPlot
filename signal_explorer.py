@@ -1,7 +1,7 @@
 # signal_explorer.py
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget, 
                             QTreeWidgetItem, QPushButton, QSplitter, QLabel,
-                            QCheckBox, QGroupBox, QFrame, QMessageBox)
+                            QFrame)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
@@ -65,6 +65,13 @@ class SignalExplorerDialog(QDialog):
         
         right_layout.addWidget(self.selected_signals_tree)
         
+        # Add panels to splitter
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setSizes([400, 400])
+        
+        layout.addWidget(splitter)
+        
         # Buttons
         button_layout = QHBoxLayout()
         clear_button = QPushButton("Clear Selected")
@@ -79,12 +86,6 @@ class SignalExplorerDialog(QDialog):
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         
-        # Add panels to splitter
-        splitter.addWidget(left_panel)
-        splitter.addWidget(right_panel)
-        splitter.setSizes([400, 400])
-        
-        layout.addWidget(splitter)
         layout.addLayout(button_layout)
         
     def populate_tree(self):
