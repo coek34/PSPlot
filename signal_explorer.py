@@ -127,7 +127,7 @@ class SignalExplorerDialog(QDialog):
         """Populate the selected signals tree with existing signals organized in same hierarchy"""
         self.selected_signals_tree.clear()
         
-        # Process existing signals to preserve their original channel and group structure
+        # Only populate if there are existing signals
         if self.existing_signals:
             # Create a mapping of existing signals by channel and group for easier organization
             signal_mapping = {}
@@ -166,15 +166,7 @@ class SignalExplorerDialog(QDialog):
                         signal_name = signal_data['name']
                         signal_item = QTreeWidgetItem(group_parent, [signal_name])
                         signal_item.setData(0, Qt.UserRole, signal_data)
-        else:
-            # If no existing signals, create a simple structure
-            channel_parent = QTreeWidgetItem(self.selected_signals_tree, ["Current"])
-            channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-            channel_parent.setExpanded(True)
-            
-            group_parent = QTreeWidgetItem(channel_parent, ["Selected"])
-            group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-            group_parent.setExpanded(True)
+        # If no existing signals, leave the tree empty
         
         # Expand all items in selected signals tree
         self.selected_signals_tree.expandAll()
