@@ -253,11 +253,16 @@ class SignalExplorerDialog(QDialog):
         # Extract actual signal data from the nested structure for proper plotting
         actual_signals = []
         for signal_data in signals:
-            # Extract the actual signal data for plotting
-            actual_signal_data = signal_data['signal_data']
-            actual_signal_data['channel_name'] = signal_data['channel_name']
-            actual_signal_data['group_name'] = signal_data['group_name']
-            actual_signals.append(actual_signal_data)
+            # Check if it's already in the correct format (no nested 'signal_data' key)
+            if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
+                # This is the nested format - extract the actual signal data
+                actual_signal_data = signal_data['signal_data']
+                actual_signal_data['channel_name'] = signal_data['channel_name']
+                actual_signal_data['group_name'] = signal_data['group_name']
+                actual_signals.append(actual_signal_data)
+            else:
+                # This is already the correct format
+                actual_signals.append(signal_data)
         
         return actual_signals
     
@@ -269,9 +274,17 @@ class SignalExplorerDialog(QDialog):
             # Emit signal for each selected signal with channel and group info
             for signal_data in selected_signals:
                 # Extract the actual signal data
-                actual_signal_data = signal_data['signal_data']
-                channel_name = signal_data['channel_name']
-                group_name = signal_data['group_name']
+                if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
+                    # Nested format - extract the actual signal data
+                    actual_signal_data = signal_data['signal_data']
+                    channel_name = signal_data['channel_name']
+                    group_name = signal_data['group_name']
+                else:
+                    # Direct format
+                    actual_signal_data = signal_data
+                    channel_name = signal_data.get('channel_name', 'Unknown')
+                    group_name = signal_data.get('group_name', 'Unknown')
+                
                 signal_name = actual_signal_data['name']
                 print(f"DEBUG: Emitting signal - Name: {signal_name}, Channel: {channel_name}")
                 # Emit with signal name and channel name
