@@ -127,40 +127,54 @@ class SignalExplorerDialog(QDialog):
         """Populate the selected signals tree with existing signals organized in same hierarchy"""
         self.selected_signals_tree.clear()
         
-        # Create a mapping of existing signals by channel and group for easier organization
-        signal_mapping = {}
-        for signal_data in self.existing_signals:
-            # For existing signals, we'll create a simple structure
-            # Since we don't have channel/group info for existing signals, we'll put them in a "Current" channel
-            channel_name = "Current"
-            if channel_name not in signal_mapping:
-                signal_mapping[channel_name] = {'groups': {}}
+        # Process existing signals to preserve their original channel and group structure
+        if self.existing_signals:
+            # Create a mapping of existing signals by channel and group for easier organization
+            signal_mapping = {}
             
-            group_name = "Selected"
-            if group_name not in signal_mapping[channel_name]['groups']:
-                signal_mapping[channel_name]['groups'][group_name] = []
+            for signal_data in self.existing_signals:
+                # Extract channel and group information from the signal data
+                if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
+                    channel_name = signal_data['channel_name']
+                    group_name = signal_data['group_name']
+                else:
+                    # If no channel/group info, put in a default "Current" channel
+                    channel_name = "Current"
+                    group_name = "Selected"
+                
+                # Create the hierarchical structure
+                if channel_name not in signal_mapping:
+                    signal_mapping[channel_name] = {'groups': {}}
+                
+                if group_name not in signal_mapping[channel_name]['groups']:
+                    signal_mapping[channel_name]['groups'][group_name] = []
+                
+                signal_mapping[channel_name]['groups'][group_name].append(signal_data)
             
-            signal_mapping[channel_name]['groups'][group_name].append(signal_data)
-        
-        # Add the existing signals to the tree with hierarchical structure
-        for channel_name, channel_data in signal_mapping.items():
-            channel_parent = QTreeWidgetItem(self.selected_signals_tree, [channel_name])
+            # Add the existing signals to the tree with hierarchical structure
+            for channel_name, channel_data in signal_mapping.items():
+                channel_parent = QTreeWidgetItem(self.selected_signals_tree, [channel_name])
+                channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+                channel_parent.setExpanded(True)
+                
+                for group_name, signals in channel_data['groups'].items():
+                    group_parent = QTreeWidgetItem(channel_parent, [group_name])
+                    group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+                    group_parent.setExpanded(True)
+                    
+                    for signal_data in signals:
+                        signal_name = signal_data['name']
+                        signal_item = QTreeWidgetItem(group_parent, [signal_name])
+                        signal_item.setData(0, Qt.UserRole, signal_data)
+        else:
+            # If no existing signals, create a simple structure
+            channel_parent = QTreeWidgetItem(self.selected_signals_tree, ["Current"])
             channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
             channel_parent.setExpanded(True)
             
-            for group_name, signals in channel_data['groups'].items():
-                group_parent = QTreeWidgetItem(channel_parent, [group_name])
-                group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-                group_parent.setExpanded(True)
-                
-                for signal_data in signals:
-                    signal_name = signal_data['name']
-                    signal_item = QTreeWidgetItem(group_parent, [signal_name])
-                    signal_item.setData(0, Qt.UserRole, {
-                        'signal_data': signal_data,
-                        'channel_name': channel_name,
-                        'group_name': group_name
-                    })
+            group_parent = QTreeWidgetItem(channel_parent, ["Selected"])
+            group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            group_parent.setExpanded(True)
         
         # Expand all items in selected signals tree
         self.selected_signals_tree.expandAll()
@@ -189,9 +203,13 @@ class SignalExplorerDialog(QDialog):
     def add_to_selected_signals(self, signal_name, signal_data):
         """Add signal to selected signals tree with hierarchical structure"""
         # Extract channel and group information
-        channel_name = signal_data['channel_name']
-        group_name = signal_data['group_name']
-        signal_info = signal_data['signal_data']
+        if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
+            channel_name = signal_data['channel_name']
+            group_name = signal_data['group_name']
+        else:
+            # If no channel/group info, put in a default structure
+            channel_name = "Current"
+            group_name = "Selected"
         
         # Create a hierarchical structure for the selected signal
         # Find or create channel parent

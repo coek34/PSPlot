@@ -110,7 +110,11 @@ class PageWidget(QWidget):
         self.plot_canvas.set_subplot_signal(subplot_index, signal_data)
         # Also store the signal for preservation
         if 0 <= subplot_index < 6:
-            self.subplot_signals[subplot_index] = [signal_data]
+            # Preserve channel and group information if available
+            if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
+                self.subplot_signals[subplot_index] = [signal_data]
+            else:
+                self.subplot_signals[subplot_index] = [signal_data]
             
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals for a specific subplot"""
