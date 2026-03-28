@@ -114,11 +114,26 @@ class PageWidget(QWidget):
             if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
                 self.subplot_signals[subplot_index] = [signal_data]
             else:
-                self.subplot_signals[subplot_index] = [signal_data]
+                # If no channel/group info, create a minimal structure
+                minimal_signal = signal_data.copy()
+                minimal_signal['channel_name'] = 'Unknown'
+                minimal_signal['group_name'] = 'Unknown'
+                self.subplot_signals[subplot_index] = [minimal_signal]
             
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals for a specific subplot"""
         self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list)
         # Also store the signals for preservation
         if 0 <= subplot_index < 6:
-            self.subplot_signals[subplot_index] = signal_data_list
+            # Ensure all signals have channel and group information
+            processed_signals = []
+            for signal_data in signal_data_list:
+                if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
+                    processed_signals.append(signal_data)
+                else:
+                    # If no channel/group info, create a minimal structure
+                    minimal_signal = signal_data.copy()
+                    minimal_signal['channel_name'] = 'Unknown'
+                    minimal_signal['group_name'] = 'Unknown'
+                    processed_signals.append(minimal_signal)
+            self.subplot_signals[subplot_index] = processed_signals
