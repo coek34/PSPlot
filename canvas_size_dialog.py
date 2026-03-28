@@ -31,26 +31,36 @@ class CanvasSizeDialog(QDialog):
         for name, width, height in sizes:
             self.size_combo.addItem(name)
         
+        # Set default selection to "Custom"
+        self.size_combo.setCurrentText("Custom")
         self.size_combo.currentTextChanged.connect(self.on_size_changed)
         layout.addRow("Size:", self.size_combo)
         
         # Custom size inputs
         self.custom_widget = QWidget()
         self.custom_layout = QFormLayout(self.custom_widget)
+        
+        # Width input with mm label
+        width_layout = QHBoxLayout()
         self.width_spin = QDoubleSpinBox()
         self.width_spin.setRange(1, 10000)
         self.width_spin.setDecimals(1)
         self.width_spin.setValue(self.current_size_mm[0])
         self.width_spin.setSuffix(" mm")
+        width_layout.addWidget(self.width_spin)
+        width_layout.addWidget(QLabel("mm"))
+        self.custom_layout.addRow("Width:", width_layout)
         
+        # Height input with mm label
+        height_layout = QHBoxLayout()
         self.height_spin = QDoubleSpinBox()
         self.height_spin.setRange(1, 10000)
         self.height_spin.setDecimals(1)
         self.height_spin.setValue(self.current_size_mm[1])
         self.height_spin.setSuffix(" mm")
-        
-        self.custom_layout.addRow("Width:", self.width_spin)
-        self.custom_layout.addRow("Height:", self.height_spin)
+        height_layout.addWidget(self.height_spin)
+        height_layout.addWidget(QLabel("mm"))
+        self.custom_layout.addRow("Height:", height_layout)
         
         layout.addRow(self.custom_widget)
         
@@ -67,8 +77,8 @@ class CanvasSizeDialog(QDialog):
         
         self.setLayout(layout)
         
-        # Initially hide custom size inputs
-        self.custom_widget.setHidden(True)
+        # Initially hide custom size inputs (this will be handled by on_size_changed)
+        self.custom_widget.setHidden(False)
         
     def on_size_changed(self, text):
         """Handle size selection change"""
