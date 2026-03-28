@@ -428,8 +428,8 @@ class MainWindow(QMainWindow):
                     facecolor='white', 
                     format=file_format
                 )
-                print(f"Exported: {filepath}")
             except Exception as e:
-                print(f"Error exporting {page_filename}: {e}")
+                # Show error in a message box instead of print
+                QMessageBox.warning(self, "Export Error", f"Failed to export {page_filename}: {e}")
         
         QMessageBox.information(self, "Export Complete", f"Exported {len(self.pages)} pages to {directory}")

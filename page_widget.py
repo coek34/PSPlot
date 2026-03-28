@@ -113,10 +113,6 @@ class PageWidget(QWidget):
             # Update the canvas's custom margins
             self.plot_canvas.set_custom_margins(margins)
             self.plot_canvas.draw()
-            
-            # Optional: Log current margins
-            current = self.plot_canvas.get_current_margins()
-            print(f"Current margins: {current}")
         except Exception as e:
             print(f"Margin adjustment error: {e}")
             # Optionally show a message box to user
@@ -124,8 +120,6 @@ class PageWidget(QWidget):
             
     def set_subplot_signal(self, subplot_index, signal_data):
         """Set signal data for a specific subplot"""
-        print(f"DEBUG: set_subplot_signal called with signal_data type: {type(signal_data)}")
-        print(f"DEBUG: set_subplot_signal signal_data: {signal_data}")
         self.plot_canvas.set_subplot_signal(subplot_index, signal_data)
         # Also store the signal for preservation
         if 0 <= subplot_index < 6:
@@ -141,8 +135,6 @@ class PageWidget(QWidget):
             
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals for a specific subplot"""
-        print(f"DEBUG: set_subplot_signals called with signal_data_list type: {type(signal_data_list)}")
-        print(f"DEBUG: set_subplot_signals signal_data_list: {signal_data_list}")
         self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list)
         # Also store the signals for preservation
         if 0 <= subplot_index < 6:

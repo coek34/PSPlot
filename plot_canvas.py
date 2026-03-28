@@ -216,9 +216,7 @@ class InteractivePlotCanvas(FigureCanvas):
     
     def set_subplot_signal(self, subplot_index, signal_data):
         """Set a signal to a specific subplot"""
-        print(f"DEBUG set_subplot_signal: subplot_index={subplot_index}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
-            print(f"DEBUG set_subplot_signal: Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -237,13 +235,11 @@ class InteractivePlotCanvas(FigureCanvas):
             group_name = signal_data.get('group_name', 'Unknown')
             
         signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
-        print(f"DEBUG set_subplot_signal: Plotting signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
         
         # Plot the signal
         if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
             ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=signal_name)
         else:
-            print("DEBUG set_subplot_signal: No valid signal data provided")
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
         
@@ -279,9 +275,7 @@ class InteractivePlotCanvas(FigureCanvas):
     
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals to a specific subplot"""
-        print(f"DEBUG set_subplot_signals: subplot_index={subplot_index}, signal_count={len(signal_data_list)}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
-            print(f"DEBUG set_subplot_signals: Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -303,12 +297,10 @@ class InteractivePlotCanvas(FigureCanvas):
                     group_name = signal_data.get('group_name', 'Unknown')
                     
                 signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
-                print(f"DEBUG set_subplot_signals: Plotting signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
                 
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
                     ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=signal_name)
         else:
-            print("DEBUG set_subplot_signals: No valid signal data provided")
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
    	 
@@ -566,13 +558,10 @@ class InteractivePlotCanvas(FigureCanvas):
             # Get existing signals for this subplot to show in the dialog
             existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
             
-            print(f"DEBUG show_signal_selector: Getting existing signals for subplot {self.last_clicked_subplot}: count = {len(existing_signals)}")
-            
             # Create a dialog with dummy signals and existing signals
             dialog = SignalExplorerDialog(self.dummy_signals, existing_signals, parent=self)
             if dialog.exec_() == dialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
-                print(f"DEBUG show_signal_selector: Selected signals from dialog: count = {len(selected_signals)}")
                 if selected_signals:
                     # Plot all selected signals in the same subplot
                     self.set_subplot_signals(self.last_clicked_subplot, selected_signals)
@@ -622,7 +611,6 @@ class InteractivePlotCanvas(FigureCanvas):
                     }
                     existing_signals.append(signal_data)
         
-        print(f"DEBUG get_existing_signals_for_subplot: Returning {len(existing_signals)} signals for subplot {subplot_index}")
         return existing_signals
     
     def find_signal_by_name_with_channel(self, signal_name):

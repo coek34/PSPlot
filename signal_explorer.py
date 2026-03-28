@@ -128,27 +128,22 @@ class SignalExplorerDialog(QDialog):
         """Populate the selected signals tree with existing signals organized in same hierarchy"""
         self.selected_signals_tree.clear()
         
-        print(f"DEBUG populate_selected_signals: existing_signals count = {len(self.existing_signals)}")
-        
         # Only populate if there are existing signals
         if self.existing_signals:
             # Create a mapping of existing signals by channel and group for easier organization
             signal_mapping = {}
             
             for signal_data in self.existing_signals:
-                print(f"DEBUG populate_selected_signals: Processing signal - Name: {signal_data.get('name', 'Unknown')}")
                 # Extract channel and group information from the signal data
                 if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
                     channel_name = signal_data['channel_name']
                     group_name = signal_data['group_name']
                     signal_name = signal_data.get('name', 'Unknown')
-                    print(f"DEBUG populate_selected_signals: Found channel='{channel_name}', group='{group_name}', signal='{signal_name}'")
                 else:
                     # If no channel/group info, put in a default "Current" channel
                     channel_name = "Current"
                     group_name = "Selected"
                     signal_name = signal_data.get('name', 'Unknown')
-                    print(f"DEBUG populate_selected_signals: No channel/group info, using defaults for signal='{signal_name}'")
                 
                 # Create the hierarchical structure
                 if channel_name not in signal_mapping:
@@ -189,7 +184,6 @@ class SignalExplorerDialog(QDialog):
                 signal_name = signal_data.get('signal_data', {}).get('name', 'Unknown')
                 channel_name = signal_data.get('channel_name', 'Unknown')
                 group_name = signal_data.get('group_name', 'Unknown')
-                print(f"DEBUG on_signal_double_clicked: Adding signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
                 # Add to selected signals tree with hierarchical structure
                 self.add_to_selected_signals(signal_data)
     
@@ -232,13 +226,11 @@ class SignalExplorerDialog(QDialog):
             signal_name = signal_data.get('name', 'Unknown')
             if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
                 signal_name = signal_data['signal_data'].get('name', signal_name)
-            print(f"DEBUG add_to_selected_signals: Channel='{channel_name}', Group='{group_name}', Signal='{signal_name}'")
         else:
             # If no channel/group info, put in a default structure
             channel_name = "Current"
             group_name = "Selected"
             signal_name = signal_data.get('name', 'Unknown')
-            print(f"DEBUG add_to_selected_signals: No channel/group info, using defaults for signal='{signal_name}'")
         
         # Create a hierarchical structure for the selected signal
         # Find or create channel parent
@@ -307,23 +299,15 @@ class SignalExplorerDialog(QDialog):
                 actual_signal_data['channel_name'] = signal_data['channel_name']
                 actual_signal_data['group_name'] = signal_data['group_name']
                 actual_signals.append(actual_signal_data)
-                signal_name = actual_signal_data.get('name', 'Unknown')
-                print(f"DEBUG get_selected_signals: Extracted nested signal - Channel: '{signal_data['channel_name']}', Group: '{signal_data['group_name']}', Signal: '{signal_name}'")
             else:
                 # This is already the correct format
                 actual_signals.append(signal_data)
-                signal_name = signal_data.get('name', 'Unknown')
-                channel_name = signal_data.get('channel_name', 'Unknown')
-                group_name = signal_data.get('group_name', 'Unknown')
-                print(f"DEBUG get_selected_signals: Using direct signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
         
-        print(f"DEBUG get_selected_signals: Returning {len(actual_signals)} signals")
         return actual_signals
     
     def accept(self):
         """Handle dialog accept"""
         selected_signals = self.get_selected_signals()
-        print(f"DEBUG accept: Processing {len(selected_signals)} selected signals")
         if selected_signals:
             # Emit signal for each selected signal with channel and group info
             for signal_data in selected_signals:
@@ -340,7 +324,6 @@ class SignalExplorerDialog(QDialog):
                     group_name = signal_data.get('group_name', 'Unknown')
                 
                 signal_name = actual_signal_data['name']
-                print(f"DEBUG accept: Emitting signal - Channel: '{channel_name}', Group: '{group_name}', Signal: '{signal_name}'")
                 # Emit with signal name and channel name
                 self.signal_selected.emit(signal_name, channel_name)
         # Call parent accept to close dialog
