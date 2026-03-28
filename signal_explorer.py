@@ -76,6 +76,8 @@ class SignalExplorerDialog(QDialog):
         button_layout = QHBoxLayout()
         clear_button = QPushButton("Clear Selected")
         clear_button.clicked.connect(self.clear_selected_signals)
+        
+        # Make buttons look consistent with other dialogs
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.accept)
         cancel_button = QPushButton("Cancel")
