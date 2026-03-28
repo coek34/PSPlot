@@ -40,27 +40,21 @@ class CanvasSizeDialog(QDialog):
         self.custom_widget = QWidget()
         self.custom_layout = QFormLayout(self.custom_widget)
         
-        # Width input with mm label
-        width_layout = QHBoxLayout()
+        # Width input
         self.width_spin = QDoubleSpinBox()
         self.width_spin.setRange(1, 10000)
         self.width_spin.setDecimals(1)
         self.width_spin.setValue(self.current_size_mm[0])
         self.width_spin.setSuffix(" mm")
-        width_layout.addWidget(self.width_spin)
-        width_layout.addWidget(QLabel("mm"))
-        self.custom_layout.addRow("Width:", width_layout)
+        self.custom_layout.addRow("Width:", self.width_spin)
         
-        # Height input with mm label
-        height_layout = QHBoxLayout()
+        # Height input
         self.height_spin = QDoubleSpinBox()
         self.height_spin.setRange(1, 10000)
         self.height_spin.setDecimals(1)
         self.height_spin.setValue(self.current_size_mm[1])
         self.height_spin.setSuffix(" mm")
-        height_layout.addWidget(self.height_spin)
-        height_layout.addWidget(QLabel("mm"))
-        self.custom_layout.addRow("Height:", height_layout)
+        self.custom_layout.addRow("Height:", self.height_spin)
         
         layout.addRow(self.custom_widget)
         
