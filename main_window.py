@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLa
 from PyQt5.QtCore import Qt, pyqtSignal
 
 # Import from separate modules
-# from canvas_size_dialog import CanvasSizeDialog
 from margin_dialog import MarginDialog
 from page_widget import PageWidget
 from plot_canvas import InteractivePlotCanvas
@@ -64,7 +63,8 @@ class MainWindow(QMainWindow):
         # Add a flag to track if we're in data import mode
         self.data_import_mode = False
         self.imported_data = []
-    
+        self.channel_signals = {}  # Dictionary to store signals per channel
+        
     def create_menu_bar(self):
         """Create menu bar with action items"""
         menubar = self.menuBar()
@@ -127,8 +127,30 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             # Get the imported data
             self.imported_data = dialog.get_imported_data()
-            # No popup message - just update the data silently
-
+            
+            # Update channel signals
+            for data in self.imported_data:
+                channel = data['channel']
+                path = data['path']
+                label = data['label']
+                
+                if channel not in self.channel_signals:
+                    self.channel_signals[channel] = []
+                
+                # Load signal data from the file (assuming a simple format for now)
+                with open(path, 'r') as file:
+                    lines = file.readlines()
+                    x_data = [float(line.split()[0]) for line in lines]
+                    y_data = [float(line.split()[1]) for line in lines]
+                
+                # Store signal data
+                self.channel_signals[channel].append({
+                    'x': x_data,
+                    'y': y_data,
+                    'name': label,
+                    'channel_name': channel,
+                    'group_name': 'Imported'
+                })
     
     def add_new_page(self, width=8.27, height=11.69):
         """Add a new page to the tab widget"""

@@ -89,7 +89,6 @@ class PageWidget(QWidget):
             # Return default margins if there's an error
             return {'left': 0.125, 'bottom': 0.1, 'right': 0.9, 'top': 0.9, 'wspace': 0.5, 'hspace': 0.5}
     
-    # In page_widget.py, modify the adjust_margins method:
     def adjust_margins(self, margins):
         """Adjust margins for this page"""
         try:
