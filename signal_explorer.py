@@ -199,9 +199,28 @@ class SignalExplorerDialog(QDialog):
         if parent:
             # Remove the item from its parent
             parent.removeChild(item)
+            # Clean up empty parents
+            self.cleanup_empty_parents(parent)
         else:
             # If it's a top-level item, remove from the tree
             self.selected_signals_tree.takeTopLevelItem(self.selected_signals_tree.indexOfTopLevelItem(item))
+    
+    def cleanup_empty_parents(self, parent_item):
+        """Recursively clean up empty parent items (groups and channels)"""
+        # If parent has no children, remove it
+        if parent_item.childCount() == 0:
+            grandparent = parent_item.parent()
+            if grandparent:
+                # Remove parent from grandparent
+                grandparent.removeChild(parent_item)
+                # Continue cleaning up
+                self.cleanup_empty_parents(grandparent)
+            else:
+                # Parent is a top-level item, remove it from the tree
+                for i in range(self.selected_signals_tree.topLevelItemCount()):
+                    if self.selected_signals_tree.topLevelItem(i) == parent_item:
+                        self.selected_signals_tree.takeTopLevelItem(i)
+                        break
     
     def add_to_selected_signals(self, signal_name, signal_data):
         """Add signal to selected signals tree with hierarchical structure"""
