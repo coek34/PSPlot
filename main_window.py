@@ -13,6 +13,7 @@ from margin_dialog import MarginDialog
 from page_widget import PageWidget
 from plot_canvas import InteractivePlotCanvas
 from data_import import DataImportDialog
+from canvas_size_dialog import CanvasSizeDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -207,8 +208,25 @@ class MainWindow(QMainWindow):
     
     def new_canvas(self):
         """Create a new canvas with selected size"""
-        # For now, just create a new page with default size
-        self.add_new_page()
+        # Get the current page to copy its size
+        current_page = self.get_current_page()
+        if current_page:
+            # Get current page size in mm
+            current_width_mm, current_height_mm = current_page.plot_canvas.get_canvas_size_mm()
+            
+            # Show canvas size dialog
+            dialog = CanvasSizeDialog(self, (current_width_mm, current_height_mm))
+            if dialog.exec_() == QDialog.Accepted:
+                # Get selected size in inches
+                width_inch, height_inch = dialog.get_selected_size()
+                # Create new page with selected size
+                self.add_new_page(width_inch, height_inch)
+        else:
+            # If no current page, use default size
+            dialog = CanvasSizeDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                width_inch, height_inch = dialog.get_selected_size()
+                self.add_new_page(width_inch, height_inch)
     
     def get_current_margins(self):
         """Get current subplot margins from the figure"""
@@ -314,6 +332,12 @@ class MainWindow(QMainWindow):
         # Adjust margins with M key
         elif key == Qt.Key_M:
             self.adjust_margins()
+            event.accept()
+            return
+            
+        # New canvas with N key
+        elif key == Qt.Key_N:
+            self.new_canvas()
             event.accept()
             return
             
