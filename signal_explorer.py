@@ -250,7 +250,16 @@ class SignalExplorerDialog(QDialog):
         for i in range(self.selected_signals_tree.topLevelItemCount()):
             collect_signals_from_tree(self.selected_signals_tree.topLevelItem(i))
         
-        return signals
+        # Extract actual signal data from the nested structure for proper plotting
+        actual_signals = []
+        for signal_data in signals:
+            # Extract the actual signal data for plotting
+            actual_signal_data = signal_data['signal_data']
+            actual_signal_data['channel_name'] = signal_data['channel_name']
+            actual_signal_data['group_name'] = signal_data['group_name']
+            actual_signals.append(actual_signal_data)
+        
+        return actual_signals
     
     def accept(self):
         """Handle dialog accept"""

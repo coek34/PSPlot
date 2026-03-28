@@ -226,12 +226,18 @@ class InteractivePlotCanvas(FigureCanvas):
         # Clear existing plot
         ax.clear()
         
+        # Extract actual signal data if it's wrapped in a nested structure
+        if isinstance(signal_data, dict) and 'signal_data' in signal_data:
+            actual_signal_data = signal_data['signal_data']
+        else:
+            actual_signal_data = signal_data
+            
         # Plot the signal
-        if signal_data and 'x' in signal_data and 'y' in signal_data:
+        if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
             # Ensure signal_data has a 'name' field
-            name = signal_data.get('name', f'Signal_{subplot_index+1}')
+            name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
             print(f"DEBUG: Plotting signal with name: {name}")
-            ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
+            ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=name)
         else:
             print("DEBUG: No valid signal data provided")
             # Plot default signal if no data provided
@@ -281,13 +287,18 @@ class InteractivePlotCanvas(FigureCanvas):
         
         # Plot all signals
         if signal_data_list:
-            
             for signal_data in signal_data_list:
-                if signal_data and 'x' in signal_data and 'y' in signal_data:
+                # Extract actual signal data if it's wrapped in a nested structure
+                if isinstance(signal_data, dict) and 'signal_data' in signal_data:
+                    actual_signal_data = signal_data['signal_data']
+                else:
+                    actual_signal_data = signal_data
+                    
+                if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
                     # Ensure signal_data has a 'name' field
-                    name = signal_data.get('name', f'Signal_{subplot_index+1}')
+                    name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
                     print(f"DEBUG: Plotting signal with name: {name}")
-                    ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
+                    ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=name)
         else:
             print("DEBUG: No valid signal data provided")
             # Plot default signal if no data provided
