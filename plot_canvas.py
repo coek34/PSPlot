@@ -216,7 +216,9 @@ class InteractivePlotCanvas(FigureCanvas):
     
     def set_subplot_signal(self, subplot_index, signal_data):
         """Set a signal to a specific subplot"""
+        print(f"DEBUG: set_subplot_signal called with subplot_index={subplot_index}, signal_data={signal_data}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
+            print(f"DEBUG: Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -228,8 +230,10 @@ class InteractivePlotCanvas(FigureCanvas):
         if signal_data and 'x' in signal_data and 'y' in signal_data:
             # Ensure signal_data has a 'name' field
             name = signal_data.get('name', f'Signal_{subplot_index+1}')
+            print(f"DEBUG: Plotting signal with name: {name}")
             ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
+            print("DEBUG: No valid signal data provided")
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
         
@@ -265,7 +269,9 @@ class InteractivePlotCanvas(FigureCanvas):
     
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals to a specific subplot"""
+        print(f"DEBUG: set_subplot_signals called with subplot_index={subplot_index}, signal_data_list={signal_data_list}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
+            print(f"DEBUG: Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -280,8 +286,10 @@ class InteractivePlotCanvas(FigureCanvas):
                 if signal_data and 'x' in signal_data and 'y' in signal_data:
                     # Ensure signal_data has a 'name' field
                     name = signal_data.get('name', f'Signal_{subplot_index+1}')
+                    print(f"DEBUG: Plotting signal with name: {name}")
                     ax.plot(signal_data['x'], signal_data['y'], linewidth=2, label=name)
         else:
+            print("DEBUG: No valid signal data provided")
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
    	 
@@ -543,6 +551,7 @@ class InteractivePlotCanvas(FigureCanvas):
             dialog = SignalExplorerDialog(self.dummy_signals, existing_signals, parent=self)
             if dialog.exec_() == dialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
+                print(f"DEBUG: Selected signals from dialog in show_signal_selector: {selected_signals}")
                 if selected_signals:
                     # Plot all selected signals in the same subplot
                     self.set_subplot_signals(self.last_clicked_subplot, selected_signals)

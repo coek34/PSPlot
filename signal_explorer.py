@@ -255,6 +255,7 @@ class SignalExplorerDialog(QDialog):
     def accept(self):
         """Handle dialog accept"""
         selected_signals = self.get_selected_signals()
+        print(f"DEBUG: Selected signals in dialog: {selected_signals}")
         if selected_signals:
             # Emit signal for each selected signal with channel and group info
             for signal_data in selected_signals:
@@ -263,6 +264,7 @@ class SignalExplorerDialog(QDialog):
                 channel_name = signal_data['channel_name']
                 group_name = signal_data['group_name']
                 signal_name = actual_signal_data['name']
+                print(f"DEBUG: Emitting signal - Name: {signal_name}, Channel: {channel_name}")
                 # Emit with signal name and channel name
                 self.signal_selected.emit(signal_name, channel_name)
         # Call parent accept to close dialog
