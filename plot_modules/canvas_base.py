@@ -1,7 +1,7 @@
 # plot_modules/canvas_base.py
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox
+from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox, QInputDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
@@ -174,7 +174,8 @@ class BaseInteractiveCanvas(FigureCanvas):
             ax.set_title('')  # No title
             
             # Show y-label on all subplots
-            ax.set_ylabel('Amplitude')
+            y_label = getattr(self, 'y_labels', {}).get(i, 'Amplitude')
+            ax.set_ylabel(y_label)
             ax.legend(fontsize=8, loc='upper right')
             ax.grid(True, alpha=0.3)
             
@@ -298,7 +299,37 @@ class BaseInteractiveCanvas(FigureCanvas):
         action = menu.addAction("Add/Change Data")
         action.triggered.connect(lambda: self.show_signal_selector(position))
         
+        # Add action to change y-label if a subplot was clicked
+        if self.last_clicked_subplot is not None:
+            y_label_action = menu.addAction("Change Y-Label")
+            y_label_action.triggered.connect(self.change_y_label)
+        
         menu.exec_(self.mapToGlobal(position))
+    
+    def change_y_label(self):
+        """Prompt user to change the y-label for the last clicked subplot"""
+        if self.last_clicked_subplot is not None:
+            # Get current y-label
+            current_label = getattr(self, 'y_labels', {}).get(self.last_clicked_subplot, 'Amplitude')
+            
+            # Prompt user for new label
+            new_label, ok = QInputDialog.getText(
+                self, 
+                "Change Y-Label", 
+                "Enter new y-label:", 
+                text=current_label
+            )
+            
+            if ok:
+                # Set the new y-label
+                if not hasattr(self, 'y_labels'):
+                    self.y_labels = {}
+                self.y_labels[self.last_clicked_subplot] = new_label
+                
+                # Update the label immediately
+                if self.last_clicked_subplot < len(self.axes):
+                    self.axes[self.last_clicked_subplot].set_ylabel(new_label)
+                    self.draw()
     
     def show_signal_selector(self, position):
         """Show signal selector dialog for the clicked subplot"""
