@@ -26,14 +26,17 @@ class PageWidget(QWidget):
         self.scroll_area.setAlignment(Qt.AlignCenter)
         
         # Apply theme-aware styling to scroll area background
+        # Use the same approach as main window for consistency
         try:
             import darkdetect
             is_dark = darkdetect.isDark()
         except:
+            # Fallback to light mode if darkdetect is not available
             is_dark = False
             
         base_color = "#2b2b2b" if is_dark else "#ffffff"
-        self.scroll_area.setStyleSheet(f"background-color: {base_color}; border: 1px solid {'#444' if is_dark else '#ccc'};")
+        border_color = "#444" if is_dark else "#ccc"
+        self.scroll_area.setStyleSheet(f"background-color: {base_color}; border: 1px solid {border_color};")
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setWidget(self.plot_canvas)
