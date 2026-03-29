@@ -97,21 +97,23 @@ class SignalExplorerDialog(QDialog):
         # Process each imported signal and organize by channel -> group -> signal
         for channel_data in self.imported_data:
             # Create channel parent node
-            channel_name = channel_data['name']
+            channel_name = channel_data.get('name', f'Channel {channel_data.get("channel", "Unknown")}')
             channel_parent = QTreeWidgetItem(self.signal_tree, [channel_name])
             channel_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
             channel_parent.setExpanded(True)
             
             # Add groups to channel
-            for group_data in channel_data['groups']:
-                group_name = group_data['name']
+            groups = channel_data.get('groups', [])
+            for group_data in groups:
+                group_name = group_data.get('name', 'Unknown Group')
                 group_parent = QTreeWidgetItem(channel_parent, [group_name])
                 group_parent.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
                 group_parent.setExpanded(True)
                 
                 # Add signals to group
-                for signal_data in group_data['signals']:
-                    signal_name = signal_data['name']
+                signals = group_data.get('signals', [])
+                for signal_data in signals:
+                    signal_name = signal_data.get('name', 'Unknown Signal')
                     signal_item = QTreeWidgetItem(group_parent, [signal_name])
                     # Store channel and group information along with signal data
                     signal_item.setData(0, Qt.UserRole, {
