@@ -55,11 +55,13 @@ class CanvasManager:
             # Store current subplot count
             current_subplot_count = current_page.plot_canvas.subplot_count
             
-            # Store current signals for each subplot (all signals for all 6 subplots)
+            # Collect current signals directly from the axes, not from subplot_signals
             signals_to_restore = []
             for i in range(6):  # Always check all 6 possible subplots
-                if i < len(current_page.subplot_signals):
-                    signals_to_restore.append(current_page.subplot_signals[i])
+                if i < len(current_page.plot_canvas.axes):
+                    # Get existing signals for this subplot directly from the canvas
+                    existing_signals = current_page.plot_canvas.get_existing_signals_for_subplot(i)
+                    signals_to_restore.append(existing_signals)
                 else:
                     signals_to_restore.append([])
             
