@@ -94,5 +94,5 @@ class KeyboardManager:
             event.accept()
             return
             
-        # Pass other keys to parent class
-        super().keyPressEvent(event)
+        # For other keys (including Escape), just accept the event without doing anything
+        event.accept()
