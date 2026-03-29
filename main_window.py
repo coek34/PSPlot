@@ -121,37 +121,7 @@ class MainWindow(QMainWindow):
         reset_margins_action.triggered.connect(self.reset_current_margins)
         view_menu.addAction(reset_margins_action)
     
-    def import_pscad_data(self):
-        """Import PSCAD data using the data import dialog"""
-        dialog = DataImportDialog(self, existing_data=self.imported_data)
-        if dialog.exec_() == QDialog.Accepted:
-            # Get the imported data
-            self.imported_data = dialog.get_imported_data()
-            
-            # Update channel signals
-            for data in self.imported_data:
-                channel = data['channel']
-                path = data['path']
-                label = data['label']
-                
-                if channel not in self.channel_signals:
-                    self.channel_signals[channel] = []
-                
-                # Load signal data from the file (assuming a simple format for now)
-                with open(path, 'r') as file:
-                    lines = file.readlines()
-                    x_data = [float(line.split()[0]) for line in lines]
-                    y_data = [float(line.split()[1]) for line in lines]
-                
-                # Store signal data
-                self.channel_signals[channel].append({
-                    'x': x_data,
-                    'y': y_data,
-                    'name': label,
-                    'channel_name': channel,
-                    'group_name': 'Imported'
-                })
-    
+    # --- Page Management Methods ---
     def add_new_page(self, width=8.27, height=11.69):
         """Add a new page to the tab widget"""
         page_index = len(self.pages)
@@ -228,6 +198,7 @@ class MainWindow(QMainWindow):
             page.page_name = new_name
             self.tab_widget.setTabText(index, new_name)
     
+    # --- Canvas and Plot Methods ---
     def new_canvas(self):
         """Create a new canvas with selected size"""
         # Get the current page to copy its size
@@ -280,6 +251,39 @@ class MainWindow(QMainWindow):
         if current_page and current_page.plot_canvas:
             current_page.plot_canvas.reset_default_margins()
     
+    # --- Data Import Methods ---
+    def import_pscad_data(self):
+        """Import PSCAD data using the data import dialog"""
+        dialog = DataImportDialog(self, existing_data=self.imported_data)
+        if dialog.exec_() == QDialog.Accepted:
+            # Get the imported data
+            self.imported_data = dialog.get_imported_data()
+            
+            # Update channel signals
+            for data in self.imported_data:
+                channel = data['channel']
+                path = data['path']
+                label = data['label']
+                
+                if channel not in self.channel_signals:
+                    self.channel_signals[channel] = []
+                
+                # Load signal data from the file (assuming a simple format for now)
+                with open(path, 'r') as file:
+                    lines = file.readlines()
+                    x_data = [float(line.split()[0]) for line in lines]
+                    y_data = [float(line.split()[1]) for line in lines]
+                
+                # Store signal data
+                self.channel_signals[channel].append({
+                    'x': x_data,
+                    'y': y_data,
+                    'name': label,
+                    'channel_name': channel,
+                    'group_name': 'Imported'
+                })
+    
+    # --- Keyboard Event Methods ---
     def keyPressEvent(self, event):
         # Handle key press events directly on the main window
         key = event.key()
@@ -366,6 +370,7 @@ class MainWindow(QMainWindow):
         # Pass other keys to parent class
         super().keyPressEvent(event)
     
+    # --- Action Methods ---
     def on_reset_x_clicked(self):
         current_page = self.get_current_page()
         if current_page and current_page.plot_canvas:
