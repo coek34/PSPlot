@@ -45,6 +45,26 @@ class SignalExplorerDialog(QDialog):
         # Disable multi-selection - only allow single selection
         self.signal_tree.setSelectionMode(QTreeWidget.SingleSelection)
         
+        # Apply modern styling to the tree widget
+        tree_style = """
+        QTreeWidget {
+            border: 1px solid #888888;
+            background-color: white;
+            alternate-background-color: #f5f5f5;
+        }
+        QTreeWidget::item {
+            padding: 4px;
+        }
+        QTreeWidget::item:selected {
+            background-color: #4a90e2;
+            color: white;
+        }
+        QTreeWidget::item:hover {
+            background-color: #e0e0e0;
+        }
+        """
+        self.signal_tree.setStyleSheet(tree_style)
+        
         left_layout.addWidget(self.signal_tree)
         
         # Right panel - Selected signals (with same hierarchical structure)
@@ -62,6 +82,9 @@ class SignalExplorerDialog(QDialog):
         self.selected_signals_tree.setAlternatingRowColors(True)
         # Connect double-click to remove signal
         self.selected_signals_tree.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
+        
+        # Apply modern styling to the selected signals tree widget
+        self.selected_signals_tree.setStyleSheet(tree_style)
         
         right_layout.addWidget(self.selected_signals_tree)
         
@@ -87,11 +110,15 @@ class SignalExplorerDialog(QDialog):
         button_style = "QPushButton {"
         button_style += "    background-color: #f0f0f0;"
         button_style += "    border: 1px solid #888888;"
-        button_style += "    padding: 5px;"
-        button_style += "    border-radius: 3px;"
+        button_style += "    padding: 8px;"
+        button_style += "    border-radius: 4px;"
+        button_style += "    font-weight: bold;"
         button_style += "}"
         button_style += "QPushButton:hover {"
         button_style += "    background-color: #e0e0e0;"
+        button_style += "}"
+        button_style += "QPushButton:pressed {"
+        button_style += "    background-color: #d0d0d0;"
         button_style += "}"
         
         clear_button.setStyleSheet(button_style)
