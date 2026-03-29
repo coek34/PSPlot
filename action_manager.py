@@ -1,4 +1,6 @@
 # action_manager.py
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
 class ActionManager:
     def __init__(self, main_window):
         self.main_window = main_window
@@ -20,11 +22,11 @@ class ActionManager:
     
     def on_export_clicked(self):
         """Export all pages using standard save dialog"""
-        if not self.main_window.pages:
+        if not self.main_window.page_manager.pages:
             return
             
         # Get file path using standard save dialog with multiple format options
-        file_path, selected_filter = self.main_window.getSaveFileName(
+        file_path, selected_filter = QFileDialog.getSaveFileName(
             self.main_window, 
             "Save File", 
             "document_plot.png", 
@@ -47,7 +49,7 @@ class ActionManager:
         filename_without_ext = os.path.splitext(os.path.basename(file_path))[0]
         
         # Export each page
-        for i, page in enumerate(self.main_window.pages):
+        for i, page in enumerate(self.main_window.page_manager.pages):
             # Use page name directly in filename
             page_filename = f"{filename_without_ext}_{page.page_name.replace(' ', '_')}.{file_format}"
             # Sanitize filename to remove invalid characters
@@ -67,6 +69,6 @@ class ActionManager:
                 )
             except Exception as e:
                 # Show error in a message box instead of print
-                self.main_window.warning(self.main_window, "Export Error", f"Failed to export {page_filename}: {e}")
+                QMessageBox.warning(self.main_window, "Export Error", f"Failed to export {page_filename}: {e}")
         
-        self.main_window.information(self.main_window, "Export Complete", f"Exported {len(self.main_window.pages)} pages to {directory}")
+        QMessageBox.information(self.main_window, "Export Complete", f"Exported {len(self.main_window.page_manager.pages)} pages to {directory}")
