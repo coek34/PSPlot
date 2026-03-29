@@ -83,6 +83,21 @@ class SignalExplorerDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         
+        # Apply consistent styling to buttons
+        button_style = "QPushButton {"
+        button_style += "    background-color: #f0f0f0;"
+        button_style += "    border: 1px solid #888888;"
+        button_style += "    padding: 5px;"
+        button_style += "    border-radius: 3px;"
+        button_style += "}"
+        button_style += "QPushButton:hover {"
+        button_style += "    background-color: #e0e0e0;"
+        button_style += "}"
+        
+        clear_button.setStyleSheet(button_style)
+        ok_button.setStyleSheet(button_style)
+        cancel_button.setStyleSheet(button_style)
+        
         button_layout.addWidget(clear_button)
         button_layout.addStretch()
         button_layout.addWidget(ok_button)
