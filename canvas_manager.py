@@ -52,9 +52,12 @@ class CanvasManager:
             if current_page.plot_canvas.current_xlim:
                 current_xlim = current_page.plot_canvas.current_xlim
             
-            # Store current signals for each subplot (all signals, not just one per subplot)
+            # Store current subplot count
+            current_subplot_count = current_page.plot_canvas.subplot_count
+            
+            # Store current signals for each subplot (all signals for all 6 subplots)
             signals_to_restore = []
-            for i in range(len(current_page.plot_canvas.axes)):
+            for i in range(6):  # Always check all 6 possible subplots
                 if i < len(current_page.subplot_signals):
                     signals_to_restore.append(current_page.subplot_signals[i])
                 else:
@@ -75,7 +78,7 @@ class CanvasManager:
             current_page.plot_canvas = new_canvas
             
             # Restore subplot count and signals
-            new_canvas.update_plots(len(signals_to_restore))
+            new_canvas.update_plots(current_subplot_count)
             
             # Restore signals to subplots - make sure we restore ALL signals for each subplot
             for i, signals in enumerate(signals_to_restore):
