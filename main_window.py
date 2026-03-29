@@ -221,6 +221,57 @@ class MainWindow(QMainWindow):
                 width_inch, height_inch = dialog.get_selected_size()
                 self.add_new_page(width_inch, height_inch)
     
+    def resize_current_page(self):
+        """Resize the current page while preserving signals and x-limits"""
+        current_page = self.get_current_page()
+        if not current_page:
+            return
+            
+        # Get current page size in mm
+        current_width_mm, current_height_mm = current_page.plot_canvas.get_canvas_size_mm()
+        
+        # Show canvas size dialog with current size as default
+        dialog = CanvasSizeDialog(self, (current_width_mm, current_height_mm))
+        if dialog.exec_() == QDialog.Accepted:
+            # Get selected size in inches
+            width_inch, height_inch = dialog.get_selected_size()
+            
+            # Store current x-limits if they exist
+            current_xlim = None
+            if current_page.plot_canvas.current_xlim:
+                current_xlim = current_page.plot_canvas.current_xlim
+            
+            # Store current signals for each subplot
+            signals_to_restore = []
+            for i in range(len(current_page.plot_canvas.axes)):
+                if i < len(current_page.subplot_signals):
+                    signals_to_restore.append(current_page.subplot_signals[i])
+                else:
+                    signals_to_restore.append([])
+            
+            # Update the page with new size
+            current_page.width = width_inch
+            current_page.height = height_inch
+            current_page.plot_canvas.fig.set_size_inches(width_inch, height_inch)
+            
+            # Update the page widget's scroll area
+            current_page.plot_canvas.update_plots(current_page.plot_canvas.subplot_count)
+            
+            # Restore signals and x-limits
+            if current_xlim:
+                current_page.plot_canvas.set_x_limits(current_xlim[0], current_xlim[1])
+            
+            # Restore signals to subplots
+            for i, signals in enumerate(signals_to_restore):
+                if i < len(current_page.plot_canvas.axes) and signals:
+                    current_page.plot_canvas.set_subplot_signals(i, signals)
+            
+            # Reset margins to tight layout
+            current_page.plot_canvas.reset_default_margins()
+            
+            # Redraw the canvas
+            current_page.plot_canvas.draw()
+    
     def get_current_margins(self):
         """Get current subplot margins from the figure"""
         current_page = self.get_current_page()
@@ -364,6 +415,12 @@ class MainWindow(QMainWindow):
         # New canvas with N key
         elif key == Qt.Key_N:
             self.new_canvas()
+            event.accept()
+            return
+            
+        # Resize current page with P key
+        elif key == Qt.Key_P:
+            self.resize_current_page()
             event.accept()
             return
             
