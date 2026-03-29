@@ -1,7 +1,7 @@
 # plot_modules/canvas_base.py
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QMenuBar, QFileDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
@@ -307,20 +307,15 @@ class BaseInteractiveCanvas(FigureCanvas):
         menu.exec_(self.mapToGlobal(position))
     
     def change_y_label(self):
-        """Prompt user to change the y-label for the last clicked subplot"""
+        """Show dialog to change the y-label for the last clicked subplot"""
         if self.last_clicked_subplot is not None:
             # Get current y-label
             current_label = getattr(self, 'y_labels', {}).get(self.last_clicked_subplot, 'Amplitude')
             
-            # Prompt user for new label
-            new_label, ok = QInputDialog.getText(
-                self, 
-                "Change Y-Label", 
-                "Enter new y-label:", 
-                text=current_label
-            )
-            
-            if ok:
+            # Create a dialog with Test4.py template
+            dialog = YLabelDialog(current_label, parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                new_label = dialog.get_label()
                 # Set the new y-label
                 if not hasattr(self, 'y_labels'):
                     self.y_labels = {}
@@ -330,7 +325,7 @@ class BaseInteractiveCanvas(FigureCanvas):
                 if self.last_clicked_subplot < len(self.axes):
                     self.axes[self.last_clicked_subplot].set_ylabel(new_label)
                     self.draw()
-    
+
     def show_signal_selector(self, position):
         """Show signal selector dialog for the clicked subplot"""
         # Use the stored last clicked subplot
@@ -350,3 +345,134 @@ class BaseInteractiveCanvas(FigureCanvas):
         else:
             # If no subplot was clicked, show a message
             QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")
+
+
+class YLabelDialog(QDialog):
+    """Dialog for changing y-label with UI similar to Test4.py"""
+    
+    def __init__(self, current_label="", parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Change Y-Label")
+        self.setModal(True)
+        self.resize(400, 200)
+        self.current_label = current_label
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Menu bar (similar to Test4.py)
+        menubar = QMenuBar(self)
+        options_menu = menubar.addMenu('Options')
+        
+        # Add a sample action (like in Test4.py)
+        say_hi_action = QAction('Say Hi', self)
+        say_hi_action.triggered.connect(self.say_hi)
+        options_menu.addAction(say_hi_action)
+        
+        layout.setMenuBar(menubar)
+        
+        # Main content area
+        content_layout = QVBoxLayout()
+        
+        # Title label
+        title_label = QLabel("Enter new y-label:")
+        title_label.setStyleSheet("font-size: 12pt; font-weight: bold; padding: 10px;")
+        content_layout.addWidget(title_label)
+        
+        # Input field
+        self.label_input = QLineEdit()
+        self.label_input.setText(self.current_label)
+        self.label_input.selectAll()
+        self.label_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                font-size: 11pt;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+        """)
+        content_layout.addWidget(self.label_input)
+        
+        # Buttons layout
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        # OK button
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        ok_button.setDefault(True)
+        ok_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 12px;
+                margin: 4px 2px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        button_layout.addWidget(ok_button)
+        
+        # Cancel button
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 12px;
+                margin: 4px 2px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
+        button_layout.addWidget(cancel_button)
+        
+        content_layout.addLayout(button_layout)
+        layout.addLayout(content_layout)
+        
+        # Apply theme-aware stylesheet
+        self.apply_theme_style()
+        
+        # Focus on input field
+        self.label_input.setFocus()
+        
+    def apply_theme_style(self):
+        """Apply theme-aware styling to the dialog"""
+        try:
+            import darkdetect
+            is_dark = darkdetect.isDark()
+        except:
+            is_dark = False
+            
+        base_color = "#2b2b2b" if is_dark else "#ffffff"
+        text_color = "#ffffff" if is_dark else "#000000"
+        
+        style = f"""
+            QWidget {{
+                background-color: {base_color};
+                color: {text_color};
+            }}
+        """
+        self.setStyleSheet(style)
+        
+    def say_hi(self):
+        """Sample function like in Test4.py"""
+        QMessageBox.information(self, "Message", "Hi!")
+        
+    def get_label(self):
+        """Return the entered label"""
+        return self.label_input.text()
