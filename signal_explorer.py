@@ -232,6 +232,9 @@ class SignalExplorerDialog(QDialog):
                 group_name = signal_data.get('group_name', 'Unknown')
                 # Add to selected signals tree with hierarchical structure
                 self.add_to_selected_signals(signal_data)
+                
+        # Clear selection to remove highlight
+        self.signal_tree.clearSelection()
     
     def on_selected_signal_double_clicked(self, item, column):
         """Handle double-click on selected signal - remove it"""
@@ -245,6 +248,9 @@ class SignalExplorerDialog(QDialog):
         else:
             # If it's a top-level item, remove from the tree
             self.selected_signals_tree.takeTopLevelItem(self.selected_signals_tree.indexOfTopLevelItem(item))
+        
+        # Clear selection to remove highlight
+        self.selected_signals_tree.clearSelection()
     
     def cleanup_empty_parents(self, parent_item):
         """Recursively clean up empty parent items (groups and channels)"""
