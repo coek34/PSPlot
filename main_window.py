@@ -149,6 +149,12 @@ class MainWindow(QMainWindow):
             }}
         """)
         
+        # Update status label styling based on theme
+        if is_dark:
+            self.status_label.setStyleSheet("QLabel { background-color : #3a3a3a; color: #ffffff; padding : 5px; }")
+        else:
+            self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; color: #000000; padding : 5px; }")
+        
     def create_menu_bar(self):
         """Create menu bar with action items"""
         menubar = self.menuBar()
