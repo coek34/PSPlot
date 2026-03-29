@@ -99,6 +99,24 @@ class SignalExplorerDialog(QDialog):
         splitter.addWidget(right_panel)
         splitter.setSizes([400, 400])
         
+        # Apply theme-aware styling to the splitter
+        splitter.setStyleSheet(f"""
+            QSplitter {{
+                background-color: {base_color};
+                border: 1px solid {"#444" if is_dark else "#ccc"};
+            }}
+            QSplitter::handle {{
+                background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
+                border: 1px solid {"#444" if is_dark else "#ccc"};
+            }}
+            QSplitter::handle:horizontal {{
+                width: 4px;
+            }}
+            QSplitter::handle:vertical {{
+                height: 4px;
+            }}
+        """)
+        
         layout.addWidget(splitter)
         
         # Buttons
