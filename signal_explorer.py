@@ -148,7 +148,7 @@ class SignalExplorerDialog(QDialog):
                 background-color: {base_color};
                 alternate-background-color: {alt_bg};
                 color: {text_color};
-                font-family: 'Segoe UI', sans-serif;
+                font-family: 'Arial', sans-serif;
                 font-size: 9pt;
             }}
             QTreeWidget::item {{
