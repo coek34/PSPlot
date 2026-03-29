@@ -22,6 +22,9 @@ class SignalExplorerDialog(QDialog):
         self.setup_ui()
         self.populate_tree()
         
+        # Apply theme-aware stylesheet to the entire dialog
+        self.apply_theme_style()
+        
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
@@ -56,9 +59,6 @@ class SignalExplorerDialog(QDialog):
         # Disable multi-selection - only allow single selection
         self.signal_tree.setSelectionMode(QTreeWidget.SingleSelection)
         
-        # Apply theme-aware styling to the tree widget
-        self.apply_theme_style()
-        
         left_layout.addWidget(self.signal_tree)
         
         # Right panel - Selected signals (with same hierarchical structure)
@@ -76,9 +76,6 @@ class SignalExplorerDialog(QDialog):
         self.selected_signals_tree.setAlternatingRowColors(True)
         # Connect double-click to remove signal
         self.selected_signals_tree.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
-        
-        # Apply theme-aware styling to the selected signals tree widget
-        self.selected_signals_tree.setStyleSheet(self.get_tree_style())
         
         right_layout.addWidget(self.selected_signals_tree)
         
@@ -153,14 +150,11 @@ class SignalExplorerDialog(QDialog):
         
         layout.addLayout(button_layout)
         
-        # Apply theme-aware stylesheet
-        self.apply_theme_style()
-        
     def apply_theme_style(self):
         """Apply theme-aware styling to the dialog"""
         # Get the current style sheet
         style_sheet = self.get_tree_style()
-        self.signal_tree.setStyleSheet(style_sheet)
+        self.setStyleSheet(style_sheet)
         
     def get_tree_style(self):
         """Get theme-aware styling for tree widgets"""
@@ -182,6 +176,10 @@ class SignalExplorerDialog(QDialog):
         border_color = "#444" if is_dark else "#ccc"
         
         style = f"""
+            QDialog {{
+                background-color: {base_color};
+                color: {text_color};
+            }}
             QTreeWidget {{
                 border: 1px solid {border_color};
                 border-radius: 6px;
@@ -210,6 +208,9 @@ class SignalExplorerDialog(QDialog):
             }}
             QWidget {{
                 background-color: {base_color};
+                color: {text_color};
+            }}
+            QLabel {{
                 color: {text_color};
             }}
             QMenuBar {{
