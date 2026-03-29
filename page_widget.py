@@ -38,10 +38,10 @@ class PageWidget(QWidget):
         
     def update_plots(self, subplot_count):
         """Update plots while preserving existing signals"""
-        # Store current signals before updating
+        # Store current signals before updating - ensure we capture all 6 subplots
         if self.plot_canvas and hasattr(self.plot_canvas, 'axes'):
-            # Save current signals for each subplot
-            for i in range(min(len(self.plot_canvas.axes), 6)):
+            # Save current signals for each subplot (up to 6)
+            for i in range(6):  # Always check all 6 possible subplots
                 if i < len(self.plot_canvas.axes):
                     ax = self.plot_canvas.axes[i]
                     lines = ax.get_lines()
