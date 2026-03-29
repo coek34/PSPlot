@@ -154,7 +154,14 @@ class SignalExplorerDialog(QDialog):
         layout.addLayout(button_layout)
         
         # Apply theme-aware stylesheet
-        self.setStyleSheet("QDialog { background-color: #f0f0f0; }")
+        try:
+            import darkdetect
+            is_dark = darkdetect.isDark()
+        except:
+            is_dark = False
+            
+        base_color = "#2b2b2b" if is_dark else "#ffffff"
+        self.setStyleSheet(f"QDialog {{ background-color: {base_color}; }}")
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the dialog"""
