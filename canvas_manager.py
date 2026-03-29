@@ -1,5 +1,5 @@
 # canvas_manager.py
-from PyQt5.QtWidgets import QMenu, QAction, QMessageBox
+from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
 from signal_explorer import SignalExplorerDialog
 
@@ -18,7 +18,7 @@ class CanvasManager:
             # Show canvas size dialog
             from canvas_size_dialog import CanvasSizeDialog
             dialog = CanvasSizeDialog(self.main_window, (current_width_mm, current_height_mm))
-            if dialog.exec_() == dialog.Accepted:
+            if dialog.exec_() == QDialog.Accepted:
                 # Get selected size in inches
                 width_inch, height_inch = dialog.get_selected_size()
                 # Create new page with selected size

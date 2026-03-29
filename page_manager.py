@@ -1,5 +1,5 @@
 # page_manager.py
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
 from page_widget import PageWidget
 
