@@ -1,7 +1,7 @@
 # signal_explorer.py
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget, 
                             QTreeWidgetItem, QPushButton, QSplitter, QLabel,
-                            QFrame)
+                            QFrame, QMenuBar, QAction, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
@@ -24,6 +24,17 @@ class SignalExplorerDialog(QDialog):
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
+        
+        # Menu bar (similar to Test4.py and y-label dialog)
+        menubar = QMenuBar(self)
+        options_menu = menubar.addMenu('Options')
+        
+        # Add a sample action (like in Test4.py)
+        say_hi_action = QAction('Say Hi', self)
+        say_hi_action.triggered.connect(self.say_hi)
+        options_menu.addAction(say_hi_action)
+        
+        layout.setMenuBar(menubar)
         
         # Main splitter
         splitter = QSplitter(Qt.Horizontal)
@@ -89,20 +100,22 @@ class SignalExplorerDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         
-        # Apply consistent styling to buttons
-        button_style = "QPushButton {"
-        button_style += "    background-color: #f0f0f0;"
-        button_style += "    border: 1px solid #888888;"
-        button_style += "    padding: 8px;"
-        button_style += "    border-radius: 4px;"
-        button_style += "    font-weight: bold;"
-        button_style += "}"
-        button_style += "QPushButton:hover {"
-        button_style += "    background-color: #e0e0e0;"
-        button_style += "}"
-        button_style += "QPushButton:pressed {"
-        button_style += "    background-color: #d0d0d0;"
-        button_style += "}"
+        # Apply consistent styling to buttons (similar to y-label dialog)
+        button_style = """
+            QPushButton {
+                background-color: #f0f0f0;
+                border: 1px solid #888888;
+                padding: 8px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;
+            }
+        """
         
         clear_button.setStyleSheet(button_style)
         ok_button.setStyleSheet(button_style)
@@ -114,6 +127,9 @@ class SignalExplorerDialog(QDialog):
         button_layout.addWidget(cancel_button)
         
         layout.addLayout(button_layout)
+        
+        # Apply theme-aware stylesheet
+        self.apply_theme_style()
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the dialog"""
@@ -158,7 +174,7 @@ class SignalExplorerDialog(QDialog):
                 color: white;
             }}
             QTreeWidget::item:hover {{
-                background-color: #555 if is_dark else #e0e0e0;
+                background-color: {"#555" if is_dark else "#e0e0e0"};
             }}
             QHeaderView::section {{
                 background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
@@ -170,6 +186,20 @@ class SignalExplorerDialog(QDialog):
             QWidget {{
                 background-color: {base_color};
                 color: {text_color};
+            }}
+            QMenuBar {{
+                background-color: {base_color};
+                color: {text_color};
+            }}
+            QMenuBar::item {{
+                background: transparent;
+                padding: 4px 8px;
+            }}
+            QMenuBar::item:selected {{
+                background: {"#555" if is_dark else "#ddd"};
+            }}
+            QMenuBar::item:pressed {{
+                background: {"#666" if is_dark else "#bbb"};
             }}
             QMenu {{
                 background-color: {base_color};
@@ -409,6 +439,10 @@ class SignalExplorerDialog(QDialog):
                 actual_signals.append(signal_data)
         
         return actual_signals
+    
+    def say_hi(self):
+        """Sample function like in Test4.py"""
+        QMessageBox.information(self, "Message", "Hi!")
     
     def accept(self):
         """Handle dialog accept"""
