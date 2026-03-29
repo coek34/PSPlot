@@ -140,6 +140,13 @@ class MainWindow(QMainWindow):
                 background-color: {base_color};
                 color: {text_color};
             }}
+            QScrollArea {{
+                background-color: {base_color};
+                border: 1px solid {"#444" if is_dark else "#ccc"};
+            }}
+            QLabel {{
+                color: {text_color};
+            }}
         """)
         
     def create_menu_bar(self):
