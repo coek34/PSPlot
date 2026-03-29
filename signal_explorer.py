@@ -149,7 +149,6 @@ class SignalExplorerDialog(QDialog):
                 alternate-background-color: {alt_bg};
                 color: {text_color};
                 font-family: 'Arial', sans-serif;
-                font-size: 9pt;
             }}
             QTreeWidget::item {{
                 padding: 6px;
@@ -167,6 +166,21 @@ class SignalExplorerDialog(QDialog):
                 padding: 6px;
                 font-weight: 600;
                 color: {text_color};
+            }}
+            QWidget {{
+                background-color: {base_color};
+                color: {text_color};
+            }}
+            QMenu {{
+                background-color: {base_color};
+                color: {text_color};
+                border: 1px solid {"#555" if is_dark else "#ccc"};
+            }}
+            QMenu::item {{
+                padding: 6px 20px;
+            }}
+            QMenu::item:selected {{
+                background-color: {"#555" if is_dark else "#e0e0e0"};
             }}
         """
         return style
