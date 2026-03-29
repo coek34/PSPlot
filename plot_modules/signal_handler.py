@@ -42,7 +42,10 @@ class SignalHandlerMixin:
         # Remove title (as requested)
         ax.set_title('')  # No title
         
-        ax.set_ylabel('Amplitude')
+        # Use custom y-label if provided, otherwise default to 'Amplitude'
+        y_label = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
+        ax.set_ylabel(y_label)
+        
         ax.legend(fontsize=8, loc='upper right')
         ax.grid(True, alpha=0.3)
         
@@ -99,7 +102,10 @@ class SignalHandlerMixin:
         # Remove title (as requested)
         ax.set_title('')  # No title
         
-        ax.set_ylabel('Amplitude')
+        # Use custom y-label if provided, otherwise default to 'Amplitude'
+        y_label = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
+        ax.set_ylabel(y_label)
+        
         ax.legend(fontsize=8, loc='upper right')
         ax.grid(True, alpha=0.3)
         
@@ -115,6 +121,17 @@ class SignalHandlerMixin:
         
         # Automatically round x to grid after adding signals
         self.round_x_to_grid()
+    
+    def set_y_label(self, subplot_index, label):
+        """Set custom y-label for a specific subplot"""
+        if not hasattr(self, 'y_labels'):
+            self.y_labels = {}
+        self.y_labels[subplot_index] = label
+        
+        # Update the label immediately if the subplot exists
+        if subplot_index < len(self.axes):
+            self.axes[subplot_index].set_ylabel(label)
+            self.draw()
     
     def _create_rectangle_selector(self, ax, subplot_index):
         """Create a rectangle selector for zooming"""
