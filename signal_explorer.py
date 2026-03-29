@@ -103,19 +103,44 @@ class SignalExplorerDialog(QDialog):
         # Apply consistent styling to buttons (similar to y-label dialog)
         button_style = """
             QPushButton {
-                background-color: #f0f0f0;
-                border: 1px solid #888888;
-                padding: 8px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 12px;
+                margin: 4px 2px;
                 border-radius: 4px;
-                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #e0e0e0;
+                background-color: #45a049;
             }
             QPushButton:pressed {
-                background-color: #d0d0d0;
+                background-color: #3c8c40;
+            }
+            QPushButton#cancelButton {
+                background-color: #f44336;
+            }
+            QPushButton#cancelButton:hover {
+                background-color: #da190b;
+            }
+            QPushButton#cancelButton:pressed {
+                background-color: #b3150a;
+            }
+            QPushButton#clearButton {
+                background-color: #ff9800;
+            }
+            QPushButton#clearButton:hover {
+                background-color: #e68a00;
+            }
+            QPushButton#clearButton:pressed {
+                background-color: #cc7a00;
             }
         """
+        
+        clear_button.setObjectName("clearButton")
+        cancel_button.setObjectName("cancelButton")
         
         clear_button.setStyleSheet(button_style)
         ok_button.setStyleSheet(button_style)
