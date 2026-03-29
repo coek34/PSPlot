@@ -46,6 +46,16 @@ class SignalExplorerDialog(QDialog):
         
         tree_label = QLabel("Available Signals")
         tree_label.setFont(QFont("Arial", 10, QFont.Bold))
+        # Apply theme-aware styling to tree label
+        try:
+            import darkdetect
+            is_dark = darkdetect.isDark()
+        except:
+            is_dark = False
+            
+        base_color = "#2b2b2b" if is_dark else "#ffffff"
+        text_color = "#ffffff" if is_dark else "#000000"
+        tree_label.setStyleSheet(f"QLabel {{ background-color: {base_color}; color: {text_color}; padding: 5px; }}")
         left_layout.addWidget(tree_label)
         
         self.signal_tree = QTreeWidget()
@@ -68,6 +78,8 @@ class SignalExplorerDialog(QDialog):
         
         selected_label = QLabel("Currently Plotted Signals")
         selected_label.setFont(QFont("Arial", 10, QFont.Bold))
+        # Apply theme-aware styling to selected label
+        selected_label.setStyleSheet(f"QLabel {{ background-color: {base_color}; color: {text_color}; padding: 5px; }}")
         right_layout.addWidget(selected_label)
         
         self.selected_signals_tree = QTreeWidget()

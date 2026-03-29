@@ -45,7 +45,11 @@ class PageWidget(QWidget):
         
         # Status label
         self.status_label = QLabel(f"{self.page_name}")
-        self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; padding : 5px; }")
+        # Apply theme-aware styling to status label
+        if is_dark:
+            self.status_label.setStyleSheet("QLabel { background-color : #3a3a3a; color: #ffffff; padding : 5px; }")
+        else:
+            self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; color: #000000; padding : 5px; }")
         layout.addWidget(self.status_label)
         
     def update_plots(self, subplot_count):
