@@ -45,25 +45,8 @@ class SignalExplorerDialog(QDialog):
         # Disable multi-selection - only allow single selection
         self.signal_tree.setSelectionMode(QTreeWidget.SingleSelection)
         
-        # Apply modern styling to the tree widget
-        tree_style = """
-        QTreeWidget {
-            border: 1px solid #888888;
-            background-color: white;
-            alternate-background-color: #f5f5f5;
-        }
-        QTreeWidget::item {
-            padding: 4px;
-        }
-        QTreeWidget::item:selected {
-            background-color: #4a90e2;
-            color: white;
-        }
-        QTreeWidget::item:hover {
-            background-color: #e0e0e0;
-        }
-        """
-        self.signal_tree.setStyleSheet(tree_style)
+        # Apply theme-aware styling to the tree widget
+        self.apply_theme_style()
         
         left_layout.addWidget(self.signal_tree)
         
@@ -83,8 +66,8 @@ class SignalExplorerDialog(QDialog):
         # Connect double-click to remove signal
         self.selected_signals_tree.itemDoubleClicked.connect(self.on_selected_signal_double_clicked)
         
-        # Apply modern styling to the selected signals tree widget
-        self.selected_signals_tree.setStyleSheet(tree_style)
+        # Apply theme-aware styling to the selected signals tree widget
+        self.selected_signals_tree.setStyleSheet(self.get_tree_style())
         
         right_layout.addWidget(self.selected_signals_tree)
         
@@ -132,6 +115,62 @@ class SignalExplorerDialog(QDialog):
         
         layout.addLayout(button_layout)
         
+    def apply_theme_style(self):
+        """Apply theme-aware styling to the dialog"""
+        # Get the current style sheet
+        style_sheet = self.get_tree_style()
+        self.signal_tree.setStyleSheet(style_sheet)
+        
+    def get_tree_style(self):
+        """Get theme-aware styling for tree widgets"""
+        # Check if we're in dark mode (simple approach)
+        # In a real implementation, you'd use a more robust method to detect theme
+        is_dark = False
+        try:
+            # Try to detect dark mode using system settings
+            import darkdetect
+            is_dark = darkdetect.isDark()
+        except:
+            # If darkdetect is not available, default to light mode
+            pass
+            
+        base_color = "#2b2b2b" if is_dark else "#ffffff"
+        text_color = "#ffffff" if is_dark else "#000000"
+        alt_bg = "#3a3a3a" if is_dark else "#fafafa"
+        sel_bg = "#0078D7"
+        border_color = "#444" if is_dark else "#ccc"
+        
+        style = f"""
+            QTreeWidget {{
+                border: 1px solid {border_color};
+                border-radius: 6px;
+                padding: 4px;
+                background-color: {base_color};
+                alternate-background-color: {alt_bg};
+                color: {text_color};
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 9pt;
+            }}
+            QTreeWidget::item {{
+                padding: 6px;
+            }}
+            QTreeWidget::item:selected {{
+                background-color: {sel_bg};
+                color: white;
+            }}
+            QTreeWidget::item:hover {{
+                background-color: #555 if is_dark else #e0e0e0;
+            }}
+            QHeaderView::section {{
+                background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
+                border: none;
+                padding: 6px;
+                font-weight: 600;
+                color: {text_color};
+            }}
+        """
+        return style
+    
     def populate_tree(self):
         """Populate the signal tree with available signals organized in channels, groups, and signals"""
         self.signal_tree.clear()
