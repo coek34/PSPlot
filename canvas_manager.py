@@ -65,6 +65,11 @@ class CanvasManager:
                 else:
                     signals_to_restore.append([])
             
+            # Collect current y-labels for each subplot
+            y_labels_to_restore = {}
+            if hasattr(current_page.plot_canvas, 'y_labels'):
+                y_labels_to_restore = current_page.plot_canvas.y_labels.copy()
+            
             # Update the page with new size
             current_page.width = width_inch
             current_page.height = height_inch
@@ -78,6 +83,10 @@ class CanvasManager:
             scroll_area.takeWidget()  # Remove old canvas
             scroll_area.setWidget(new_canvas)  # Set new canvas
             current_page.plot_canvas = new_canvas
+            
+            # Restore y-labels first
+            if y_labels_to_restore:
+                new_canvas.y_labels = y_labels_to_restore
             
             # Restore subplot count and signals
             new_canvas.update_plots(current_subplot_count)
