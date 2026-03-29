@@ -198,18 +198,19 @@ class MainWindow(QMainWindow):
         round_x_action.triggered.connect(self.action_manager.on_round_x_clicked)
         view_menu.addAction(round_x_action)
         
-        view_menu.addSeparator()
+        # Settings menu
+        settings_menu = menubar.addMenu('Settings')
         
         # Add margin adjustment
         margin_action = QAction('Adjust Margins (M)', self)
         margin_action.setShortcut('M')
         margin_action.triggered.connect(self.canvas_manager.adjust_margins)
-        view_menu.addAction(margin_action)
+        settings_menu.addAction(margin_action)
         
         # In create_menu_bar(), add:
         reset_margins_action = QAction('Reset Margins to Defaults', self)
         reset_margins_action.triggered.connect(self.canvas_manager.reset_current_margins)
-        view_menu.addAction(reset_margins_action)
+        settings_menu.addAction(reset_margins_action)
     
     # Delegate methods to page_manager
     def add_new_page(self, width=8.27, height=11.69):
