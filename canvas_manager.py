@@ -63,25 +63,31 @@ class CanvasManager:
             # Update the page with new size
             current_page.width = width_inch
             current_page.height = height_inch
-            current_page.plot_canvas.fig.set_size_inches(width_inch, height_inch)
             
-            # Update the page widget's scroll area
-            current_page.plot_canvas.update_plots(current_page.plot_canvas.subplot_count)
+            # Create a new canvas with the new size
+            from plot_canvas import InteractivePlotCanvas
+            new_canvas = InteractivePlotCanvas(width=width_inch, height=height_inch)
             
-            # Restore signals and x-limits
-            if current_xlim:
-                current_page.plot_canvas.set_x_limits(current_xlim[0], current_xlim[1])
+            # Replace the old canvas with the new one
+            scroll_area = current_page.scroll_area
+            scroll_area.takeWidget()  # Remove old canvas
+            scroll_area.setWidget(new_canvas)  # Set new canvas
+            current_page.plot_canvas = new_canvas
+            
+            # Restore subplot count and signals
+            new_canvas.update_plots(len(signals_to_restore))
             
             # Restore signals to subplots
             for i, signals in enumerate(signals_to_restore):
-                if i < len(current_page.plot_canvas.axes) and signals:
-                    current_page.plot_canvas.set_subplot_signals(i, signals)
+                if i < len(new_canvas.axes) and signals:
+                    new_canvas.set_subplot_signals(i, signals)
             
-            # Reset margins to tight layout
-            current_page.plot_canvas.reset_default_margins()
+            # Restore x-limits if they existed
+            if current_xlim:
+                new_canvas.set_x_limits(current_xlim[0], current_xlim[1])
             
-            # Redraw the canvas
-            current_page.plot_canvas.draw()
+            # Apply tight layout (reset margins to defaults)
+            new_canvas.reset_default_margins()
     
     def get_current_margins(self):
         """Get current subplot margins from the figure"""
