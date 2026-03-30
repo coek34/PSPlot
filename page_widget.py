@@ -136,20 +136,43 @@ class PageWidget(QWidget):
             QMessageBox.warning(self, "Margin Error", f"Failed to adjust margins: {e}")
             
     def set_subplot_signal(self, subplot_index, signal_data):
-        """Set signal data for a specific subplot"""
-        self.plot_canvas.set_subplot_signal(subplot_index, signal_data)
-        # Also store the signal for preservation
+        """Set signal data for a specific subplot (handles both single and multiple signals)"""
+        # Handle both single signal and list of signals
+        if isinstance(signal_data, list):
+            # Multiple signals - call set_subplot_signals for the list
+            self.plot_canvas.set_subplot_signals(subplot_index, signal_data)
+        else:
+            # Single signal - convert to list and call set_subplot_signals
+            self.plot_canvas.set_subplot_signals(subplot_index, [signal_data])
+        
+        # Also store the signal(s) for preservation
         if 0 <= subplot_index < 6:
-            # Preserve channel and group information if available
-            if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
-                self.subplot_signals[subplot_index] = [signal_data]
+            # Ensure all signals have channel and group information
+            processed_signals = []
+            if isinstance(signal_data, list):
+                # Handle list of signals
+                for signal in signal_data:
+                    if isinstance(signal, dict) and 'channel_name' in signal and 'group_name' in signal:
+                        processed_signals.append(signal)
+                    else:
+                        # If no channel/group info, create a minimal structure
+                        minimal_signal = signal.copy() if isinstance(signal, dict) else {'name': str(signal)}
+                        minimal_signal['channel_name'] = signal.get('channel_name', 'Unknown') if isinstance(signal, dict) else 'Unknown'
+                        minimal_signal['group_name'] = signal.get('group_name', 'Unknown') if isinstance(signal, dict) else 'Unknown'
+                        processed_signals.append(minimal_signal)
             else:
-                # If no channel/group info, create a minimal structure
-                minimal_signal = signal_data.copy() if isinstance(signal_data, dict) else {'name': str(signal_data)}
-                minimal_signal['channel_name'] = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
-                minimal_signal['group_name'] = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
-                self.subplot_signals[subplot_index] = [minimal_signal]
+                # Handle single signal
+                if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
+                    processed_signals = [signal_data]
+                else:
+                    # If no channel/group info, create a minimal structure
+                    minimal_signal = signal_data.copy() if isinstance(signal_data, dict) else {'name': str(signal_data)}
+                    minimal_signal['channel_name'] = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                    minimal_signal['group_name'] = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                    processed_signals = [minimal_signal]
             
+            self.subplot_signals[subplot_index] = processed_signals
+    
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals for a specific subplot"""
         self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list)
