@@ -34,7 +34,8 @@ class PageWidget(QWidget):
             # Fallback to light mode if darkdetect is not available
             is_dark = False
             
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
+        # Use pale gray for light theme instead of white
+        base_color = "#3a3a3a" if is_dark else "#f0f0f0"
         border_color = "#444" if is_dark else "#ccc"
         self.scroll_area.setStyleSheet(f"background-color: {base_color}; border: 1px solid {border_color};")
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -49,7 +50,7 @@ class PageWidget(QWidget):
         if is_dark:
             self.status_label.setStyleSheet("QLabel { background-color : #3a3a3a; color: #ffffff; padding : 5px; }")
         else:
-            self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; color: #000000; padding : 5px; }")
+            self.status_label.setStyleSheet("QLabel { background-color : #f0f0f0; color: #000000; padding : 5px; }")
         layout.addWidget(self.status_label)
         
     def update_plots(self, subplot_count):
