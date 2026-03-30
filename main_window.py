@@ -297,6 +297,8 @@ class MainWindow(QMainWindow):
                 for i, signals in enumerate(signals_to_restore):
                     if i < len(page.plot_canvas.axes) and signals:
                         logger.debug(f"Replotting signals for subplot {i}")
+                        # Set the main_window reference in the canvas
+                        page.plot_canvas.main_window = self
                         page.plot_canvas.set_subplot_signals(i, signals)
         
         logger.debug("Legend update complete")
