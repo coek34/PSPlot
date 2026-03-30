@@ -275,19 +275,20 @@ class MainWindow(QMainWindow):
     def toggle_group_name_in_legend(self, checked):
         """Toggle group name in legend"""
         self.group_name_in_legend = checked
+        
         # Update all pages to reflect the new setting
         for page in self.page_manager.pages:
             if page.plot_canvas:
-                # Update the legend for all subplots
-                for i, ax in enumerate(page.plot_canvas.axes):
-                    lines = ax.get_lines()
-                    if lines:
-                        # Get current labels and update them
-                        labels = [line.get_label() for line in lines]
-                        if labels:
-                            # Update legend with new labels if needed
-                            ax.legend(fontsize=8, loc='upper right')
-                page.plot_canvas.draw()
+                # Get existing signals for each subplot
+                signals_to_restore = []
+                for i in range(len(page.plot_canvas.axes)):
+                    existing_signals = page.plot_canvas.get_existing_signals_for_subplot(i)
+                    signals_to_restore.append(existing_signals)
+                
+                # Replot all signals with new legend format
+                for i, signals in enumerate(signals_to_restore):
+                    if i < len(page.plot_canvas.axes) and signals:
+                        page.plot_canvas.set_subplot_signals(i, signals)
 
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
