@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLa
                             QMenuBar, QMenu, QAction, QFileDialog, QDialog, QFormLayout, 
                             QLineEdit, QPushButton, QComboBox, QSpinBox, QMessageBox, 
                             QDoubleSpinBox, QTabWidget, QTabBar, QToolBar, QToolButton, 
-                            QInputDialog, QScrollArea)
+                            QInputDialog, QScrollArea, QCheckBox)
 from PyQt5.QtCore import Qt, pyqtSignal
 
 # Import from separate modules
@@ -71,6 +71,9 @@ class MainWindow(QMainWindow):
         
         # Apply theme styling
         self.apply_theme_style()
+        
+        # Group name in legend flag
+        self.group_name_in_legend = False
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the main window"""
@@ -211,6 +214,13 @@ class MainWindow(QMainWindow):
         reset_margins_action = QAction('Reset Margins to Defaults', self)
         reset_margins_action.triggered.connect(self.canvas_manager.reset_current_margins)
         settings_menu.addAction(reset_margins_action)
+        
+        # Add group name in legend checkbox
+        self.group_name_in_legend_action = QAction('Group name in legend', self)
+        self.group_name_in_legend_action.setCheckable(True)
+        self.group_name_in_legend_action.setChecked(False)
+        self.group_name_in_legend_action.triggered.connect(self.toggle_group_name_in_legend)
+        settings_menu.addAction(self.group_name_in_legend_action)
     
     # Delegate methods to page_manager
     def add_new_page(self, width=8.27, height=11.69):
@@ -261,6 +271,23 @@ class MainWindow(QMainWindow):
     # Override keyPressEvent to use keyboard_manager
     def keyPressEvent(self, event):
         self.keyboard_manager.keyPressEvent(event)
+    
+    def toggle_group_name_in_legend(self, checked):
+        """Toggle group name in legend"""
+        self.group_name_in_legend = checked
+        # Update all pages to reflect the new setting
+        for page in self.page_manager.pages:
+            if page.plot_canvas:
+                # Update the legend for all subplots
+                for i, ax in enumerate(page.plot_canvas.axes):
+                    lines = ax.get_lines()
+                    if lines:
+                        # Get current labels and update them
+                        labels = [line.get_label() for line in lines]
+                        if labels:
+                            # Update legend with new labels if needed
+                            ax.legend(fontsize=8, loc='upper right')
+                page.plot_canvas.draw()
 
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication

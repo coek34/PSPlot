@@ -26,9 +26,18 @@ class SignalHandlerMixin:
             
         signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
         
+        # Create label based on group name in legend setting
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+            if group_name and group_name != 'Unknown':
+                label = f"{group_name}.{signal_name}"
+            else:
+                label = signal_name
+        else:
+            label = signal_name
+        
         # Plot the signal
         if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
-            ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=signal_name)
+            ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
@@ -87,8 +96,17 @@ class SignalHandlerMixin:
                     
                 signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
                 
+                # Create label based on group name in legend setting
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+                    if group_name and group_name != 'Unknown':
+                        label = f"{group_name}.{signal_name}"
+                    else:
+                        label = signal_name
+                else:
+                    label = signal_name
+                
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
-                    ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=signal_name)
+                    ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
