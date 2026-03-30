@@ -1,12 +1,17 @@
 # main_window.py
 import sys, os
 import re
+import logging
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                             QMenuBar, QMenu, QAction, QFileDialog, QDialog, QFormLayout, 
                             QLineEdit, QPushButton, QComboBox, QSpinBox, QMessageBox, 
                             QDoubleSpinBox, QTabWidget, QTabBar, QToolBar, QToolButton, 
                             QInputDialog, QScrollArea, QCheckBox)
 from PyQt5.QtCore import Qt, pyqtSignal
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Import from separate modules
 from margin_dialog import MarginDialog
@@ -274,11 +279,14 @@ class MainWindow(QMainWindow):
     
     def toggle_group_name_in_legend(self, checked):
         """Toggle group name in legend"""
+        logger.debug(f"Toggle group name in legend: {checked}")
         self.group_name_in_legend = checked
+        logger.debug(f"Updated group_name_in_legend flag to: {self.group_name_in_legend}")
         
         # Update all pages to reflect the new setting
         for page in self.page_manager.pages:
             if page.plot_canvas:
+                logger.debug(f"Updating page {page.page_index} with new legend setting")
                 # Get existing signals for each subplot
                 signals_to_restore = []
                 for i in range(len(page.plot_canvas.axes)):
@@ -288,7 +296,10 @@ class MainWindow(QMainWindow):
                 # Replot all signals with new legend format
                 for i, signals in enumerate(signals_to_restore):
                     if i < len(page.plot_canvas.axes) and signals:
+                        logger.debug(f"Replotting signals for subplot {i}")
                         page.plot_canvas.set_subplot_signals(i, signals)
+        
+        logger.debug("Legend update complete")
 
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication

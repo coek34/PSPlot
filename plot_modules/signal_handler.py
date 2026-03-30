@@ -1,12 +1,19 @@
 # plot_modules/signal_handler.py
 import numpy as np
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class SignalHandlerMixin:
     """Mixin class for signal-related functionality"""
     
     def set_subplot_signal(self, subplot_index, signal_data):
         """Set a signal to a specific subplot"""
+        logger.debug(f"set_subplot_signal called for subplot {subplot_index}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
+            logger.debug(f"Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -28,12 +35,16 @@ class SignalHandlerMixin:
         
         # Create label based on group name in legend setting
         if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+            logger.debug(f"Using group name in legend: group_name={group_name}, signal_name={signal_name}")
             if group_name and group_name != 'Unknown':
                 label = f"{group_name}.{signal_name}"
             else:
                 label = signal_name
         else:
+            logger.debug(f"Not using group name in legend: signal_name={signal_name}")
             label = signal_name
+        
+        logger.debug(f"Final label for signal: {label}")
         
         # Plot the signal
         if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
@@ -73,7 +84,9 @@ class SignalHandlerMixin:
     
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals to a specific subplot"""
+        logger.debug(f"set_subplot_signals called for subplot {subplot_index} with {len(signal_data_list)} signals")
         if subplot_index < 0 or subplot_index >= len(self.axes):
+            logger.debug(f"Invalid subplot index {subplot_index}")
             return
             
         ax = self.axes[subplot_index]
@@ -98,12 +111,16 @@ class SignalHandlerMixin:
                 
                 # Create label based on group name in legend setting
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+                    logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
                     if group_name and group_name != 'Unknown':
                         label = f"{group_name}.{signal_name}"
                     else:
                         label = signal_name
                 else:
+                    logger.debug(f"Not using group name in legend for signal {signal_name}")
                     label = signal_name
+                
+                logger.debug(f"Plotting signal with label: {label}")
                 
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
                     ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
