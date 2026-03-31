@@ -34,7 +34,16 @@ class SignalHandlerMixin:
         signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
         
         # Create label based on group name in legend setting
-        if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+        # Check if main_window exists and has the flag
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
+            use_group_name = self.main_window.group_name_in_legend
+        else:
+            # Fallback to False if we can't access the flag
+            use_group_name = False
+            
+        logger.debug(f"Using group name in legend: {use_group_name}")
+        
+        if use_group_name:
             logger.debug(f"Using group name in legend: group_name={group_name}, signal_name={signal_name}")
             if group_name and group_name != 'Unknown':
                 label = f"{group_name}.{signal_name}"
@@ -110,7 +119,16 @@ class SignalHandlerMixin:
                 signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
                 
                 # Create label based on group name in legend setting
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend') and self.main_window.group_name_in_legend:
+                # Check if main_window exists and has the flag
+                if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
+                    use_group_name = self.main_window.group_name_in_legend
+                else:
+                    # Fallback to False if we can't access the flag
+                    use_group_name = False
+                    
+                logger.debug(f"Using group name in legend: {use_group_name}")
+                
+                if use_group_name:
                     logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
                     if group_name and group_name != 'Unknown':
                         label = f"{group_name}.{signal_name}"

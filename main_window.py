@@ -297,8 +297,6 @@ class MainWindow(QMainWindow):
                 for i, signals in enumerate(signals_to_restore):
                     if i < len(page.plot_canvas.axes) and signals:
                         logger.debug(f"Replotting signals for subplot {i}")
-                        # Clear the subplot first
-                        page.plot_canvas.axes[i].clear()
                         # Replot with new legend format
                         page.plot_canvas.set_subplot_signals(i, signals)
         
