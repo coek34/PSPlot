@@ -36,15 +36,32 @@ class SignalHandlerMixin:
         # Create label based on group name in legend setting
         # Check if main_window exists and has the flag
         use_group_name = False
-        if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
-            use_group_name = self.main_window.group_name_in_legend
-        elif hasattr(self, 'parent') and hasattr(self.parent(), 'group_name_in_legend'):
-            # Try to access from parent if it's a widget
-            use_group_name = self.parent().group_name_in_legend
-        elif hasattr(self, 'parent') and hasattr(self.parent(), 'main_window') and hasattr(self.parent().main_window, 'group_name_in_legend'):
-            # Try to access from parent's main_window
-            use_group_name = self.parent().main_window.group_name_in_legend
-            
+        
+        # Try to access the flag from different possible locations
+        try:
+            # Method 1: Direct access to main_window if it exists
+            if hasattr(self, 'main_window') and self.main_window is not None:
+                if hasattr(self.main_window, 'group_name_in_legend'):
+                    use_group_name = self.main_window.group_name_in_legend
+                    logger.debug(f"Found flag in main_window: {use_group_name}")
+                elif hasattr(self.main_window, 'parent') and self.main_window.parent() is not None:
+                    # Try parent if main_window has one
+                    parent = self.main_window.parent()
+                    if hasattr(parent, 'group_name_in_legend'):
+                        use_group_name = parent.group_name_in_legend
+                        logger.debug(f"Found flag in parent: {use_group_name}")
+            else:
+                # Method 2: Try to find it in the widget hierarchy
+                widget = self
+                while widget is not None:
+                    if hasattr(widget, 'group_name_in_legend'):
+                        use_group_name = widget.group_name_in_legend
+                        logger.debug(f"Found flag in widget hierarchy: {use_group_name}")
+                        break
+                    widget = widget.parent()
+        except Exception as e:
+            logger.debug(f"Error accessing group_name_in_legend flag: {e}")
+        
         logger.debug(f"Using group name in legend: {use_group_name}")
         
         if use_group_name:
@@ -125,15 +142,32 @@ class SignalHandlerMixin:
                 # Create label based on group name in legend setting
                 # Check if main_window exists and has the flag
                 use_group_name = False
-                if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
-                    use_group_name = self.main_window.group_name_in_legend
-                elif hasattr(self, 'parent') and hasattr(self.parent(), 'group_name_in_legend'):
-                    # Try to access from parent if it's a widget
-                    use_group_name = self.parent().group_name_in_legend
-                elif hasattr(self, 'parent') and hasattr(self.parent(), 'main_window') and hasattr(self.parent().main_window, 'group_name_in_legend'):
-                    # Try to access from parent's main_window
-                    use_group_name = self.parent().main_window.group_name_in_legend
-                    
+                
+                # Try to access the flag from different possible locations
+                try:
+                    # Method 1: Direct access to main_window if it exists
+                    if hasattr(self, 'main_window') and self.main_window is not None:
+                        if hasattr(self.main_window, 'group_name_in_legend'):
+                            use_group_name = self.main_window.group_name_in_legend
+                            logger.debug(f"Found flag in main_window: {use_group_name}")
+                        elif hasattr(self.main_window, 'parent') and self.main_window.parent() is not None:
+                            # Try parent if main_window has one
+                            parent = self.main_window.parent()
+                            if hasattr(parent, 'group_name_in_legend'):
+                                use_group_name = parent.group_name_in_legend
+                                logger.debug(f"Found flag in parent: {use_group_name}")
+                    else:
+                        # Method 2: Try to find it in the widget hierarchy
+                        widget = self
+                        while widget is not None:
+                            if hasattr(widget, 'group_name_in_legend'):
+                                use_group_name = widget.group_name_in_legend
+                                logger.debug(f"Found flag in widget hierarchy: {use_group_name}")
+                                break
+                            widget = widget.parent()
+                except Exception as e:
+                    logger.debug(f"Error accessing group_name_in_legend flag: {e}")
+                
                 logger.debug(f"Using group name in legend: {use_group_name}")
                 
                 if use_group_name:
