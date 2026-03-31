@@ -35,11 +35,15 @@ class SignalHandlerMixin:
         
         # Create label based on group name in legend setting
         # Check if main_window exists and has the flag
+        use_group_name = False
         if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
             use_group_name = self.main_window.group_name_in_legend
-        else:
-            # Fallback to False if we can't access the flag
-            use_group_name = False
+        elif hasattr(self, 'parent') and hasattr(self.parent(), 'group_name_in_legend'):
+            # Try to access from parent if it's a widget
+            use_group_name = self.parent().group_name_in_legend
+        elif hasattr(self, 'parent') and hasattr(self.parent(), 'main_window') and hasattr(self.parent().main_window, 'group_name_in_legend'):
+            # Try to access from parent's main_window
+            use_group_name = self.parent().main_window.group_name_in_legend
             
         logger.debug(f"Using group name in legend: {use_group_name}")
         
@@ -120,11 +124,15 @@ class SignalHandlerMixin:
                 
                 # Create label based on group name in legend setting
                 # Check if main_window exists and has the flag
+                use_group_name = False
                 if hasattr(self, 'main_window') and hasattr(self.main_window, 'group_name_in_legend'):
                     use_group_name = self.main_window.group_name_in_legend
-                else:
-                    # Fallback to False if we can't access the flag
-                    use_group_name = False
+                elif hasattr(self, 'parent') and hasattr(self.parent(), 'group_name_in_legend'):
+                    # Try to access from parent if it's a widget
+                    use_group_name = self.parent().group_name_in_legend
+                elif hasattr(self, 'parent') and hasattr(self.parent(), 'main_window') and hasattr(self.parent().main_window, 'group_name_in_legend'):
+                    # Try to access from parent's main_window
+                    use_group_name = self.parent().main_window.group_name_in_legend
                     
                 logger.debug(f"Using group name in legend: {use_group_name}")
                 
