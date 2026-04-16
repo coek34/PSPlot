@@ -1,8 +1,14 @@
 """Application entry point for PSPlot."""
 
-import sys
 import logging
+import sys
 from typing import NoReturn
+
+# Silence matplotlib debug spam BEFORE any matplotlib imports
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 from PyQt5.QtWidgets import QApplication
 
