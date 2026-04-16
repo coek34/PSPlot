@@ -2,6 +2,7 @@
 from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
 from signal_explorer import SignalExplorerDialog
+from theme import get_theme
 
 class CanvasManager:
     def __init__(self, main_window):
@@ -140,41 +141,7 @@ class CanvasManager:
         menu = QMenu(self.main_window)
         
         # Apply theme-aware styling to the menu
-        is_dark = False
-        try:
-            # Try to detect dark mode using system settings
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            # If darkdetect is not available, default to light mode
-            pass
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        border_color = "#444" if is_dark else "#ccc"
-        
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {base_color};
-                color: {text_color};
-                border: 1px solid {border_color};
-                padding: 4px;
-                font-family: 'Arial', sans-serif;
-            }}
-            QMenu::item {{
-                padding: 6px 20px;
-                border: none;
-            }}
-            QMenu::item:selected {{
-                background-color: #0078D7;
-                color: white;
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background-color: {border_color};
-                margin: 4px 0;
-            }}
-        """)
+        menu.setStyleSheet(get_theme().get_menu_style())
         
         # Add action to show data label for the specific subplot
         action = menu.addAction("Add/Change Data")

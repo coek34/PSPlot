@@ -2,6 +2,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox
 from PyQt5.QtCore import Qt
 from plot_canvas import InteractivePlotCanvas
+from theme import get_theme
 
 class PageWidget(QWidget):
     def __init__(self, page_index, width=8.27, height=11.69, parent=None):
@@ -26,31 +27,17 @@ class PageWidget(QWidget):
         self.scroll_area.setAlignment(Qt.AlignCenter)
         
         # Apply theme-aware styling to scroll area background
-        # Use the same approach as main window for consistency
-        try:
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            # Fallback to light mode if darkdetect is not available
-            is_dark = False
-            
-        # Use pale gray for light theme instead of white
-        base_color = "#3a3a3a" if is_dark else "#f0f0f0"
-        border_color = "#444" if is_dark else "#ccc"
-        self.scroll_area.setStyleSheet(f"background-color: {base_color}; border: 1px solid {border_color};")
+        theme = get_theme()
+        self.scroll_area.setStyleSheet(theme.get_scroll_area_style())
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setWidget(self.plot_canvas)
         
         layout.addWidget(self.scroll_area)
         
-        # Status label
+        # Status label with theme-aware styling
         self.status_label = QLabel(f"{self.page_name}")
-        # Apply theme-aware styling to status label
-        if is_dark:
-            self.status_label.setStyleSheet("QLabel { background-color : #3a3a3a; color: #ffffff; padding : 5px; }")
-        else:
-            self.status_label.setStyleSheet("QLabel { background-color : #f0f0f0; color: #000000; padding : 5px; }")
+        self.status_label.setStyleSheet(theme.get_status_label_style())
         layout.addWidget(self.status_label)
         
     def update_plots(self, subplot_count):

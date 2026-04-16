@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget,
                             QFrame, QMenuBar, QAction, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
+from theme import get_theme, get_colors
 
 class SignalExplorerDialog(QDialog):
     signal_selected = pyqtSignal(str, str)  # signal_name, channel_label
@@ -25,6 +26,9 @@ class SignalExplorerDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
+        # Get theme colors
+        c = get_colors()
+        
         # Main splitter
         splitter = QSplitter(Qt.Horizontal)
         
@@ -34,19 +38,10 @@ class SignalExplorerDialog(QDialog):
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(5, 5, 5, 5)
         
-        try:
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            is_dark = False
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        
         left_panel.setFrameShape(QFrame.NoFrame)  # Removes the border
         left_panel.setStyleSheet(f"""
             QFrame {{
-                background-color: {base_color};  /* Match the theme */
+                background-color: {c.base};  /* Match the theme */
                 border: none;                     /* Explicitly remove border */
             }}
         """)
@@ -72,7 +67,7 @@ class SignalExplorerDialog(QDialog):
         right_panel.setFrameShape(QFrame.NoFrame)  # Removes the border
         right_panel.setStyleSheet(f"""
             QFrame {{
-                background-color: {base_color};  /* Match the theme */
+                background-color: {c.base};  /* Match the theme */
                 border: none;                     /* Explicitly remove border */
             }}
         """)
@@ -97,12 +92,12 @@ class SignalExplorerDialog(QDialog):
         # Apply theme-aware styling to the splitter
         splitter.setStyleSheet(f"""
             QSplitter {{
-                background-color: {base_color};
-                border: 1px solid {"#444" if is_dark else "#ccc"};
+                background-color: {c.base};
+                border: 1px solid {c.border};
             }}
             QSplitter::handle {{
-                background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
-                border: 1px solid {"#444" if is_dark else "#ccc"};
+                background-color: {c.alt};
+                border: 1px solid {c.border};
             }}
             QSplitter::handle:horizontal {{
                 width: 4px;
@@ -196,81 +191,66 @@ class SignalExplorerDialog(QDialog):
         
     def get_tree_style(self):
         """Get theme-aware styling for tree widgets"""
-        # Check if we're in dark mode (simple approach)
-        # In a real implementation, you'd use a more robust method to detect theme
-        is_dark = False
-        try:
-            # Try to detect dark mode using system settings
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            # If darkdetect is not available, default to light mode
-            pass
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        alt_bg = "#3a3a3a" if is_dark else "#fafafa"
-        sel_bg = "#0078D7"
-        border_color = "#444" if is_dark else "#ccc"
+        c = get_colors()
         
         style = f"""
             QTreeWidget {{
-                border: 1px solid {"#555" if is_dark else "#ccc"};
+                border: 1px solid {c.border_light};
                 border-radius: 6px;
                 padding: 4px;
-                background-color: {base_color};
-                alternate-background-color: {alt_bg};
-                color: {text_color};
+                background-color: {c.base};
+                alternate-background-color: {c.alt};
+                color: {c.text};
                 font-family: 'Arial', sans-serif;
             }}
             QTreeWidget::item {{
                 padding: 6px;
             }}
             QTreeWidget::item:selected {{
-                background-color: {sel_bg};
+                background-color: {c.selection};
                 color: white;
             }}
             QTreeWidget::item:hover {{
-                background-color: {"#555" if is_dark else "#e0e0e0"};
+                background-color: {c.hover};
             }}
             QHeaderView::section {{
-                background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
+                background-color: {c.alt};
                 border: none;
                 padding: 6px;
                 font-weight: 600;
-                color: {text_color};
+                color: {c.text};
             }}
             QWidget {{
-                background-color: {base_color};
-                color: {text_color};
+                background-color: {c.base};
+                color: {c.text};
             }}
             QLabel {{
-                color: {text_color};
+                color: {c.text};
             }}
             QMenuBar {{
-                background-color: {base_color};
-                color: {text_color};
+                background-color: {c.base};
+                color: {c.text};
             }}
             QMenuBar::item {{
                 background: transparent;
                 padding: 4px 8px;
             }}
             QMenuBar::item:selected {{
-                background: {"#555" if is_dark else "#ddd"};
+                background: {c.hover};
             }}
             QMenuBar::item:pressed {{
-                background: {"#666" if is_dark else "#bbb"};
+                background: {"#666" if c.base == "#2b2b2b" else "#bbb"};
             }}
             QMenu {{
-                background-color: {base_color};
-                color: {text_color};
-                border: 1px solid {"#555" if is_dark else "#ccc"};
+                background-color: {c.base};
+                color: {c.text};
+                border: 1px solid {c.border_light};
             }}
             QMenu::item {{
                 padding: 6px 20px;
             }}
             QMenu::item:selected {{
-                background-color: {"#555" if is_dark else "#e0e0e0"};
+                background-color: {c.hover};
             }}
         """
         return style

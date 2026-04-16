@@ -24,6 +24,7 @@ from canvas_manager import CanvasManager
 from action_manager import ActionManager
 from keyboard_manager import KeyboardManager
 from data_manager import DataManager
+from theme import get_theme
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -82,86 +83,13 @@ class MainWindow(QMainWindow):
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the main window"""
-        try:
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            # If darkdetect is not available, default to light mode
-            is_dark = False
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        alt_bg = "#3a3a3a" if is_dark else "#fafafa"
-        sel_bg = "#0078D7"
+        theme = get_theme()
         
-        # Apply styling to main window
-        self.setStyleSheet(f"""
-            QMainWindow {{
-                background-color: {base_color};
-                color: {text_color};
-            }}
-            QMenuBar {{
-                background-color: {base_color};
-                color: {text_color};
-            }}
-            QMenuBar::item {{
-                background: transparent;
-                padding: 4px 8px;
-            }}
-            QMenuBar::item:selected {{
-                background: {"#555" if is_dark else "#ddd"};
-            }}
-            QMenuBar::item:pressed {{
-                background: {"#666" if is_dark else "#bbb"};
-            }}
-            QMenu {{
-                background-color: {base_color};
-                color: {text_color};
-                border: 1px solid {"#555" if is_dark else "#ccc"};
-            }}
-            QMenu::item {{
-                padding: 6px 20px;
-            }}
-            QMenu::item:selected {{
-                background-color: {sel_bg};
-                color: white;
-            }}
-            QTabWidget::pane {{
-                border: 1px solid {"#444" if is_dark else "#ccc"};
-                background-color: {base_color};
-            }}
-            QTabBar::tab {{
-                background-color: {"#3a3a3a" if is_dark else "#f0f0f0"};
-                color: {text_color};
-                padding: 8px;
-                border: 1px solid {"#444" if is_dark else "#ccc"};
-                border-bottom: none;
-            }}
-            QTabBar::tab:selected {{
-                background-color: {base_color};
-                border-bottom: 2px solid {sel_bg};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {"#555" if is_dark else "#e0e0e0"};
-            }}
-            QStatusBar {{
-                background-color: {base_color};
-                color: {text_color};
-            }}
-            QScrollArea {{
-                background-color: {base_color};
-                border: 1px solid {"#444" if is_dark else "#ccc"};
-            }}
-            QLabel {{
-                color: {text_color};
-            }}
-        """)
+        # Apply full application stylesheet
+        self.setStyleSheet(theme.get_style_sheet())
         
         # Update status label styling based on theme
-        if is_dark:
-            self.status_label.setStyleSheet("QLabel { background-color : #3a3a3a; color: #ffffff; padding : 5px; }")
-        else:
-            self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; color: #000000; padding : 5px; }")
+        self.status_label.setStyleSheet(theme.get_status_label_style())
         
     def create_menu_bar(self):
         """Create menu bar with action items"""

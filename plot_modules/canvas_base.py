@@ -7,6 +7,11 @@ from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
 from PyQt5.QtCore import Qt
 
+try:
+    from theme import get_theme
+except ImportError:
+    get_theme = None
+
 class BaseInteractiveCanvas(FigureCanvas):
     def __init__(self, parent=None, width=8.27, height=11.69):
         # Create figure with specified dimensions (default A4 portrait)
@@ -259,41 +264,8 @@ class BaseInteractiveCanvas(FigureCanvas):
         menu = QMenu(self)
         
         # Apply theme-aware styling to the menu
-        is_dark = False
-        try:
-            # Try to detect dark mode using system settings
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            # If darkdetect is not available, default to light mode
-            pass
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        border_color = "#444" if is_dark else "#ccc"
-        
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {base_color};
-                color: {text_color};
-                border: 1px solid {border_color};
-                padding: 4px;
-                font-family: 'Arial', sans-serif;
-            }}
-            QMenu::item {{
-                padding: 6px 20px;
-                border: none;
-            }}
-            QMenu::item:selected {{
-                background-color: #0078D7;
-                color: white;
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background-color: {border_color};
-                margin: 4px 0;
-            }}
-        """)
+        if get_theme:
+            menu.setStyleSheet(get_theme().get_menu_style())
         
         # Add action to show data label for the specific subplot
         action = menu.addAction("Add/Change Data")
@@ -452,22 +424,15 @@ class YLabelDialog(QDialog):
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the dialog"""
-        try:
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            is_dark = False
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        text_color = "#ffffff" if is_dark else "#000000"
-        
-        style = f"""
-            QWidget {{
-                background-color: {base_color};
-                color: {text_color};
-            }}
-        """
-        self.setStyleSheet(style)
+        if get_theme:
+            c = get_theme().colors
+            style = f"""
+                QWidget {{
+                    background-color: {c.base};
+                    color: {c.text};
+                }}
+            """
+            self.setStyleSheet(style)
         
     def say_hi(self):
         """Sample function like in Test4.py"""
