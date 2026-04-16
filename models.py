@@ -5,8 +5,16 @@ and prevent KeyError bugs.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple, Union
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class ValidationError(ValueError):
+    """Raised when signal data validation fails."""
+    pass
 
 
 @dataclass
@@ -22,8 +30,8 @@ class Signal:
         group_name: Group within channel (e.g., 'Voltage', 'Exponential')
         x: X-axis data (typically time)
         y: Y-axis data (signal values)
-        color: Optional color override
-        line_style: Optional line style (solid, dashed, etc.)
+        color: Optional color override (hex color string)
+        line_style: Optional line style ('solid', 'dashed', 'dotted', 'dashdot')
         visible: Whether signal should be displayed
         label: Optional custom label for legend (if None, uses name)
     """
@@ -37,10 +45,56 @@ class Signal:
     visible: bool = True
     label: Optional[str] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate data after initialization."""
+        self._validate()
+    
+    def _validate(self) -> None:
+        """Validate signal data. Raises ValidationError if invalid."""
+        # Validate name
+        if not self.name or not isinstance(self.name, str):
+            raise ValidationError(f"Signal name must be a non-empty string, got: {self.name!r}")
+        
+        # Validate channel/group names
+        if not isinstance(self.channel_name, str):
+            raise ValidationError(f"Channel name must be a string, got: {type(self.channel_name)}")
+        if not isinstance(self.group_name, str):
+            raise ValidationError(f"Group name must be a string, got: {type(self.group_name)}")
+        
+        # Validate arrays
+        if not isinstance(self.x, np.ndarray):
+            try:
+                object.__setattr__(self, 'x', np.array(self.x, dtype=float))
+            except (TypeError, ValueError) as e:
+                raise ValidationError(f"Cannot convert x data to numpy array: {e}")
+        
+        if not isinstance(self.y, np.ndarray):
+            try:
+                object.__setattr__(self, 'y', np.array(self.y, dtype=float))
+            except (TypeError, ValueError) as e:
+                raise ValidationError(f"Cannot convert y data to numpy array: {e}")
+        
+        # Check array lengths
         if len(self.x) != len(self.y):
-            raise ValueError(f"Signal '{self.name}': x and y arrays must have same length")
+            raise ValidationError(
+                f"Signal '{self.name}': x and y arrays must have same length, "
+                f"got x={len(self.x)}, y={len(self.y)}"
+            )
+        
+        # Validate color format if provided
+        if self.color is not None and not isinstance(self.color, str):
+            raise ValidationError(f"Color must be a string or None, got: {type(self.color)}")
+        
+        # Validate line_style
+        valid_styles = ('solid', 'dashed', 'dotted', 'dashdot', None)
+        if self.line_style not in valid_styles:
+            raise ValidationError(
+                f"Invalid line_style '{self.line_style}'. Must be one of: {valid_styles}"
+            )
+        
+        # Log empty signals
+        if len(self.x) == 0:
+            logger.warning(f"Signal '{self.name}' has empty data arrays")
     
     @property
     def display_name(self) -> str:
@@ -53,7 +107,7 @@ class Signal:
         return f"{self.channel_name}.{self.group_name}.{self.name}"
     
     def is_valid(self) -> bool:
-        """Check if signal has valid data."""
+        """Check if signal has valid data for plotting."""
         return len(self.x) > 0 and len(self.y) > 0 and self.visible
     
     def to_dict(self) -> Dict[str, Any]:
@@ -72,18 +126,45 @@ class Signal:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Signal':
-        """Create a Signal from a dictionary (legacy data)."""
-        return cls(
-            name=data.get('name', 'Unknown'),
-            channel_name=data.get('channel_name', 'Unknown'),
-            group_name=data.get('group_name', 'Unknown'),
-            x=data.get('x', np.array([])),
-            y=data.get('y', np.array([])),
-            color=data.get('color'),
-            line_style=data.get('line_style'),
-            visible=data.get('visible', True),
-            label=data.get('label'),
-        )
+        """Create a Signal from a dictionary (legacy data).
+        
+        Handles missing keys with defaults and validates the result.
+        
+        Args:
+            data: Dictionary containing signal data
+            
+        Returns:
+            Signal instance
+            
+        Raises:
+            ValidationError: If data is invalid
+        """
+        try:
+            return cls(
+                name=data.get('name', 'Unknown'),
+                channel_name=data.get('channel_name', 'Unknown'),
+                group_name=data.get('group_name', 'Unknown'),
+                x=data.get('x', np.array([])),
+                y=data.get('y', np.array([])),
+                color=data.get('color'),
+                line_style=data.get('line_style'),
+                visible=data.get('visible', True),
+                label=data.get('label'),
+            )
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(f"Failed to create Signal from dict: {e}")
+    
+    def get_xy_range(self) -> Tuple[float, float, float, float]:
+        """Get x and y ranges for this signal.
+        
+        Returns:
+            (x_min, x_max, y_min, y_max) or (0, 0, 0, 0) for empty signal
+        """
+        if len(self.x) == 0 or len(self.y) == 0:
+            return (0.0, 0.0, 0.0, 0.0)
+        return float(self.x.min()), float(self.x.max()), float(self.y.min()), float(self.y.max())
 
 
 @dataclass

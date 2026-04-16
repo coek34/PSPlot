@@ -4,8 +4,12 @@ This module contains all magic numbers, default values, and application-wide
 constants to ensure consistency across the codebase.
 """
 
+import logging
+import logging.handlers
+import os
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from pathlib import Path
+from typing import Dict, Tuple, Optional
 
 # Version info
 APP_NAME = "PSPlotter"
@@ -15,6 +19,62 @@ WINDOW_TITLE = f"{APP_NAME} - Power System Results Plotter"
 # Window defaults
 DEFAULT_WINDOW_SIZE = (1200, 900)  # width, height in pixels
 DEFAULT_WINDOW_POS = (100, 100)    # x, y position
+
+# Logging configuration
+LOG_LEVEL = logging.INFO
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+MAX_LOG_BYTES = 10 * 1024 * 1024  # 10 MB
+BACKUP_COUNT = 5
+
+
+def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = None) -> None:
+    """Configure application-wide logging.
+    
+    Sets up console and file handlers with appropriate formatting.
+    Reduces matplotlib debug spam to WARNING level.
+    
+    Args:
+        log_level: Root logger level. Defaults to LOG_LEVEL.
+        log_file: Path to log file. If None, uses ~/.psplot/psplot.log
+    """
+    level = log_level if log_level is not None else LOG_LEVEL
+    
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    
+    # Clear existing handlers to avoid duplicates
+    root_logger.handlers = []
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_formatter = logging.Formatter(LOG_FORMAT)
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+    
+    # File handler with rotation
+    if log_file is None:
+        log_dir = Path.home() / ".psplot"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = str(log_dir / "psplot.log")
+    
+    file_handler = logging.handlers.RotatingFileHandler(
+        log_file, maxBytes=MAX_LOG_BYTES, backupCount=BACKUP_COUNT
+    )
+    file_handler.setLevel(level)
+    file_formatter = logging.Formatter(LOG_FORMAT)
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
+    
+    # Reduce matplotlib debug spam
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
+    logging.getLogger("PIL").setLevel(logging.WARNING)
+    
+    # Log startup
+    logger = logging.getLogger(__name__)
+    logger.info(f"Logging configured. Level={logging.getLevelName(level)}, File={log_file}")
 
 
 @dataclass(frozen=True)
