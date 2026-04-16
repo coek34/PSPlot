@@ -25,28 +25,15 @@ class SignalExplorerDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Menu bar (similar to Test4.py and y-label dialog)
-        menubar = QMenuBar(self)
-        options_menu = menubar.addMenu('Options')
-        
-        # Add a sample action (like in Test4.py)
-        say_hi_action = QAction('Say Hi', self)
-        say_hi_action.triggered.connect(self.say_hi)
-        options_menu.addAction(say_hi_action)
-        
-        layout.setMenuBar(menubar)
-        
         # Main splitter
         splitter = QSplitter(Qt.Horizontal)
         
         # Left panel - Signal tree
         left_panel = QFrame()
+        
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(5, 5, 5, 5)
         
-        tree_label = QLabel("Available Signals")
-        tree_label.setFont(QFont("Arial", 10, QFont.Bold))
-        # Apply theme-aware styling to tree label
         try:
             import darkdetect
             is_dark = darkdetect.isDark()
@@ -55,11 +42,17 @@ class SignalExplorerDialog(QDialog):
             
         base_color = "#2b2b2b" if is_dark else "#ffffff"
         text_color = "#ffffff" if is_dark else "#000000"
-        tree_label.setStyleSheet(f"QLabel {{ background-color: {base_color}; color: {text_color}; padding: 5px; }}")
-        left_layout.addWidget(tree_label)
+        
+        left_panel.setFrameShape(QFrame.NoFrame)  # Removes the border
+        left_panel.setStyleSheet(f"""
+            QFrame {{
+                background-color: {base_color};  /* Match the theme */
+                border: none;                     /* Explicitly remove border */
+            }}
+        """)
         
         self.signal_tree = QTreeWidget()
-        self.signal_tree.setHeaderLabels(["Signals"])
+        self.signal_tree.setHeaderLabels(["Available Signals"])
         self.signal_tree.setRootIsDecorated(True)
         self.signal_tree.setAlternatingRowColors(True)
         self.signal_tree.itemDoubleClicked.connect(self.on_signal_double_clicked)
@@ -76,14 +69,16 @@ class SignalExplorerDialog(QDialog):
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(5, 5, 5, 5)
         
-        selected_label = QLabel("Currently Plotted Signals")
-        selected_label.setFont(QFont("Arial", 10, QFont.Bold))
-        # Apply theme-aware styling to selected label
-        selected_label.setStyleSheet(f"QLabel {{ background-color: {base_color}; color: {text_color}; padding: 5px; }}")
-        right_layout.addWidget(selected_label)
+        right_panel.setFrameShape(QFrame.NoFrame)  # Removes the border
+        right_panel.setStyleSheet(f"""
+            QFrame {{
+                background-color: {base_color};  /* Match the theme */
+                border: none;                     /* Explicitly remove border */
+            }}
+        """)
         
         self.selected_signals_tree = QTreeWidget()
-        self.selected_signals_tree.setHeaderLabels(["Signals"])
+        self.selected_signals_tree.setHeaderLabels(["Selected Signals"])
         self.selected_signals_tree.setRootIsDecorated(True)
         self.selected_signals_tree.setAlternatingRowColors(True)
         # Connect double-click to remove signal
@@ -220,7 +215,7 @@ class SignalExplorerDialog(QDialog):
         
         style = f"""
             QTreeWidget {{
-                border: 1px solid {border_color};
+                border: 1px solid {"#555" if is_dark else "#ccc"};
                 border-radius: 6px;
                 padding: 4px;
                 background-color: {base_color};
@@ -504,10 +499,6 @@ class SignalExplorerDialog(QDialog):
                 actual_signals.append(signal_data)
         
         return actual_signals
-    
-    def say_hi(self):
-        """Sample function like in Test4.py"""
-        QMessageBox.information(self, "Message", "Hi!")
     
     def accept(self):
         """Handle dialog accept"""

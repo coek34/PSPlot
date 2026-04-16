@@ -64,7 +64,28 @@ class SignalHandlerMixin:
         
         logger.debug(f"Using group name in legend: {use_group_name}")
         
+        # If we're using group names in legend, try to get the actual group name
         if use_group_name:
+            # Try to find the actual group name from dummy signals structure
+            if hasattr(self, 'dummy_signals') and self.dummy_signals:
+                # Search through all channels
+                for channel in self.dummy_signals:
+                    # Search through all groups in this channel
+                    for group in channel.get('groups', []):
+                        # Search through all signals in this group
+                        for signal in group.get('signals', []):
+                            if signal.get('name') == signal_name:
+                                # Found the signal, get its group name
+                                group_name = group.get('name', 'Unknown')
+                                logger.debug(f"Found actual group name: {group_name}")
+                                break
+                        else:
+                            continue
+                        break
+                    else:
+                        continue
+                    break
+            
             logger.debug(f"Using group name in legend: group_name={group_name}, signal_name={signal_name}")
             if group_name and group_name != 'Unknown':
                 label = f"{group_name}.{signal_name}"
@@ -169,6 +190,30 @@ class SignalHandlerMixin:
                     logger.debug(f"Error accessing group_name_in_legend flag: {e}")
                 
                 logger.debug(f"Using group name in legend: {use_group_name}")
+                
+                # If we're using group names in legend, try to get the actual group name
+                if use_group_name:
+                    # Try to find the actual group name from dummy signals structure
+                    if hasattr(self, 'dummy_signals') and self.dummy_signals:
+                        # Search through all channels
+                        for channel in self.dummy_signals:
+                            # Search through all groups in this channel
+                            for group in channel.get('groups', []):
+                                # Search through all signals in this group
+                                for signal in group.get('signals', []):
+                                    if signal.get('name') == signal_name:
+                                        # Found the signal, get its group name
+                                        group_name = group.get('name', 'Unknown')
+                                        logger.debug(f"Found actual group name: {group_name}")
+                                        break
+                                else:
+                                    continue
+                                break
+                            else:
+                                continue
+                            break
+                
+                logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
                 
                 if use_group_name:
                     logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
