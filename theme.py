@@ -29,6 +29,10 @@ class ThemeColors:
     
     # Misc
     status_bg: str      # Status bar background
+    
+    # Action colors
+    success: str        # Success/OK buttons
+    danger: str         # Danger/Cancel buttons
 
 
 class ThemeManager:
@@ -51,6 +55,8 @@ class ThemeManager:
         selection="#0078D7",
         hover="#555",
         status_bg="#3a3a3a",
+        success="#4CAF50",
+        danger="#f44336",
     )
     
     LIGHT = ThemeColors(
@@ -63,6 +69,8 @@ class ThemeManager:
         selection="#0078D7",
         hover="#e0e0e0",
         status_bg="#f0f0f0",
+        success="#4CAF50",
+        danger="#f44336",
     )
     
     def __init__(self):
@@ -205,6 +213,47 @@ class ThemeManager:
                 color: white;
             }}
         """
+    
+    def get_button_ok_style(self) -> str:
+        """Get stylesheet for OK/Confirm buttons."""
+        c = self.colors
+        return f"""
+            QPushButton {{
+                background-color: {c.success};
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {self._darken(c.success)};
+            }}
+        """
+    
+    def get_button_cancel_style(self) -> str:
+        """Get stylesheet for Cancel/Delete buttons."""
+        c = self.colors
+        return f"""
+            QPushButton {{
+                background-color: {c.danger};
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {self._darken(c.danger)};
+            }}
+        """
+    
+    @staticmethod
+    def _darken(color: str, factor: float = 0.9) -> str:
+        """Darken a hex color by a factor."""
+        # Simple darkening - remove '#' and convert to int
+        r = int(int(color[1:3], 16) * factor)
+        g = int(int(color[3:5], 16) * factor)
+        b = int(int(color[5:7], 16) * factor)
+        return f"#{r:02x}{g:02x}{b:02x}"
     
     def get_status_label_style(self) -> str:
         """Get stylesheet for status labels."""

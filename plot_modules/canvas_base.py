@@ -374,43 +374,15 @@ class YLabelDialog(QDialog):
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.accept)
         ok_button.setDefault(True)
-        ok_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 12px;
-                margin: 4px 2px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        if get_theme:
+            ok_button.setStyleSheet(get_theme().get_button_ok_style())
         button_layout.addWidget(ok_button)
         
         # Cancel button
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
-        cancel_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 12px;
-                margin: 4px 2px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
+        if get_theme:
+            cancel_button.setStyleSheet(get_theme().get_button_cancel_style())
         button_layout.addWidget(cancel_button)
         
         content_layout.addLayout(button_layout)

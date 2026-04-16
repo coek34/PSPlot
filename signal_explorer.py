@@ -120,51 +120,12 @@ class SignalExplorerDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         
-        # Apply consistent styling to buttons (similar to y-label dialog)
-        button_style = """
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 12px;
-                margin: 4px 2px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3c8c40;
-            }
-            QPushButton#cancelButton {
-                background-color: #f44336;
-            }
-            QPushButton#cancelButton:hover {
-                background-color: #da190b;
-            }
-            QPushButton#cancelButton:pressed {
-                background-color: #b3150a;
-            }
-            QPushButton#clearButton {
-                background-color: #ff9800;
-            }
-            QPushButton#clearButton:hover {
-                background-color: #e68a00;
-            }
-            QPushButton#clearButton:pressed {
-                background-color: #cc7a00;
-            }
-        """
-        
-        clear_button.setObjectName("clearButton")
-        cancel_button.setObjectName("cancelButton")
-        
-        clear_button.setStyleSheet(button_style)
-        ok_button.setStyleSheet(button_style)
-        cancel_button.setStyleSheet(button_style)
+        # Apply theme-aware styling to buttons
+        theme = get_theme()
+        c = get_colors()
+        ok_button.setStyleSheet(theme.get_button_ok_style())
+        cancel_button.setStyleSheet(theme.get_button_cancel_style())
+        clear_button.setStyleSheet(theme.get_button_ok_style())  # Keep clear green for now
         
         button_layout.addWidget(clear_button)
         button_layout.addStretch()
@@ -173,15 +134,8 @@ class SignalExplorerDialog(QDialog):
         
         layout.addLayout(button_layout)
         
-        # Apply theme-aware stylesheet
-        try:
-            import darkdetect
-            is_dark = darkdetect.isDark()
-        except:
-            is_dark = False
-            
-        base_color = "#2b2b2b" if is_dark else "#ffffff"
-        self.setStyleSheet(f"QDialog {{ background-color: {base_color}; }}")
+        # Apply theme-aware stylesheet to dialog
+        self.setStyleSheet(f"QDialog {{ background-color: {c.base}; }}")
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the dialog"""

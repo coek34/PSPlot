@@ -1,6 +1,5 @@
 # main_window.py
 import sys, os
-import re
 import logging
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                             QMenuBar, QMenu, QAction, QFileDialog, QDialog, QFormLayout, 
@@ -14,6 +13,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 # Import from separate modules
+from config import WINDOW_TITLE, DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_POS
+from config import SUBPLOT_CONFIG, get_status_text
 from margin_dialog import MarginDialog
 from page_widget import PageWidget
 from plot_canvas import InteractivePlotCanvas
@@ -29,8 +30,10 @@ from theme import get_theme
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PSPlotter - Power System Results Plotter")
-        self.setGeometry(100, 100, 1200, 900)
+        self.setWindowTitle(WINDOW_TITLE)
+        x, y = DEFAULT_WINDOW_POS
+        width, height = DEFAULT_WINDOW_SIZE
+        self.setGeometry(x, y, width, height)
         
         # Initialize managers
         self.page_manager = PageManager(self)
@@ -58,8 +61,7 @@ class MainWindow(QMainWindow):
         
         # Status bar for instructions
         status_layout = QHBoxLayout()
-        self.status_label = QLabel("Keys: 1-6 (plots) | A/D (pan) | R (reset x) | Y (reset y) | X (grid) | E (export) | M (margins) | Double-click tabs to rename pages")
-        self.status_label.setStyleSheet("QLabel { background-color : #e0e0e0; padding : 5px; }")
+        self.status_label = QLabel(get_status_text())
         status_layout.addWidget(self.status_label)
         main_layout.addLayout(status_layout)
         
