@@ -25,12 +25,16 @@ class CanvasDefaults:
     height: float = 11.69
     
     # Common paper sizes (width, height in inches)
-    SIZES: Dict[str, Tuple[float, float]] = {
-        'A4': (8.27, 11.69),
-        'Letter': (8.5, 11.0),
-        'A3': (11.69, 16.53),
-        'A5': (5.83, 8.27),
-    }
+    # Note: Access via CANVAS_SIZES constant below, not via instance
+
+
+# Module-level constants for paper sizes (immutable)
+CANVAS_SIZES: Dict[str, Tuple[float, float]] = {
+    'A4': (8.27, 11.69),
+    'Letter': (8.5, 11.0),
+    'A3': (11.69, 16.53),
+    'A5': (5.83, 8.27),
+}
 
 
 @dataclass(frozen=True)
@@ -38,16 +42,17 @@ class SubplotConfig:
     """Subplot configuration constants."""
     max_count: int = 6
     min_count: int = 1
-    
-    # Keyboard shortcuts for subplot counts
-    shortcuts: Dict[int, str] = {
-        1: '1',
-        2: '2',
-        3: '3',
-        4: '4',
-        5: '5',
-        6: '6',
-    }
+
+
+# Module-level shortcuts dict (immutable)
+SUBPLOT_SHORTCUTS: Dict[int, str] = {
+    1: '1',
+    2: '2',
+    3: '3',
+    4: '4',
+    5: '5',
+    6: '6',
+}
 
 
 @dataclass(frozen=True)
