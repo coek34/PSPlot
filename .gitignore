@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Application artifacts
+Output/
+*.png
+*.pdf
+*.svg
+out.log
+
+# IDE/AI assistant
+.aider*
+.letta/
+
+# OS files
+.DS_Store
+Thumbs.db
