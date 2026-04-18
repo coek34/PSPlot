@@ -201,19 +201,24 @@ class PageWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # Get the setting from main_window
+        # Get the settings from main_window
         use_group_name = False
+        use_channel_name = False
         try:
-            # Find main_window through page hierarchy
             if hasattr(self, 'main_window') and self.main_window:
                 use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
-                logger.info(f"PageWidget: use_group_name = {use_group_name}")
+                use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
+                logger.info(f"PageWidget: use_channel_name = {use_channel_name}, use_group_name = {use_group_name}")
         except:
             pass
         
-        # Pass the setting to canvas
+        # Pass the settings to canvas
         if self.plot_canvas:
-            self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list, use_group_name=use_group_name)
+            self.plot_canvas.set_subplot_signals(
+                subplot_index, signal_data_list, 
+                use_group_name=use_group_name, 
+                use_channel_name=use_channel_name
+            )
         
         # Also store the signals for preservation
         if 0 <= subplot_index < 6:

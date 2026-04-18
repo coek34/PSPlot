@@ -93,6 +93,8 @@ class MainWindow(QMainWindow):
         
         # Group name in legend flag
         self.group_name_in_legend = False
+        # Channel name in legend flag
+        self.channel_name_in_legend = False
 
     def restore_app_state(self) -> bool:
         """Restore application state from settings."""
@@ -313,6 +315,13 @@ class MainWindow(QMainWindow):
         self.group_name_in_legend_action.setChecked(False)
         self.group_name_in_legend_action.triggered.connect(self.toggle_group_name_in_legend)
         settings_menu.addAction(self.group_name_in_legend_action)
+        
+        # Add channel name in legend checkbox  
+        self.channel_name_in_legend_action = QAction('Channel name in legend', self)
+        self.channel_name_in_legend_action.setCheckable(True)
+        self.channel_name_in_legend_action.setChecked(False)
+        self.channel_name_in_legend_action.triggered.connect(self.toggle_channel_name_in_legend)
+        settings_menu.addAction(self.channel_name_in_legend_action)
     
     # Delegate methods to page_manager
     def add_new_page(self, width=8.27, height=11.69):
@@ -384,10 +393,35 @@ class MainWindow(QMainWindow):
                 for i, signals in enumerate(signals_to_restore):
                     if i < len(page.plot_canvas.axes) and signals:
                         logger.debug(f"Replotting signals for subplot {i}")
-                        # Replot with new legend format
-                        page.plot_canvas.set_subplot_signals(i, signals)
+                        # Replot with new legend format via page_widget (reads the flag from main_window)
+                        page.set_subplot_signals(i, signals)
         
-        logger.debug("Legend update complete")
+        logger.info(f"Legend update complete. group_name_in_legend = {self.group_name_in_legend}")
+
+    def toggle_channel_name_in_legend(self, checked):
+        """Toggle channel name in legend"""
+        logger.debug(f"Toggle channel name in legend: {checked}")
+        self.channel_name_in_legend = checked
+        logger.debug(f"Updated channel_name_in_legend flag to: {self.channel_name_in_legend}")
+        
+        # Update all pages to reflect the new setting
+        for page in self.page_manager.pages:
+            if page.plot_canvas:
+                logger.debug(f"Updating page {page.page_index} with new channel legend setting")
+                # Get existing signals for each subplot
+                signals_to_restore = []
+                for i in range(len(page.plot_canvas.axes)):
+                    existing_signals = page.plot_canvas.get_existing_signals_for_subplot(i)
+                    signals_to_restore.append(existing_signals)
+                
+                # Replot all signals with new legend format
+                for i, signals in enumerate(signals_to_restore):
+                    if i < len(page.plot_canvas.axes) and signals:
+                        logger.debug(f"Replotting signals for subplot {i}")
+                        # Replot with new legend format via page_widget (reads the flag from main_window)
+                        page.set_subplot_signals(i, signals)
+        
+        logger.info(f"Legend update complete. channel_name_in_legend = {self.channel_name_in_legend}")
 
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication

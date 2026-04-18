@@ -133,10 +133,10 @@ class SignalHandlerMixin:
         # Automatically round x to grid after adding signal
         self.round_x_to_grid()
     
-    def set_subplot_signals(self, subplot_index, signal_data_list, use_group_name=False):
+    def set_subplot_signals(self, subplot_index, signal_data_list, use_group_name=False, use_channel_name=False):
         """Set multiple signals to a specific subplot"""
         logger.info(f"\n=== SIGNAL HANDLER: set_subplot_signals ===")
-        logger.info(f"Subplot: {subplot_index}, Signals: {len(signal_data_list)}, use_group_name: {use_group_name}")
+        logger.info(f"Subplot: {subplot_index}, Signals: {len(signal_data_list)}, use_channel_name: {use_channel_name}, use_group_name: {use_group_name}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
             logger.debug(f"Invalid subplot index {subplot_index}")
             return
@@ -163,25 +163,39 @@ class SignalHandlerMixin:
                     
                 signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
                 
-                # Create label based on setting
-                if use_group_name:
-                    if group_name and group_name != 'Unknown':
-                        label = f"{group_name}.{signal_name}"
-                    elif channel_name and channel_name != 'Unknown':
-                        label = f"{channel_name}.{signal_name}"
-                    else:
-                        label = signal_name
-                    logger.info(f"  ✓ Using group/channel prefix: {label}")
+                # Create label based on settings - Channel di paling kiri!
+                parts = []
+                
+                # Channel selalu di paling kiri jika diminta dan tersedia
+                if use_channel_name and channel_name and channel_name != 'Unknown':
+                    parts.append(channel_name)
+                
+                # Group di tengah jika diminta dan tersedia
+                if use_group_name and group_name and group_name != 'Unknown':
+                    parts.append(group_name)
+                
+                # Signal name selalu di akhir
+                parts.append(signal_name)
+                
+                # Gabungkan dengan titik
+                if len(parts) > 1:
+                    label = '.'.join(parts)
+                    logger.info(f"  ✓ Using channel/group prefix: {label}")
                 else:
                     label = signal_name
-                    logger.info(f"  ✗ use_group_name=False, using signal name only: {label}")
+                    logger.info(f"  ✗ No prefix, using signal name only: {label}")
                 
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
-                    ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
+                    line, = ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
+                    # Store original signal name and metadata for later retrieval
+                    line._original_signal_name = signal_name
+                    line._channel_name = channel_name
+                    line._group_name = group_name
+                    logger.debug(f"  Stored original signal name: {signal_name}, group: {group_name}")
         else:
             # Plot default signal if no data provided
             ax.plot([], [], linewidth=2, label=f'Subplot {subplot_index+1}')
-   	 
+        
         # Set labels
         if subplot_index == len(self.axes) - 1:  # Last subplot
             ax.set_xlabel('Time (s)')
@@ -249,22 +263,23 @@ class SignalHandlerMixin:
                 x_data = line.get_xdata()
                 y_data = line.get_ydata()
                 if len(x_data) > 0 and len(y_data) > 0:
-                    # Try to retrieve channel and group info from the line's properties
-                    # We'll store this info in the line's label when plotting
-                    signal_name = line.get_label() if line.get_label() else f'Signal_{subplot_index+1}'
+                    # Get original signal name from custom attribute if available
+                    if hasattr(line, '_original_signal_name'):
+                        signal_name = line._original_signal_name
+                        channel_name = getattr(line, '_channel_name', 'Unknown')
+                        group_name = getattr(line, '_group_name', 'Unknown')
+                        logger.debug(f"Retrieved stored signal: {signal_name}, group: {group_name}")
+                    else:
+                        # Fallback to label if original name not stored
+                        signal_name = line.get_label() if line.get_label() else f'Signal_{subplot_index+1}'
+                        channel_name = 'Unknown'
+                        group_name = 'Unknown'
+                        # Try to find the signal to get channel/group info
+                        signal_info = self.find_signal_by_name_with_channel(signal_name)
+                        if signal_info:
+                            channel_name = signal_info['channel_name']
+                            group_name = signal_info['group_name']
                     
-                    # Extract channel and group from the signal name if possible
-                    # For dummy signals, we can look them up
-                    channel_name = 'Unknown'
-                    group_name = 'Unknown'
-                    
-                    # Try to find the signal in our dummy signals to get channel/group info
-                    signal_info = self.find_signal_by_name_with_channel(signal_name)
-                    if signal_info:
-                        channel_name = signal_info['channel_name']
-                        group_name = signal_info['group_name']
-                    
-                    # Create a representation of the signal with channel/group info
                     signal_data = {
                         'name': signal_name,
                         'x': x_data,
@@ -272,8 +287,10 @@ class SignalHandlerMixin:
                         'channel_name': channel_name,
                         'group_name': group_name
                     }
+                    logger.debug(f"  Replotting signal: {signal_name} (group: {group_name})")
                     existing_signals.append(signal_data)
         
+        logger.debug(f"Total {len(existing_signals)} signals found in subplot {subplot_index}")
         return existing_signals
     
     def find_signal_by_name_with_channel(self, signal_name):
