@@ -307,8 +307,14 @@ class BaseInteractiveCanvas(FigureCanvas):
             # Get existing signals for this subplot to show in the dialog
             existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
             
-            # Create a dialog with dummy signals and existing signals
-            dialog = SignalExplorerDialog(self.dummy_signals, existing_signals, parent=self)
+            # Get data from data manager if available
+            available_data = self.dummy_signals
+            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'data_manager'):
+                imported = self.main_window.data_manager.get_all_available_data()
+                available_data = self.dummy_signals + imported
+            
+            # Create a dialog with dummy + imported signals and existing signals
+            dialog = SignalExplorerDialog(available_data, existing_signals, parent=self)
             if dialog.exec_() == dialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
                 if selected_signals:

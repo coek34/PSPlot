@@ -133,9 +133,10 @@ class SignalHandlerMixin:
         # Automatically round x to grid after adding signal
         self.round_x_to_grid()
     
-    def set_subplot_signals(self, subplot_index, signal_data_list):
+    def set_subplot_signals(self, subplot_index, signal_data_list, use_group_name=False):
         """Set multiple signals to a specific subplot"""
-        logger.debug(f"set_subplot_signals called for subplot {subplot_index} with {len(signal_data_list)} signals")
+        logger.info(f"\n=== SIGNAL HANDLER: set_subplot_signals ===")
+        logger.info(f"Subplot: {subplot_index}, Signals: {len(signal_data_list)}, use_group_name: {use_group_name}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
             logger.debug(f"Invalid subplot index {subplot_index}")
             return
@@ -153,79 +154,27 @@ class SignalHandlerMixin:
                     actual_signal_data = signal_data['signal_data']
                     channel_name = signal_data.get('channel_name', 'Unknown')
                     group_name = signal_data.get('group_name', 'Unknown')
+                    logger.info(f"  Nested signal_data found: channel={channel_name}, group={group_name}")
                 else:
                     actual_signal_data = signal_data
-                    channel_name = signal_data.get('channel_name', 'Unknown')
-                    group_name = signal_data.get('group_name', 'Unknown')
+                    channel_name = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                    group_name = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
+                    logger.info(f"  Direct signal_data: channel={channel_name}, group={group_name}")
                     
                 signal_name = actual_signal_data.get('name', f'Signal_{subplot_index+1}')
                 
-                # Create label based on group name in legend setting
-                # Check if main_window exists and has the flag
-                use_group_name = False
-                
-                # Try to access the flag from different possible locations
-                try:
-                    # Method 1: Direct access to main_window if it exists
-                    if hasattr(self, 'main_window') and self.main_window is not None:
-                        if hasattr(self.main_window, 'group_name_in_legend'):
-                            use_group_name = self.main_window.group_name_in_legend
-                            logger.debug(f"Found flag in main_window: {use_group_name}")
-                        elif hasattr(self.main_window, 'parent') and self.main_window.parent() is not None:
-                            # Try parent if main_window has one
-                            parent = self.main_window.parent()
-                            if hasattr(parent, 'group_name_in_legend'):
-                                use_group_name = parent.group_name_in_legend
-                                logger.debug(f"Found flag in parent: {use_group_name}")
-                    else:
-                        # Method 2: Try to find it in the widget hierarchy
-                        widget = self
-                        while widget is not None:
-                            if hasattr(widget, 'group_name_in_legend'):
-                                use_group_name = widget.group_name_in_legend
-                                logger.debug(f"Found flag in widget hierarchy: {use_group_name}")
-                                break
-                            widget = widget.parent()
-                except Exception as e:
-                    logger.debug(f"Error accessing group_name_in_legend flag: {e}")
-                
-                logger.debug(f"Using group name in legend: {use_group_name}")
-                
-                # If we're using group names in legend, try to get the actual group name
+                # Create label based on setting
                 if use_group_name:
-                    # Try to find the actual group name from dummy signals structure
-                    if hasattr(self, 'dummy_signals') and self.dummy_signals:
-                        # Search through all channels
-                        for channel in self.dummy_signals:
-                            # Search through all groups in this channel
-                            for group in channel.get('groups', []):
-                                # Search through all signals in this group
-                                for signal in group.get('signals', []):
-                                    if signal.get('name') == signal_name:
-                                        # Found the signal, get its group name
-                                        group_name = group.get('name', 'Unknown')
-                                        logger.debug(f"Found actual group name: {group_name}")
-                                        break
-                                else:
-                                    continue
-                                break
-                            else:
-                                continue
-                            break
-                
-                logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
-                
-                if use_group_name:
-                    logger.debug(f"Using group name in legend for signal {signal_name}: group_name={group_name}")
                     if group_name and group_name != 'Unknown':
                         label = f"{group_name}.{signal_name}"
+                    elif channel_name and channel_name != 'Unknown':
+                        label = f"{channel_name}.{signal_name}"
                     else:
                         label = signal_name
+                    logger.info(f"  ✓ Using group/channel prefix: {label}")
                 else:
-                    logger.debug(f"Not using group name in legend for signal {signal_name}")
                     label = signal_name
-                
-                logger.debug(f"Plotting signal with label: {label}")
+                    logger.info(f"  ✗ use_group_name=False, using signal name only: {label}")
                 
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
                     ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)

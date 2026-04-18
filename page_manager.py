@@ -2,6 +2,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
 from page_widget import PageWidget
+from settings import PageState
 
 class PageManager:
     def __init__(self, main_window):
@@ -9,10 +10,32 @@ class PageManager:
         self.pages = []
         self.current_page_index = 0
     
+    def get_all_pages_state(self):
+        """Get state for all pages for persistence"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Getting state for {len(self.pages)} pages...")
+        
+        states = []
+        for idx, page in enumerate(self.pages):
+            try:
+                state = page.get_state()
+                states.append(state)
+                logger.info(f"  Got state for page {idx}: {state.name}")
+            except Exception as e:
+                logger.error(f"  ERROR getting state for page {idx}: {e}", exc_info=True)
+        
+        logger.info(f"Total {len(states)} page states collected")
+        return states
+    
     def add_new_page(self, width=8.27, height=11.69):
         """Add a new page to the tab widget"""
         page_index = len(self.pages)
         page_widget = PageWidget(page_index, width, height)
+        
+        # Give page_widget a reference to main_window
+        page_widget.main_window = self.main_window
+        
         self.pages.append(page_widget)
         
         # Add to tab widget

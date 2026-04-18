@@ -26,14 +26,24 @@ from action_manager import ActionManager
 from keyboard_manager import KeyboardManager
 from data_manager import DataManager
 from theme import get_theme
+from settings import get_settings
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(WINDOW_TITLE)
-        x, y = DEFAULT_WINDOW_POS
-        width, height = DEFAULT_WINDOW_SIZE
-        self.setGeometry(x, y, width, height)
+        
+        # Initialize settings
+        self.settings = get_settings()
+        
+        # Apply window geometry from settings if available
+        if self.settings.preferences.window_geometry:
+            x, y, w, h = self.settings.preferences.window_geometry
+            self.setGeometry(x, y, w, h)
+        else:
+            x, y = DEFAULT_WINDOW_POS
+            width, height = DEFAULT_WINDOW_SIZE
+            self.setGeometry(x, y, width, height)
         
         # Initialize managers
         self.page_manager = PageManager(self)
@@ -70,8 +80,9 @@ class MainWindow(QMainWindow):
         self.plot_count_label.setStyleSheet("QLabel { font-weight: bold; padding: 5px; }")
         main_layout.addWidget(self.plot_count_label)
         
-        # Add initial page
-        self.page_manager.add_new_page()
+        # Restore or Add initial page
+        if not self.restore_app_state():
+            self.page_manager.add_new_page()
         
         # Make sure window can receive focus
         self.setFocusPolicy(Qt.StrongFocus)
@@ -82,6 +93,152 @@ class MainWindow(QMainWindow):
         
         # Group name in legend flag
         self.group_name_in_legend = False
+
+    def restore_app_state(self) -> bool:
+        """Restore application state from settings."""
+        logger = logging.getLogger(__name__)
+        state = self.settings.state
+        if not state.pages:
+            logger.warning("No saved pages in settings.state, cannot restore")
+            return False
+            
+        logger.info(f"=== RESTORING APP STATE ===")
+        logger.info(f"Restoring state with {len(state.pages)} pages")
+        logger.info(f"Imported files to restore: {state.imported_files}")
+        
+        # 1. Restore imported data
+        if state.imported_files:
+            logger.info(f"Loading {len(state.imported_files)} imported files...")
+            self.data_manager.load_from_paths_info(state.imported_files)
+            logger.info(f"Data manager now has {len(self.data_manager.channel_signals)} channels")
+        else:
+            logger.info("No imported files to restore")
+        
+        # 2. Restore pages
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
+        self.page_manager.pages = []
+        
+        for page_idx, p_state in enumerate(state.pages):
+            logger.info(f"Restoring page {page_idx}: '{p_state.name}' with {p_state.subplot_count} subplots")
+            page = self.page_manager.add_new_page(width=p_state.width, height=p_state.height)
+            page.page_name = p_state.name
+            
+            # Ensure page has reference to main_window
+            page.main_window = self
+            
+            self.tab_widget.setTabText(page.page_index, p_state.name)
+            
+            # Restore margins
+            if p_state.margins:
+                page.adjust_margins(p_state.margins)
+                logger.info(f"  Restored margins: {p_state.margins}")
+            
+            # Restore subplot count
+            page.update_plots(p_state.subplot_count)
+            
+            # Restore signals (Rehydration)
+            logger.info(f"  Restoring {len(p_state.subplots_signals)} subplots with signal refs...")
+            for subplot_idx, sig_refs in enumerate(p_state.subplots_signals):
+                logger.info(f"    Subplot {subplot_idx}: {len(sig_refs)} signal references")
+                page_signals = []
+                for ref_idx, ref in enumerate(sig_refs):
+                    logger.debug(f"      Ref {ref_idx}: {ref}")
+                    # Find the actual data in data_manager
+                    rehydrated = self._find_signal_data(ref)
+                    if rehydrated:
+                        logger.info(f"      ✓ Rehydrated '{ref.get('name')}' from {ref.get('channel_name')}")
+                        page_signals.append(rehydrated)
+                    else:
+                        logger.warning(f"      ✗ FAILED to rehydrate '{ref.get('name')}' - signal not found!")
+                
+                if page_signals:
+                    logger.info(f"    Plotting {len(page_signals)} signals to subplot {subplot_idx}")
+                    page.set_subplot_signals(subplot_idx, page_signals)
+                else:
+                    logger.warning(f"    No signals available to plot in subplot {subplot_idx}")
+            
+        # Restore current page
+        self.tab_widget.setCurrentIndex(state.current_page_index)
+        logger.info(f"=== RESTORE COMPLETE ===")
+        return True
+
+    def _find_signal_data(self, ref: dict):
+        """Find raw signals data from metadata reference (Imported or Dummy)"""
+        logger = logging.getLogger(__name__)
+        name = ref.get('name')
+        file_path = ref.get('file_path')
+        channel_name = str(ref.get('channel_name'))
+        group_name = ref.get('group_name')
+        
+        logger.debug(f"_find_signal_data: Looking for '{name}' in channel='{channel_name}', group='{group_name}', file='{file_path}'")
+        
+        # 1. Look through imported data in manager
+        logger.debug(f"  Searching in imported data ({len(self.data_manager.channel_signals)} channels)...")
+        for channel, signals in self.data_manager.channel_signals.items():
+            if str(channel) == channel_name:
+                for sig in signals:
+                    if sig.get('name') == name and sig.get('file_path') == file_path:
+                        logger.debug(f"  ✓ FOUND in imported data!")
+                        return sig
+
+        # 2. Look through dummy data in the first available canvas
+        logger.debug(f"  Searching in dummy data...")
+        page = self.get_current_page()
+        if page and page.plot_canvas:
+            for channel in page.plot_canvas.dummy_signals:
+                if channel.get('name') == channel_name:
+                    for group in channel.get('groups', []):
+                        if group.get('name') == group_name:
+                            for sig in group.get('signals', []):
+                                if sig.get('name') == name:
+                                    # Format as full signal dict for rehydration
+                                    result = {
+                                        **sig,
+                                        'channel_name': channel_name,
+                                        'group_name': group_name
+                                    }
+                                    logger.debug(f"  ✓ FOUND in dummy data!")
+                                    return result
+        
+        logger.debug(f"  ✗ NOT FOUND anywhere")
+        return None
+
+    def closeEvent(self, event):
+        """Save settings and state on window close."""
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.info("=== CLOSING APPLICATION ===")
+        
+        try:
+            # Save window geometry
+            geom = self.geometry()
+            self.settings.preferences.window_geometry = [geom.x(), geom.y(), geom.width(), geom.height()]
+            logger.info(f"Saved window geometry: {[geom.x(), geom.y(), geom.width(), geom.height()]}")
+            
+            # Save imported files
+            self.settings.state.imported_files = self.data_manager.get_imported_paths_info()
+            logger.info(f"Saved {len(self.settings.state.imported_files)} imported files")
+            
+            # Save app state
+            self.settings.state.current_page_index = self.tab_widget.currentIndex()
+            logger.info(f"Current page index: {self.settings.state.current_page_index}")
+            
+            logger.info("Getting page states...")
+            page_states = self.page_manager.get_all_pages_state()
+            self.settings.state.pages = page_states
+            logger.info(f"Got {len(page_states)} page states")
+            
+            # Save settings to file
+            logger.info("Saving to file...")
+            self.settings.save()
+            logger.info("=== CLOSE COMPLETE ===")
+            
+        except Exception as e:
+            logger.error(f"ERROR during close: {e}")
+            logger.error(traceback.format_exc())
+        
+        event.accept()
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the main window"""

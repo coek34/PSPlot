@@ -1,8 +1,10 @@
 # page_widget.py
+import logging
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox
 from PyQt5.QtCore import Qt
 from plot_canvas import InteractivePlotCanvas
 from theme import get_theme
+from settings import PageState
 
 class PageWidget(QWidget):
     def __init__(self, page_index, width=8.27, height=11.69, parent=None):
@@ -14,6 +16,40 @@ class PageWidget(QWidget):
         self.page_name = f"Page {page_index + 1}"
         self.subplot_signals = [[] for _ in range(6)]  # Store lists of signals for up to 6 subplots
         self.setup_ui()
+        
+    def get_state(self) -> PageState:
+        """Return a serializable PageState object"""
+        logger = logging.getLogger(__name__)
+        logger.info(f"Getting state for page '{self.page_name}' (index {self.page_index})")
+        
+        # Create a lightweight version of subplot_signals without raw data
+        serializable_signals = []
+        for subplot_idx, subplot in enumerate(self.subplot_signals):
+            subplot_list = []
+            for signal in subplot:
+                if isinstance(signal, dict):
+                    # Keep metadata, drop large arrays
+                    sig_ref = {
+                        'name': signal.get('name'),
+                        'channel_name': signal.get('channel_name'),
+                        'group_name': signal.get('group_name'),
+                        'file_path': signal.get('file_path', '')
+                    }
+                    subplot_list.append(sig_ref)
+                    logger.debug(f"  Subplot {subplot_idx}: Saving signal ref - {sig_ref}")
+            serializable_signals.append(subplot_list)
+            logger.info(f"  Subplot {subplot_idx}: {len(subplot_list)} signals saved")
+
+        state = PageState(
+            name=self.page_name,
+            width=self.width,
+            height=self.height,
+            subplot_count=self.plot_canvas.subplot_count if self.plot_canvas else 1,
+            margins=self.get_current_margins(),
+            subplots_signals=serializable_signals
+        )
+        logger.info(f"Page state created: {state.name}, {len(serializable_signals)} subplots with signals")
+        return state
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -162,18 +198,34 @@ class PageWidget(QWidget):
     
     def set_subplot_signals(self, subplot_index, signal_data_list):
         """Set multiple signals for a specific subplot"""
-        self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list)
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Get the setting from main_window
+        use_group_name = False
+        try:
+            # Find main_window through page hierarchy
+            if hasattr(self, 'main_window') and self.main_window:
+                use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
+                logger.info(f"PageWidget: use_group_name = {use_group_name}")
+        except:
+            pass
+        
+        # Pass the setting to canvas
+        if self.plot_canvas:
+            self.plot_canvas.set_subplot_signals(subplot_index, signal_data_list, use_group_name=use_group_name)
+        
         # Also store the signals for preservation
         if 0 <= subplot_index < 6:
-            # Ensure all signals have channel and group information
             processed_signals = []
             for signal_data in signal_data_list:
                 if isinstance(signal_data, dict) and 'channel_name' in signal_data and 'group_name' in signal_data:
                     processed_signals.append(signal_data)
                 else:
-                    # If no channel/group info, create a minimal structure
                     minimal_signal = signal_data.copy() if isinstance(signal_data, dict) else {'name': str(signal_data)}
                     minimal_signal['channel_name'] = signal_data.get('channel_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
                     minimal_signal['group_name'] = signal_data.get('group_name', 'Unknown') if isinstance(signal_data, dict) else 'Unknown'
                     processed_signals.append(minimal_signal)
             self.subplot_signals[subplot_index] = processed_signals
+
+            logger.info(f"Stored {len(processed_signals)} signals in subplot_signals[{subplot_index}]")
