@@ -7,8 +7,9 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-SETTINGS_DIR = Path.home() / ".psplot"
-SETTINGS_FILE = SETTINGS_DIR / "settings.json"
+# Use the application directory for settings instead of home directory
+SETTINGS_DIR = Path(__file__).parent
+SETTINGS_FILE = SETTINGS_DIR / "last_session.psp"
 
 @dataclass
 class PageState:

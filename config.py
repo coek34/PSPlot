@@ -35,7 +35,7 @@ def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = Non
     
     Args:
         log_level: Root logger level. Defaults to LOG_LEVEL.
-        log_file: Path to log file. If None, uses ~/.psplot/psplot.log
+        log_file: Path to log file. If None, uses psplot.log in app directory
     """
     level = log_level if log_level is not None else LOG_LEVEL
     
@@ -55,8 +55,8 @@ def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = Non
     
     # File handler with rotation
     if log_file is None:
-        log_dir = Path.home() / ".psplot"
-        log_dir.mkdir(parents=True, exist_ok=True)
+        # Use application directory for logs
+        log_dir = Path(__file__).parent
         log_file = str(log_dir / "psplot.log")
     
     file_handler = logging.handlers.RotatingFileHandler(
