@@ -18,6 +18,8 @@ class PageState:
     height: float
     subplot_count: int
     margins: Dict[str, float]
+    # Current x-axis limits [min, max]
+    x_limits: Optional[List[float]] = None
     # List of subplots, each contains a list of signal references
     # Signal ref: {"file_path": str, "channel": str, "group": str, "name": str}
     subplots_signals: List[List[Dict[str, str]]] = field(default_factory=list)

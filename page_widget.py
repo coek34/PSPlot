@@ -45,6 +45,7 @@ class PageWidget(QWidget):
             height=self.height,
             subplot_count=self.plot_canvas.subplot_count if self.plot_canvas else 1,
             margins=self.get_current_margins(),
+            x_limits=list(self.plot_canvas.current_xlim) if self.plot_canvas and self.plot_canvas.current_xlim else None,
             subplots_signals=serializable_signals
         )
         logger.info(f"Page state created: {state.name}, {len(serializable_signals)} subplots with signals")

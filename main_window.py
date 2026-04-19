@@ -136,6 +136,12 @@ class MainWindow(QMainWindow):
                 page.adjust_margins(p_state.margins)
                 logger.info(f"  Restored margins: {p_state.margins}")
             
+            # Restore x-limits
+            if p_state.x_limits and len(p_state.x_limits) == 2:
+                if page.plot_canvas:
+                    page.plot_canvas.set_x_limits(p_state.x_limits[0], p_state.x_limits[1])
+                    logger.info(f"  Restored x-limits: {p_state.x_limits}")
+
             # Restore subplot count
             page.update_plots(p_state.subplot_count)
             
