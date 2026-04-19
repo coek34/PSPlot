@@ -70,6 +70,14 @@ class KeyboardManager:
             event.accept()
             return
 
+        # Toggle measurement cursors with T key
+        elif key == Qt.Key_T:
+            current_page = self.main_window.get_current_page()
+            if current_page and current_page.plot_canvas:
+                current_page.plot_canvas.toggle_measurement_cursors()
+            event.accept()
+            return
+
         # Import data with C key
         elif key == Qt.Key_C:
             self.main_window.import_pscad_data()

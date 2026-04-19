@@ -27,6 +27,14 @@ class BaseInteractiveCanvas(FigureCanvas):
         self.current_ylim_dict = {}  # Track individual y-limits for each subplot
         self.x_data_range = (0, 10)  # Full data range
         
+        # Measurement Cursors
+        self.cursors_active = False
+        self.cursor_lines_a = [] # List of vertical lines for cursor A (one per ax)
+        self.cursor_lines_b = [] # List of vertical lines for cursor B
+        self.cursor_pos_a = None # X position of cursor A
+        self.cursor_pos_b = None # X position of cursor B
+        self.active_cursor = None # 'A' or 'B' being dragged
+        
         # Store custom margins
         self.custom_margins = None  # Start with None to use tight_layout by default
         
@@ -42,6 +50,10 @@ class BaseInteractiveCanvas(FigureCanvas):
     
         # Add regular click event handler for subplot detection
         self.fig.canvas.mpl_connect('button_press_event', self.on_regular_click)
+        
+        # Connect cursor events
+        self.fig.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
+        self.fig.canvas.mpl_connect('button_release_event', self.on_mouse_release)
         
         # Available signals from DataManager
         self.dummy_signals = [] 
@@ -149,14 +161,87 @@ class BaseInteractiveCanvas(FigureCanvas):
         self.fig.canvas.draw_idle()
     
     def on_regular_click(self, event):
-        """Store which subplot was last clicked for context menu use"""
+        """Store which subplot was last clicked and handle cursor selection"""
         if event.inaxes in self.axes:
             # Find which subplot was clicked
             for i, ax in enumerate(self.axes):
                 if event.inaxes == ax:
                     self.last_clicked_subplot = i
                     break
-    
+        
+        if self.cursors_active and event.xdata is not None:
+            # Check if clicking near a cursor to start dragging
+            tol = (self.fig.get_axes()[0].get_xlim()[1] - self.fig.get_axes()[0].get_xlim()[0]) * 0.02
+            if abs(event.xdata - self.cursor_pos_a) < tol:
+                self.active_cursor = 'A'
+            elif abs(event.xdata - self.cursor_pos_b) < tol:
+                self.active_cursor = 'B'
+
+    def on_mouse_move(self, event):
+        """Handle cursor dragging and delta calculation"""
+        if not self.cursors_active or self.active_cursor is None or event.xdata is None:
+            return
+            
+        if self.active_cursor == 'A':
+            self.cursor_pos_a = event.xdata
+        else:
+            self.cursor_pos_b = event.xdata
+            
+        self._update_cursor_positions()
+        
+    def on_mouse_release(self, event):
+        """Stop dragging cursor"""
+        self.active_cursor = None
+
+    def toggle_measurement_cursors(self):
+        """Enable/Disable measurement vertical lines"""
+        self.cursors_active = not self.cursors_active
+        
+        if self.cursors_active:
+            # Initialize positions if not set
+            xlim = self.axes[0].get_xlim()
+            if self.cursor_pos_a is None:
+                self.cursor_pos_a = xlim[0] + (xlim[1] - xlim[0]) * 0.25
+            if self.cursor_pos_b is None:
+                self.cursor_pos_b = xlim[0] + (xlim[1] - xlim[0]) * 0.75
+            
+            # Create lines on each axes
+            self.cursor_lines_a = []
+            self.cursor_lines_b = []
+            for ax in self.axes:
+                la = ax.axvline(self.cursor_pos_a, color='red', linestyle='--', linewidth=1.5, alpha=0.8, picker=5)
+                lb = ax.axvline(self.cursor_pos_b, color='blue', linestyle='--', linewidth=1.5, alpha=0.8, picker=5)
+                self.cursor_lines_a.append(la)
+                self.cursor_lines_b.append(lb)
+            
+            self._update_cursor_positions() # Initial info update
+        else:
+            # Remove lines
+            for l in self.cursor_lines_a + self.cursor_lines_b:
+                l.remove()
+            self.cursor_lines_a = []
+            self.cursor_lines_b = []
+            
+        self.draw()
+
+    def _update_cursor_positions(self):
+        """Sync line positions and update delta info in status bar"""
+        for la, lb in zip(self.cursor_lines_a, self.cursor_lines_b):
+            la.set_xdata([self.cursor_pos_a, self.cursor_pos_a])
+            lb.set_xdata([self.cursor_pos_b, self.cursor_pos_b])
+        
+        # Calculate Delta
+        dx = abs(self.cursor_pos_b - self.cursor_pos_a)
+        freq = 1.0/dx if dx > 0 else 0
+        
+        # Display in main window status bar if possible
+        if hasattr(self, 'main_window') and self.main_window:
+            msg = f"A: {self.cursor_pos_a:.4f}s | B: {self.cursor_pos_b:.4f}s | Δt: {dx:.4f}s | f: {freq:.2f}Hz"
+            # Temporary override status
+            self.main_window.status_label.setText(msg)
+            
+        self.draw_idle()
+
     def show_context_menu(self, position):
         """Show context menu when right-clicking on the canvas"""
         # Create context menu

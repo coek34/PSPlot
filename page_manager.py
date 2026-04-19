@@ -90,8 +90,8 @@ class PageManager:
         """Update the status bar with page information"""
         total_pages = len(self.pages)
         current_page = self.current_page_index + 1
-        self.main_window.status_label.setText(f"Keys: 1-6 (plots) | A/D (pan) | R (reset x) | Y (reset y) | X (grid) | E (export) | M (margins) | Double-click tabs to rename pages | Page {current_page}/{total_pages}")
-    
+        self.main_window.status_label.setText(f"Keys: 1-6 (plots) | A/D (pan) | R (res x) | Y (res y) | X (grid) | T (cursors) | E (export) | M (margins) | Page {current_page}/{total_pages}")
+
     def on_page_changed(self, index):
         """Handle page change event"""
         self.current_page_index = index
