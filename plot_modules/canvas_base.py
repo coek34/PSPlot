@@ -246,6 +246,10 @@ class BaseInteractiveCanvas(FigureCanvas):
             self.cursor_texts_a = []
             self.cursor_texts_b = []
             
+            # Reset status bar to default help text
+            if hasattr(self, 'main_window') and self.main_window:
+                self.main_window.update_status_bar()
+            
         self.draw()
 
     def _update_cursor_positions(self):
