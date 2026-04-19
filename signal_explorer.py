@@ -1,7 +1,7 @@
 # signal_explorer.py
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget, 
                             QTreeWidgetItem, QPushButton, QSplitter, QLabel,
-                            QFrame, QMenuBar, QAction, QMessageBox)
+                            QFrame, QMenuBar, QAction, QMessageBox, QLineEdit)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 from theme import get_theme, get_colors
