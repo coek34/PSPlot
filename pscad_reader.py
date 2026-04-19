@@ -9,37 +9,56 @@ from matplotlib.ticker import MaxNLocator
 
 class PSCADReader:
     """
-    A utility class to read and plot PSCAD output data.
+    A utility class to read and plot PSCAD output data with caching and downsampling.
     """
-    
-    @staticmethod
-    def get_pgb(fn_out, s_dsc, s_grp):
-        """Finds the signal index (nPGB) from the PSCAD .inf file."""
-        n_pgb = None
-        inf_file = fn_out + ".inf"
-        if exists(inf_file):
-            with open(inf_file, 'r') as f:
-                s_srch = f'Desc="{s_dsc}"  Group="{s_grp}"'
-                i = 1
-                i_tmp = []
-                for line in f:
-                    if s_srch in line:
-                        i_tmp.append(i)            
-                    i += 1
-                if i_tmp:
-                    n_pgb = i_tmp[-1]
-        return n_pgb
+    _cache = {} # Cache: { (file_path, signal_index): (full_t, full_y) }
+
+    @classmethod
+    def clear_cache(cls):
+        cls._cache = {}
+
+    @classmethod
+    def get_signal_data(cls, fn_out, n_pgb, max_points=2000):
+        """
+        Reads the signal data from the .out files with caching and automatic downsampling.
+        
+        Args:
+            fn_out (str): Base filename.
+            n_pgb (int): Signal index.
+            max_points (int): Maximum points to return for plotting.
+            
+        Returns:
+            tuple: (t_array, y_array) - potentially downsampled
+        """
+        cache_key = (fn_out, n_pgb)
+        
+        # 1. Try to get full data from cache
+        if cache_key in cls._cache:
+            full_t, full_y = cls._cache[cache_key]
+        else:
+            # 2. Read from disk if not cached
+            full_t, full_y = cls._read_from_disk(fn_out, n_pgb)
+            if full_t.size > 0:
+                cls._cache[cache_key] = (full_t, full_y)
+        
+        if full_t.size == 0:
+            return full_t, full_y
+
+        # 3. Downsample if number of points exceeds threshold
+        if full_t.size > max_points:
+            return cls.downsample(full_t, full_y, max_points)
+        
+        return full_t, full_y
 
     @staticmethod
-    def get_signal_data(fn_out, n_pgb):
-        """Reads the signal data from the .out files."""
+    def _read_from_disk(fn_out, n_pgb):
+        """Internal method for raw disk reading"""
         t, dat = np.array([]), np.array([])
         if n_pgb is not None:
             file_num = int(ceil(n_pgb / 10))
             szero = '0' if file_num < 10 else ''
             fname = f"{fn_out}_{szero}{file_num}.out"
             
-            # If the prefixed file doesn't exist, try without prefix (some versions/exports)
             if not exists(fname) and exists(fn_out + ".out"):
                 fname = fn_out + ".out"
             
@@ -47,8 +66,6 @@ class PSCADReader:
             
             if exists(fname):
                 try:
-                    # Skip the first line if it's a label header (common in some PSCAD exports)
-                    # We check the first line to see if it's numeric
                     with open(fname, 'r') as f:
                         line1 = f.readline().strip()
                         skip = 1 if any(c.isalpha() for c in line1) else 0
@@ -58,8 +75,37 @@ class PSCADReader:
                     dat = pddat.iloc[:, 1].values
                 except Exception as e:
                     print(f"Error reading {fname}: {e}")
-                    
         return np.array(t), np.array(dat)
+
+    @staticmethod
+    def downsample(t, y, max_points):
+        """
+        Downsamples data using a min-max approach to preserve spikes/visual fidelity.
+        Dividing the data into buckets and picking min/max from each.
+        """
+        n = len(t)
+        # Aim for max_points by taking pairs of min/max
+        bucket_size = max(1, n // (max_points // 2))
+        
+        # Reshape to handle buckets (dropping remainder)
+        n_buckets = n // bucket_size
+        t_trunc = t[:n_buckets * bucket_size].reshape(n_buckets, bucket_size)
+        y_trunc = y[:n_buckets * bucket_size].reshape(n_buckets, bucket_size)
+        
+        # Get indices of min and max in each bucket
+        min_idx = np.argmin(y_trunc, axis=1)
+        max_idx = np.argmax(y_trunc, axis=1)
+        
+        # We need to preserve time order within each bucket
+        # Create global indices
+        offset = np.arange(0, n_buckets * bucket_size, bucket_size)
+        idx_a = offset + min_idx
+        idx_b = offset + max_idx
+        
+        # Combine and sort to maintain time chronological order
+        combined_idx = np.unique(np.concatenate([idx_a, idx_b]))
+        
+        return t[combined_idx], y[combined_idx]
 
     @classmethod
     def read_signal(cls, fn_name, sgn_name, grp_name):
