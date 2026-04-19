@@ -95,6 +95,9 @@ class SignalHandlerMixin:
             ax.set_ylim(self.current_ylim_dict[subplot_index])
         
         selector = self._create_rectangle_selector(ax, subplot_index)
+        # If cursors are currently active, the new zoom selector must be disabled immediately
+        if getattr(self, 'cursors_active', False):
+            selector.set_active(False)
         self.rect_selectors[subplot_index] = selector
         
         self.draw()

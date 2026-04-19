@@ -105,6 +105,9 @@ class BaseInteractiveCanvas(FigureCanvas):
                 button=[1], minspanx=5, minspany=5, spancoords='pixels',
                 interactive=True
             )
+            # If cursors are active, stay in measurement mode (disable zoom)
+            if self.cursors_active:
+                selector.set_active(False)
             self.rect_selectors.append(selector)
         
         # Apply shared x-limits if they exist (this preserves x-limits when changing subplot count)
@@ -194,11 +197,16 @@ class BaseInteractiveCanvas(FigureCanvas):
         self.active_cursor = None
 
     def toggle_measurement_cursors(self):
-        """Enable/Disable measurement vertical lines"""
+        """Enable/Disable measurement vertical lines and toggle zoom availability"""
         self.cursors_active = not self.cursors_active
         
+        # When cursors are active, we should disable the zoom selectors to prevent conflicts
+        zoom_enabled = not self.cursors_active
+        for selector in self.rect_selectors:
+            selector.set_active(zoom_enabled)
+        
         if self.cursors_active:
-            # Initialize positions if not set
+
             xlim = self.axes[0].get_xlim()
             if self.cursor_pos_a is None:
                 self.cursor_pos_a = xlim[0] + (xlim[1] - xlim[0]) * 0.25
