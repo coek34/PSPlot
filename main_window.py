@@ -228,6 +228,16 @@ class MainWindow(QMainWindow):
         logger.info("=== CLOSING APPLICATION ===")
         
         try:
+            # Force update signals from canvas to storage before saving
+            for page in self.page_manager.pages:
+                if page.plot_canvas:
+                    logger.info(f"Gathering signals for page: {page.page_name}")
+                    for i in range(6):
+                        if i < len(page.plot_canvas.axes):
+                            sigs = page.plot_canvas.get_existing_signals_for_subplot(i)
+                            if sigs:
+                                page.subplot_signals[i] = sigs
+
             # Save window geometry
             geom = self.geometry()
             self.settings.preferences.window_geometry = [geom.x(), geom.y(), geom.width(), geom.height()]

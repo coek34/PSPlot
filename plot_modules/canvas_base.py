@@ -43,114 +43,13 @@ class BaseInteractiveCanvas(FigureCanvas):
         # Add regular click event handler for subplot detection
         self.fig.canvas.mpl_connect('button_press_event', self.on_regular_click)
         
-        # Dummy signals data
-        self.dummy_signals = self.generate_dummy_signals()
-    
+        # Available signals from DataManager
+        self.dummy_signals = [] 
+        
     def generate_dummy_signals(self):
-        """Generate dummy signals organized in channels with groups"""
-        # Create hierarchical structure: Channel -> Groups -> Signals
-        signals = []
-        x = np.linspace(0, 10, 1000)
-        
-        # Create Dummy channel with Trigonometry and Exponential groups
-        dummy_channel = {
-            'name': 'Dummy',
-            'groups': []
-        }
-        
-        # Trigonometry group (4 signals)
-        trig_group = {
-            'name': 'Trigonometry',
-            'signals': []
-        }
-        
-        for i in range(4):
-            if i == 0:
-                # Sine wave
-                y = np.sin(x * (i+1)) * np.exp(-x/10)
-            elif i == 1:
-                # Cosine wave
-                y = np.cos(x * (i+1)) * np.exp(-x/8)
-            elif i == 2:
-                # Sine with different frequency
-                y = np.sin(x * 2) * np.cos(x * (i+1))
-            else:
-                # Combined signal
-                y = np.sin(x) * np.cos(x * (i+1)) * np.exp(-x/5)
-            
-            trig_group['signals'].append({
-                'name': f'Trig_{i+1}',
-                'x': x,
-                'y': y
-            })
-        
-        # Exponential group (4 signals)
-        exp_group = {
-            'name': 'Exponential',
-            'signals': []
-        }
-        
-        for i in range(4):
-            if i == 0:
-                # Exponential decay
-                y = np.exp(-x/(i+1)) * np.sin(x * (i+1))
-            elif i == 1:
-                # Exponential growth
-                y = np.exp(x/(i+1)) * np.cos(x * (i+1))
-            elif i == 2:
-                # Damped oscillation
-                y = np.exp(-x/5) * np.sin(x * (i+1)) * np.cos(x * (i+1))
-            else:
-                # Complex exponential
-                y = np.exp(-x/3) * np.sin(x * (i+1)) * np.exp(-x/2)
-            
-            exp_group['signals'].append({
-                'name': f'Exp_{i+1}',
-                'x': x,
-                'y': y
-            })
-        
-        # Add groups to channel
-        dummy_channel['groups'].extend([trig_group, exp_group])
-        signals.append(dummy_channel)
-        
-        # Create another channel with different signals
-        dummy2_channel = {
-            'name': 'Dummy2',
-            'groups': []
-        }
-        
-        # Another trigonometry group
-        trig_group2 = {
-            'name': 'Trigonometry',
-            'signals': []
-        }
-        
-        for i in range(4):
-            if i == 0:
-                # Sine wave with different amplitude
-                y = 2 * np.sin(x * (i+1)) * np.exp(-x/10)
-            elif i == 1:
-                # Cosine wave with different frequency
-                y = np.cos(x * 3) * np.exp(-x/8)
-            elif i == 2:
-                # Combined signal
-                y = np.sin(x * 2) * np.cos(x * (i+1)) * np.exp(-x/5)
-            else:
-                # Sine with phase shift
-                y = np.sin(x + np.pi/4) * np.exp(-x/3)
-            
-            trig_group2['signals'].append({
-                'name': f'Trig2_{i+1}',
-                'x': x,
-                'y': y
-            })
-        
-        dummy2_channel['groups'].append(trig_group2)
-        signals.append(dummy2_channel)
-        
-        return signals
-    
+        """No longer used"""
+        return []
+
     def update_plots(self, subplot_count):
         self.subplot_count = max(1, min(6, subplot_count))
         self.fig.clear()

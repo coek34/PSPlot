@@ -11,12 +11,10 @@ class SignalHandlerMixin:
     
     def set_subplot_signal(self, subplot_index, signal_data):
         """Set a signal to a specific subplot"""
-        # (This remains as fallback for single signals)
         self.set_subplot_signals(subplot_index, [signal_data])
-    
+
     def set_subplot_signals(self, subplot_index, signal_data_list, use_group_name=False, use_channel_name=False):
-        """Set multiple signals to a specific subplot"""
-        logger.info(f"\n=== SIGNAL HANDLER: set_subplot_signals ===")
+
         logger.info(f"  Subplot: {subplot_index}, Signals Count: {len(signal_data_list)}")
         if subplot_index < 0 or subplot_index >= len(self.axes):
             return
@@ -54,13 +52,14 @@ class SignalHandlerMixin:
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
                     line, = ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
                     # Force set attributes for persistence
-                    line._original_signal_name = str(signal_name)
-                    line._channel_name = str(channel_name)
-                    line._group_name = str(group_name)
-                    line._file_path = str(file_path)
+                    # We use setattr to ensure these custom attributes are recognized and stored
+                    setattr(line, '_original_signal_name', str(signal_name))
+                    setattr(line, '_channel_name', str(channel_name))
+                    setattr(line, '_group_name', str(group_name))
+                    setattr(line, '_file_path', str(file_path))
+                    setattr(line, '_units', str(actual_signal_data.get('units', '')))
                     
-                    # Store unit on line for possible later use
-                    line._units = str(actual_signal_data.get('units', ''))
+                    logger.debug(f"  Metadata attached to line: {signal_name} (Chan: {channel_name})")
         
         # Set axes labels and appearance
         if subplot_index == len(self.axes) - 1:
@@ -140,20 +139,3 @@ class SignalHandlerMixin:
                         'file_path': file_path
                     })
         return existing_signals
-    
-    def find_signal_by_name_with_channel(self, signal_name):
-        """Find a signal by name in the dummy signals structure"""
-        for channel in self.dummy_signals:
-            for group in channel['groups']:
-                for signal in group['signals']:
-                    if signal['name'] == signal_name:
-                        return {'signal': signal, 'channel_name': channel['name'], 'group_name': group['name']}
-        return None
-    
-    def find_signal_by_name(self, signal_name, channel_name=None):
-        for channel in self.dummy_signals:
-            if channel_name and channel['name'] != channel_name: continue
-            for group in channel['groups']:
-                for signal in group['signals']:
-                    if signal['name'] == signal_name: return signal
-        return None

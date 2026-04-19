@@ -79,51 +79,23 @@ class PageWidget(QWidget):
         
     def update_plots(self, subplot_count):
         """Update plots while preserving existing signals"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Store current signals before updating - ensure we capture all 6 subplots
         if self.plot_canvas and hasattr(self.plot_canvas, 'axes'):
-            # Save current signals for each subplot (up to 6)
-            for i in range(6):  # Always check all 6 possible subplots
+            logger.info("Preserving signals before subplot update...")
+            for i in range(6):
                 if i < len(self.plot_canvas.axes):
-                    ax = self.plot_canvas.axes[i]
-                    lines = ax.get_lines()
-                    # Clear the existing list for this subplot
-                    self.subplot_signals[i] = []
-                    # Save all lines from this subplot that are not rectangle selectors
-                    for line in lines:
-                        # Skip lines with '_nolegend_' label (these are from rectangle selectors)
-                        if line.get_label() != '_nolegend_':
-                            x_data = line.get_xdata()
-                            y_data = line.get_ydata()
-                            if len(x_data) > 0 and len(y_data) > 0:
-                                # Store a representation of the signal with channel/group info if available
-                                signal_data = {
-                                    'x': x_data,
-                                    'y': y_data,
-                                    'name': line.get_label() if line.get_label() else f'Signal_{i+1}'
-                                }
-                                
-                                # Try to get channel and group info from the existing signal data
-                                if i < len(self.subplot_signals) and self.subplot_signals[i]:
-                                    # Look for matching signal in existing signals
-                                    for existing_signal in self.subplot_signals[i]:
-                                        if existing_signal.get('name') == signal_data['name']:
-                                            signal_data['channel_name'] = existing_signal.get('channel_name', 'Unknown')
-                                            signal_data['group_name'] = existing_signal.get('group_name', 'Unknown')
-                                            break
-                                    else:
-                                        # If not found, use defaults
-                                        signal_data['channel_name'] = 'Unknown'
-                                        signal_data['group_name'] = 'Unknown'
-                                else:
-                                    # Use defaults if no existing signals
-                                    signal_data['channel_name'] = 'Unknown'
-                                    signal_data['group_name'] = 'Unknown'
-                                    
-                                self.subplot_signals[i].append(signal_data)
-        
+                    # Use the canvas method which now reliably catches metadata
+                    sigs = self.plot_canvas.get_existing_signals_for_subplot(i)
+                    if sigs:
+                        self.subplot_signals[i] = sigs
+                        logger.info(f"  Preserved {len(sigs)} signals for subplot {i}")
+
         # Update the plots
         self.plot_canvas.update_plots(subplot_count)
-        
+
         # Restore signals to new subplots if they exist
         if self.plot_canvas and hasattr(self.plot_canvas, 'axes'):
             for i in range(min(subplot_count, 6)):
