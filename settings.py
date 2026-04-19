@@ -20,6 +20,8 @@ class PageState:
     margins: Dict[str, float]
     # Current x-axis limits [min, max]
     x_limits: Optional[List[float]] = None
+    # Custom y-labels for each subplot index
+    y_labels: Dict[int, str] = field(default_factory=dict)
     # List of subplots, each contains a list of signal references
     # Signal ref: {"file_path": str, "channel": str, "group": str, "name": str}
     subplots_signals: List[List[Dict[str, str]]] = field(default_factory=list)

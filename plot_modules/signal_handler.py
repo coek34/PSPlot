@@ -58,6 +58,9 @@ class SignalHandlerMixin:
                     line._channel_name = str(channel_name)
                     line._group_name = str(group_name)
                     line._file_path = str(file_path)
+                    
+                    # Store unit on line for possible later use
+                    line._units = str(actual_signal_data.get('units', ''))
         
         # Set axes labels and appearance
         if subplot_index == len(self.axes) - 1:
@@ -66,8 +69,26 @@ class SignalHandlerMixin:
             ax.set_xlabel('')
             
         ax.set_title('')
-        y_label = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
-        ax.set_ylabel(y_label)
+        
+        # Determine Y Label: 
+        # 1. Use existing manual label if it's not the default 'Amplitude'
+        # 2. Otherwise, use the unit of the first signal if available
+        # 3. Fallback to 'Amplitude'
+        existing_y = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
+        
+        if existing_y == 'Amplitude' and signal_data_list:
+            # Try to get unit from the first signal in the list
+            first_sig = signal_data_list[0]
+            # Handle both nested and flat structure
+            if isinstance(first_sig, dict):
+                unit = first_sig.get('units') or first_sig.get('signal_data', {}).get('units', '')
+                if unit:
+                    # Update internal y_labels dict and set on axes
+                    if not hasattr(self, 'y_labels'): self.y_labels = {}
+                    self.y_labels[subplot_index] = str(unit)
+                    existing_y = str(unit)
+
+        ax.set_ylabel(existing_y)
         ax.legend(fontsize=8, loc='upper right')
         ax.grid(True, alpha=0.3)
         

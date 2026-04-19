@@ -142,10 +142,16 @@ class MainWindow(QMainWindow):
                     page.plot_canvas.set_x_limits(p_state.x_limits[0], p_state.x_limits[1])
                     logger.info(f"  Restored x-limits: {p_state.x_limits}")
 
+            # Restore y-labels
+            if p_state.y_labels and page.plot_canvas:
+                # Convert string keys from JSON back to integers if necessary
+                y_labels = {int(k): str(v) for k, v in p_state.y_labels.items()}
+                page.plot_canvas.y_labels = y_labels
+                logger.info(f"  Restored y-labels: {y_labels}")
+
             # Restore subplot count
             page.update_plots(p_state.subplot_count)
-            
-            # Restore signals (Rehydration)
+
             logger.info(f"  Restoring {len(p_state.subplots_signals)} subplots with signal refs...")
             for subplot_idx, sig_refs in enumerate(p_state.subplots_signals):
                 logger.info(f"    Subplot {subplot_idx}: {len(sig_refs)} signal references")
