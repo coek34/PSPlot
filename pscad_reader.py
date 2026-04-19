@@ -117,6 +117,24 @@ class PSCADReader:
         return cls.get_signal_data(fn_name, n_pgb)
 
     @staticmethod
+    def get_pgb(fn_out, s_dsc, s_grp):
+        """Finds the signal index (nPGB) from the PSCAD .inf file."""
+        n_pgb = None
+        inf_file = fn_out + ".inf"
+        if exists(inf_file):
+            with open(inf_file, 'r') as f:
+                s_srch = f'Desc="{s_dsc}"  Group="{s_grp}"'
+                i = 1
+                i_tmp = []
+                for line in f:
+                    if s_srch in line:
+                        i_tmp.append(i)            
+                    i += 1
+                if i_tmp:
+                    n_pgb = i_tmp[-1]
+        return n_pgb
+
+    @staticmethod
     def list_signals(fn_out, verbose=True):
         """
         Parses the .inf file and returns a list of all available signals.
