@@ -28,15 +28,14 @@ class PageWidget(QWidget):
             subplot_list = []
             for signal in subplot:
                 if isinstance(signal, dict):
-                    # Keep metadata, drop large arrays
+                    # Keep metadata, drop large arrays and absolute file paths
                     sig_ref = {
                         'name': signal.get('name'),
                         'channel_name': signal.get('channel_name'),
-                        'group_name': signal.get('group_name'),
-                        'file_path': signal.get('file_path', '')
+                        'group_name': signal.get('group_name')
                     }
                     subplot_list.append(sig_ref)
-                    logger.debug(f"  Subplot {subplot_idx}: Saving signal ref - {sig_ref}")
+                    logger.debug(f"  Subplot {subplot_idx}: Saving signal ref (chan-linked) - {sig_ref}")
             serializable_signals.append(subplot_list)
             logger.info(f"  Subplot {subplot_idx}: {len(subplot_list)} signals saved")
 

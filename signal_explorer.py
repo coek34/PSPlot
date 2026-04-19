@@ -423,14 +423,14 @@ class SignalExplorerDialog(QDialog):
         for signal_data in signals:
             # Check if it's already in the correct format (no nested 'signal_data' key)
             if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
-                # This is the nested format - extract the actual signal data
-                actual_signal_data = signal_data['signal_data']
+                # This is the nested format - extract a copy to avoid modifying the original data source
+                actual_signal_data = signal_data['signal_data'].copy()
                 actual_signal_data['channel_name'] = signal_data['channel_name']
                 actual_signal_data['group_name'] = signal_data['group_name']
                 actual_signals.append(actual_signal_data)
             else:
-                # This is already the correct format
-                actual_signals.append(signal_data)
+                # This is already the correct format (usually existing signals or dummy)
+                actual_signals.append(signal_data.copy())
         
         return actual_signals
     

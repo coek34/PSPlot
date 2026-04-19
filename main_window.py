@@ -169,23 +169,12 @@ class MainWindow(QMainWindow):
         """Find raw signals data from metadata reference (Imported or Dummy)"""
         logger = logging.getLogger(__name__)
         name = ref.get('name')
-        file_path = ref.get('file_path')
         channel_name = str(ref.get('channel_name'))
         group_name = ref.get('group_name')
         
-        logger.debug(f"_find_signal_data: Looking for '{name}' in channel='{channel_name}', group='{group_name}', file='{file_path}'")
+        logger.debug(f"_find_signal_data: Looking for '{name}' in channel='{channel_name}', group='{group_name}'")
         
-        # 1. Look through imported data in manager
-        logger.debug(f"  Searching in imported data ({len(self.data_manager.channel_signals)} channels)...")
-        for channel, signals in self.data_manager.channel_signals.items():
-            if str(channel) == channel_name:
-                for sig in signals:
-                    if sig.get('name') == name and sig.get('file_path') == file_path:
-                        logger.debug(f"  ✓ FOUND in imported data!")
-                        return sig
-
-        # 2. Look through dummy data in the first available canvas
-        logger.debug(f"  Searching in dummy data...")
+        # 1. Check if it's a dummy signal first (Internal data)
         page = self.get_current_page()
         if page and page.plot_canvas:
             for channel in page.plot_canvas.dummy_signals:
@@ -194,15 +183,29 @@ class MainWindow(QMainWindow):
                         if group.get('name') == group_name:
                             for sig in group.get('signals', []):
                                 if sig.get('name') == name:
-                                    # Format as full signal dict for rehydration
-                                    result = {
-                                        **sig,
-                                        'channel_name': channel_name,
-                                        'group_name': group_name
-                                    }
                                     logger.debug(f"  ✓ FOUND in dummy data!")
-                                    return result
+                                    return {**sig, 'channel_name': channel_name, 'group_name': group_name}
+
+        # 2. Resolve file_path from DataManager using channel_name (Dynamic Linking)
+        # This allows switching files just by changing the imported file in a channel
+        file_path = None
+        for data in self.data_manager.imported_data:
+            if data['label'] == channel_name:
+                file_path = data['path']
+                # Prep path for reader (remove .inf)
+                if file_path.lower().endswith('.inf'):
+                    file_path = file_path[:-4]
+                break
         
+        if file_path:
+            logger.debug(f"  Dynamically resolved file: {file_path}")
+            # Create a full ref for loading
+            load_ref = {**ref, 'file_path': file_path}
+            loaded = self.data_manager.load_signal_data(load_ref)
+            if loaded:
+                logger.debug(f"  ✓ Successfully reloaded '{name}' from current channel source")
+                return loaded
+
         logger.debug(f"  ✗ NOT FOUND anywhere")
         return None
 

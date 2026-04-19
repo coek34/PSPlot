@@ -300,29 +300,66 @@ class BaseInteractiveCanvas(FigureCanvas):
 
     def show_signal_selector(self, position):
         """Show signal selector dialog for the clicked subplot"""
-        # Use the stored last clicked subplot
-        if self.last_clicked_subplot is not None:
-            from signal_explorer import SignalExplorerDialog
+        # If position is exactly (0,0), it might be an automated trigger from import
+        # In that case, we should default to subplot 0 if none was clicked
+        if self.last_clicked_subplot is None:
+            self.last_clicked_subplot = 0
             
-            # Get existing signals for this subplot to show in the dialog
-            existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
+        from signal_explorer import SignalExplorerDialog
+        
+        # Get existing signals for this subplot to show in the dialog
+        existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
+        
+        # Get data from data manager if available
+        available_data = self.dummy_signals
+        data_manager = None
+        if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'data_manager'):
+            data_manager = self.main_window.data_manager
+            imported = data_manager.get_all_available_data()
+            available_data = self.dummy_signals + imported
+        
+        # Create a dialog with dummy + imported signals and existing signals
+        dialog = SignalExplorerDialog(available_data, existing_signals, parent=self)
+        if dialog.exec_() == dialog.Accepted:
+            selected_ref = dialog.get_selected_signals()
+            final_signals = []
             
-            # Get data from data manager if available
-            available_data = self.dummy_signals
-            if hasattr(self, 'main_window') and self.main_window and hasattr(self.main_window, 'data_manager'):
-                imported = self.main_window.data_manager.get_all_available_data()
-                available_data = self.dummy_signals + imported
-            
-            # Create a dialog with dummy + imported signals and existing signals
-            dialog = SignalExplorerDialog(available_data, existing_signals, parent=self)
-            if dialog.exec_() == dialog.Accepted:
-                selected_signals = dialog.get_selected_signals()
-                if selected_signals:
+            if selected_ref:
+                for ref in selected_ref:
+                    # If ref doesn't have 'x' and 'y' data (meaning it's just metadata from .inf), load it
+                    if ('x' not in ref or 'y' not in ref) and data_manager:
+                        # Load data via data_manager
+                        loaded_data = data_manager.load_signal_data(ref)
+                        if loaded_data:
+                            # Merge original ref with loaded data to preserve metadata
+                            merged = {**ref, **loaded_data}
+                            final_signals.append(merged)
+                    else:
+                        # Data already exists (e.g., dummy signals or already loaded)
+                        final_signals.append(ref)
+                
+                if final_signals:
                     # Plot all selected signals in the same subplot
-                    self.set_subplot_signals(self.last_clicked_subplot, selected_signals)
-        else:
-            # If no subplot was clicked, show a message
-            QMessageBox.information(self, "Info", "Please click on a subplot first to select a signal.")
+                    # Use set_subplot_signals if available (via mixin), otherwise fallback
+                    if hasattr(self, 'set_subplot_signals'):
+                        # Check for flags in main_window
+                        use_group_name = False
+                        use_channel_name = False
+                        if self.main_window:
+                            use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
+                            use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
+                        
+                        self.set_subplot_signals(self.last_clicked_subplot, final_signals, 
+                                               use_group_name=use_group_name, 
+                                               use_channel_name=use_channel_name)
+                    else:
+                        # Fallback for base class if mixin not correctly initialized
+                        ax = self.axes[self.last_clicked_subplot]
+                        ax.clear()
+                        for sig in final_signals:
+                            ax.plot(sig['x'], sig['y'], label=sig['name'])
+                        ax.legend()
+                        self.draw()
 
 
 class YLabelDialog(QDialog):

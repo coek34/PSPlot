@@ -33,11 +33,13 @@ class PageManager:
         page_index = len(self.pages)
         page_widget = PageWidget(page_index, width, height)
         
-        # Give page_widget a reference to main_window
+        # Give page_widget and its canvas a reference to main_window
         page_widget.main_window = self.main_window
+        if page_widget.plot_canvas:
+            page_widget.plot_canvas.main_window = self.main_window
         
         self.pages.append(page_widget)
-        
+
         # Add to tab widget
         tab_name = f"Page {page_index + 1}"
         self.main_window.tab_widget.addTab(page_widget, tab_name)

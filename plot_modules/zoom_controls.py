@@ -21,9 +21,30 @@ class ZoomControlMixin:
         self.draw()
     
     def reset_x_zoom(self):
-        """Reset to original x-view (full data range)"""
-        self.set_x_limits(self.x_data_range[0], self.x_data_range[1])
-    
+        """Reset to original x-view (full range of signals currently plotted)"""
+        all_x_min, all_x_max = [], []
+        
+        # Look through all subplots and lines to find global x-range
+        for ax in self.axes:
+            lines = ax.get_lines()
+            for line in lines:
+                if line.get_label() != '_nolegend_':
+                    xd = line.get_xdata()
+                    if len(xd) > 0:
+                        all_x_min.append(np.min(xd))
+                        all_x_max.append(np.max(xd))
+        
+        if all_x_min and all_x_max:
+            # Found data in the plot, reset to its range
+            new_min = min(all_x_min)
+            new_max = max(all_x_max)
+            # Update the global data range as well to ensure set_x_limits doesn't truncate
+            self.x_data_range = (new_min, new_max)
+            self.set_x_limits(new_min, new_max)
+        else:
+            # Fallback to current x_data_range if no lines are plotted
+            self.set_x_limits(self.x_data_range[0], self.x_data_range[1])
+
     def reset_y_zoom(self):
         """Reset y-axis to show only visible data in current x-range"""
         if self.current_xlim is not None:
