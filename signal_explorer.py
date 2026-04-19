@@ -29,6 +29,28 @@ class SignalExplorerDialog(QDialog):
         # Get theme colors
         c = get_colors()
         
+        # Search area
+        search_layout = QHBoxLayout()
+        search_label = QLabel("Search:")
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Filter signals by name...")
+        self.search_input.textChanged.connect(self.filter_signals)
+        
+        # Style search input
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border_light};
+                border-radius: 4px;
+                padding: 4px 8px;
+            }}
+        """)
+        
+        search_layout.addWidget(search_label)
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+
         # Main splitter
         splitter = QSplitter(Qt.Horizontal)
         
@@ -209,6 +231,57 @@ class SignalExplorerDialog(QDialog):
         """
         return style
     
+    def filter_signals(self, text):
+        """Filter the signal tree based on search text"""
+        search_text = text.lower()
+        
+        # Iterate through all top-level items (Channels)
+        for i in range(self.signal_tree.topLevelItemCount()):
+            channel_item = self.signal_tree.topLevelItem(i)
+            channel_visible = False
+            
+            # Iterate through Groups
+            for j in range(channel_item.childCount()):
+                group_item = channel_item.child(j)
+                group_visible = False
+                
+                # Iterate through Signals
+                for k in range(group_item.childCount()):
+                    signal_item = group_item.child(k)
+                    # Check if signal name matches search text
+                    matches = search_text in signal_item.text(0).lower()
+                    signal_item.setHidden(not matches)
+                    if matches:
+                        group_visible = True
+                
+                # Show group if any signal matches, or if group name itself matches
+                if search_text in group_item.text(0).lower():
+                    group_visible = True
+                    # If group name matches, show all its signals
+                    for k in range(group_item.childCount()):
+                        group_item.child(k).setHidden(False)
+                
+                group_item.setHidden(not group_visible)
+                if group_visible:
+                    channel_visible = True
+            
+            # Show channel if any group/signal matches, or if channel name matches
+            if search_text in channel_item.text(0).lower():
+                channel_visible = True
+                # If channel matches, show everything inside
+                self._set_subtree_hidden(channel_item, False)
+            
+            channel_item.setHidden(not channel_visible)
+            if channel_visible and search_text:
+                channel_item.setExpanded(True)
+
+    def _set_subtree_hidden(self, parent_item, hidden):
+        """Recursively set hidden state for all children"""
+        parent_item.setHidden(hidden)
+        for i in range(parent_item.childCount()):
+            child = parent_item.child(i)
+            self._set_subtree_hidden(child, hidden)
+
     def populate_tree(self):
         """Populate the signal tree with available signals organized in channels, groups, and signals"""
         self.signal_tree.clear()
