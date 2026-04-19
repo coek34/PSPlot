@@ -18,3 +18,8 @@ out.log
 # OS files
 .DS_Store
 Thumbs.db
+
+# Project specific
+settings.psp
+psplot.log
+Samples/
