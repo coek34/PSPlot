@@ -29,8 +29,10 @@ class BaseInteractiveCanvas(FigureCanvas):
         
         # Measurement Cursors
         self.cursors_active = False
-        self.cursor_lines_a = [] # List of vertical lines for cursor A (one per ax)
+        self.cursor_lines_a = [] # List of vertical lines for cursor A
         self.cursor_lines_b = [] # List of vertical lines for cursor B
+        self.cursor_texts_a = [] # List of text labels for values at cursor A
+        self.cursor_texts_b = [] # List of text labels for values at cursor B
         self.cursor_pos_a = None # X position of cursor A
         self.cursor_pos_b = None # X position of cursor B
         self.active_cursor = None # 'A' or 'B' being dragged
@@ -206,46 +208,96 @@ class BaseInteractiveCanvas(FigureCanvas):
             selector.set_active(zoom_enabled)
         
         if self.cursors_active:
-
             xlim = self.axes[0].get_xlim()
             if self.cursor_pos_a is None:
                 self.cursor_pos_a = xlim[0] + (xlim[1] - xlim[0]) * 0.25
             if self.cursor_pos_b is None:
                 self.cursor_pos_b = xlim[0] + (xlim[1] - xlim[0]) * 0.75
             
-            # Create lines on each axes
+            # Create lines and text on each axes
             self.cursor_lines_a = []
             self.cursor_lines_b = []
+            self.cursor_texts_a = []
+            self.cursor_texts_b = []
+            
             for ax in self.axes:
-                la = ax.axvline(self.cursor_pos_a, color='red', linestyle='--', linewidth=1.5, alpha=0.8, picker=5)
-                lb = ax.axvline(self.cursor_pos_b, color='blue', linestyle='--', linewidth=1.5, alpha=0.8, picker=5)
+                la = ax.axvline(self.cursor_pos_a, color='red', linestyle='--', linewidth=1.5, alpha=0.8)
+                lb = ax.axvline(self.cursor_pos_b, color='blue', linestyle='--', linewidth=1.5, alpha=0.8)
                 self.cursor_lines_a.append(la)
                 self.cursor_lines_b.append(lb)
+                
+                # Add text labels with background box for readability
+                bbox = dict(boxstyle='round,pad=0.3', fc='white', ec='red', alpha=0.9, lw=1)
+                ta = ax.text(self.cursor_pos_a, 0, "", color='red', fontsize=8, fontweight='bold', bbox=bbox, zorder=5)
+                
+                bbox_b = dict(boxstyle='round,pad=0.3', fc='white', ec='blue', alpha=0.9, lw=1)
+                tb = ax.text(self.cursor_pos_b, 0, "", color='blue', fontsize=8, fontweight='bold', bbox=bbox_b, zorder=5)
+                
+                self.cursor_texts_a.append(ta)
+                self.cursor_texts_b.append(tb)
             
             self._update_cursor_positions() # Initial info update
         else:
-            # Remove lines
-            for l in self.cursor_lines_a + self.cursor_lines_b:
-                l.remove()
+            # Remove lines and texts
+            for obj in self.cursor_lines_a + self.cursor_lines_b + self.cursor_texts_a + self.cursor_texts_b:
+                obj.remove()
             self.cursor_lines_a = []
             self.cursor_lines_b = []
+            self.cursor_texts_a = []
+            self.cursor_texts_b = []
             
         self.draw()
 
     def _update_cursor_positions(self):
-        """Sync line positions and update delta info in status bar"""
-        for la, lb in zip(self.cursor_lines_a, self.cursor_lines_b):
+        """Sync line positions and update delta info in status bar and on-plot labels"""
+        xlim = self.axes[0].get_xlim()
+        x_range = xlim[1] - xlim[0]
+        
+        # Helper to get interpolated value at X
+        def get_val_at(ax, x_pos):
+            lines = ax.get_lines()
+            for line in lines:
+                if line.get_label() != '_nolegend_' and not hasattr(line, '_cursor_marker'):
+                    xd = line.get_xdata()
+                    yd = line.get_ydata()
+                    if len(xd) > 1:
+                        # Use interpolation for precision between data points
+                        try:
+                            return np.interp(x_pos, xd, yd)
+                        except:
+                            pass
+            return None
+
+        for i, (ax, la, lb, ta, tb) in enumerate(zip(self.axes, self.cursor_lines_a, self.cursor_lines_b, self.cursor_texts_a, self.cursor_texts_b)):
+            # Update Vertical Lines
             la.set_xdata([self.cursor_pos_a, self.cursor_pos_a])
             lb.set_xdata([self.cursor_pos_b, self.cursor_pos_b])
+            
+            # Update Text A
+            val_a = get_val_at(ax, self.cursor_pos_a)
+            if val_a is not None:
+                ta.set_text(f"{val_a:.4f}")
+                ta.set_position((self.cursor_pos_a + x_range*0.01, val_a))
+                ta.set_visible(True)
+            else:
+                ta.set_visible(False)
+                
+            # Update Text B
+            val_b = get_val_at(ax, self.cursor_pos_b)
+            if val_b is not None:
+                tb.set_text(f"{val_b:.4f}")
+                # Offset slightly to the right of the line
+                tb.set_position((self.cursor_pos_b + x_range*0.01, val_b))
+                tb.set_visible(True)
+            else:
+                tb.set_visible(False)
         
-        # Calculate Delta
+        # Calculate Delta for status bar
         dx = abs(self.cursor_pos_b - self.cursor_pos_a)
         freq = 1.0/dx if dx > 0 else 0
         
-        # Display in main window status bar if possible
         if hasattr(self, 'main_window') and self.main_window:
             msg = f"A: {self.cursor_pos_a:.4f}s | B: {self.cursor_pos_b:.4f}s | Δt: {dx:.4f}s | f: {freq:.2f}Hz"
-            # Temporary override status
             self.main_window.status_label.setText(msg)
             
         self.draw_idle()
