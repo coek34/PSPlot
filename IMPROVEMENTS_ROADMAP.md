@@ -3,7 +3,7 @@
 This document tracks planned improvements and technical debt for the PSPlot application.
 
 **Last Updated:** 2026-04-22  
-**Current Version:** 1.2.0 (Duri Edition)  
+**Current Version:** 1.3.0 (Pekanbaru Edition)  
 **Status:** Active Development
 
 ---
@@ -20,10 +20,10 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 5 | **Type Hints** | ✅ | Full type annotations across major modules |
 | 6 | **Input Validation** | ✅ | New validation.py with comprehensive validators |
 | 7 | **Fix Mutable Defaults** | ✅ | Cleaned up mutable defaults in dataclasses |
-| 8 | **Configuration Persistence** | ✅ | Save/Restore window geometry and app state via settings.json |
+| 8 | **Configuration Persistence** | ✅ | Save/Restore window geometry via settings.psp |
 | 9 | **Auto-save Plot State** | ✅ | Automatic state gathering and saving on application close |
 
-### Phase 2: Fieldwork & Analysis Features (Duri Audit)
+### Phase 2: Fieldwork & Analysis Features
 | # | Improvement | Status | Details |
 |---|-------------|--------|---------|
 | 10| **Kursor Measurement Fix** | ✅ | Fixed crash when removing kursor artists after ax.clear() |
@@ -31,9 +31,17 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 12| **Search & Filter in Signal Tree** | ✅ | Added search bar to Signal Explorer for rapid signal discovery |
 | 13| **Quick Scaling** | ✅ | Implemented per-signal scaling via right-click 'Scale' with .psp persistence |
 | 14| **COMTRADE Support** | ✅ | Full support for IEEE COMTRADE (C37.111-1991/1999/2013) reading |
-| 15| **Fieldwork UI Polish** | ✅ | High-contrast selection colors and descriptive status bar help labels |
-| 16| **Documentation Polish** | ✅ | Comprehensive README.md and COMTRADE Standard Comparison guide |
+| 15| **Fieldwork UI Polish** | ✅ | Full macOS Dark Mode support, high-contrast tree selection, and status bar help labels |
+| 16| **Documentation Polish** | ✅ | Comprehensive README.md and technical COMTRADE Standard Comparison guide |
 | 17| **Keyboard Audit** | ✅ | Restored/fixed and documented all 11+ rapid-analysis keyboard shortcuts |
+
+### Phase 3: Deployment & Identity (Pekanbaru Updates)
+| # | Improvement | Status | Details |
+|---|-------------|--------|---------|
+| 18| **Application Identity** | ✅ | Native macOS Dock label (PSPlot), Custom Icon, and high-formality window titles |
+| 19| **macOS Standard Paths** | ✅ | Migrated settings and logs to `~/Library/Application Support/PSPlot/` |
+| 20| **Session Templating** | ✅ | Full export/import of `.psp` layouts to apply configurations to new datasets |
+| 21| **Bundled Deployment** | ✅ | PyInstaller configuration for macOS .app generation with custom metadata |
 
 ---
 
@@ -48,7 +56,6 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 
 ### 🟡 MEDIUM PRIORITY: UX & Workflow
 *   **CSV Generic Import**: Support for importing any structured CSV file via a column-mapping dialog.
-*   **Session Templating**: Advanced export/import of `.psp` files to allow applying a layout to different simulation files (Templating).
 *   **Multi-File Comparison (Overlay)**: Automated mode to plot signals from multiple `.out` files on a single subplot for comparison.
 *   **Unit Tests**: (tests/test_models.py, test_validation.py) - Verify core logic and prevent regressions.
 
@@ -69,4 +76,4 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 ---
 
 *Last updated by: Hermes Agent*  
-*Status: Roadmap updated for Pak Roni's return to UGM.*
+*Status: Roadmap updated following the Pekanbaru Fieldwork sprint.*
