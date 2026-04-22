@@ -1,5 +1,7 @@
 # PSPlot: Power System Signal Analysis Tool
 
+![PSPlot UI Mockup](psplot_ui_mockup.svg)
+
 PSPlot is a high-performance, PyQt5-based visualization and analysis tool designed for electrical engineers and researchers. It specializes in processing large-scale transient data from simulation environments (PSCAD) and field recordings (IEEE COMTRADE).
 
 ## 🚀 Capabilities
