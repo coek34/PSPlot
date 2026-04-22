@@ -21,12 +21,21 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # Initialize logging
-        self.setup_logging()
+        # Application wide logging is already setup in main.py
         logger = logging.getLogger(__name__)
         logger.info("Initializing PSPlot Plotter Application...")
         
-        self.setWindowTitle("PSPlot - Professional PSCAD Visualization")
+        self.setWindowTitle("PSPlot: Professional Power System Output Plotter")
+        
+        # Set Window Icon
+        import sys
+        if hasattr(sys, '_MEIPASS'):
+            icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
+        else:
+            icon_path = os.path.join(os.path.dirname(__file__), "PSPlot_icon.png")
+            
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         # 1. Load Settings & Preferences
         self.settings = get_settings()
@@ -57,22 +66,6 @@ class MainWindow(QMainWindow):
         self.restore_app_state()
         
         logger.info("Application initialized successfully.")
-
-    def setup_logging(self):
-        import logging.handlers
-        log_file = "psplot.log"
-        handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
-        root_logger.addHandler(handler)
-        
-        # Also add stdout for terminal debugging
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        root_logger.addHandler(console)
 
     def setup_ui(self):
         self.central_widget = QWidget()
@@ -375,6 +368,14 @@ class MainWindow(QMainWindow):
         import_data_action.setShortcut('C')
         import_data_action.triggered.connect(self.import_pscad_data)
         file_menu.addAction(import_data_action)
+        
+        open_template_action = QAction('Open Template...', self)
+        open_template_action.triggered.connect(self.action_manager.on_open_template_clicked)
+        file_menu.addAction(open_template_action)
+        
+        save_template_action = QAction('Save Template...', self)
+        save_template_action.triggered.connect(self.action_manager.on_save_template_clicked)
+        file_menu.addAction(save_template_action)
         
         file_menu.addSeparator()
         

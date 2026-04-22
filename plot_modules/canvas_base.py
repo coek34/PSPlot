@@ -16,6 +16,9 @@ except ImportError:
 
 class BaseInteractiveCanvas(FigureCanvas):
     def __init__(self, parent=None, width=8.27, height=11.69):
+        # Initialize main window reference early
+        self.main_window = None
+        
         # Create figure with specified dimensions (default A4 portrait)
         self.fig = Figure(figsize=(width, height), dpi=100)
         super().__init__(self.fig)
@@ -582,7 +585,7 @@ class BaseInteractiveCanvas(FigureCanvas):
                         # Check for flags in main_window
                         use_group_name = False
                         use_channel_name = False
-                        if self.main_window:
+                        if hasattr(self, 'main_window') and self.main_window:
                             use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
                             use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
                         

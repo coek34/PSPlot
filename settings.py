@@ -1,14 +1,21 @@
 import json
 import logging
 import os
+import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Use the application directory for settings instead of home directory
-SETTINGS_DIR = Path(__file__).parent
+# Use the standard macOS Application Support directory for settings
+if sys.platform == 'darwin':
+    # ~/Library/Application Support/PSPlot
+    SETTINGS_DIR = Path.home() / "Library" / "Application Support" / "PSPlot"
+else:
+    # Fallback/Default
+    SETTINGS_DIR = Path(__file__).parent
+
 SETTINGS_FILE = SETTINGS_DIR / "settings.psp"
 
 @dataclass

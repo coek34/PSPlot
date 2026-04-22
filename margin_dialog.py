@@ -10,6 +10,9 @@ class MarginDialog(QDialog):
         self.setup_ui()
         
     def setup_ui(self):
+        from theme import get_theme
+        theme = get_theme()
+        
         layout = QFormLayout()
         
         # Get current margins for default values
@@ -65,6 +68,10 @@ class MarginDialog(QDialog):
         ok_button.clicked.connect(self.accept)
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
+        
+        ok_button.setStyleSheet(theme.get_button_ok_style())
+        cancel_button.setStyleSheet(theme.get_button_cancel_style())
+        
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         layout.addRow(button_layout)
@@ -73,6 +80,7 @@ class MarginDialog(QDialog):
         button_layout.addWidget(reset_button)
         
         self.setLayout(layout)
+        self.setStyleSheet(theme.get_style_sheet())
         
     def get_margins(self):
         # Add validation to ensure margins are within reasonable bounds

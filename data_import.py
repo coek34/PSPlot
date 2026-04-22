@@ -46,7 +46,7 @@ class DataImportDialog(QDialog):
         
         # Instructions
         instr = QLabel("Double-click a row in 'Path' to select a PSCAD (.inf) or COMTRADE (.cfg) file.")
-        instr.setStyleSheet("font-weight: bold; color: #555; padding-bottom: 5px;")
+        instr.setStyleSheet("font-weight: bold; padding-bottom: 5px;")
         layout.addWidget(instr)
 
         # Table for showing imported data (6 channels)
@@ -105,7 +105,7 @@ class DataImportDialog(QDialog):
         
         # Apply theme to dialog
         if theme:
-            self.setStyleSheet(f"QDialog {{ background-color: {theme.colors.base}; }} QLabel {{ color: {theme.colors.text}; }}")
+            self.setStyleSheet(theme.get_style_sheet())
         
     def on_cell_clicked(self, row, column):
         """Handle cell click - allow browsing for file paths"""

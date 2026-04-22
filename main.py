@@ -23,6 +23,32 @@ def main() -> NoReturn:
     log.info(f"Starting {APP_NAME}")
     
     app = QApplication(sys.argv)
+    
+    # Try to set the process name for macOS Dock/Task Manager
+    if sys.platform == 'darwin':
+        try:
+            import ctypes
+            libc = ctypes.CDLL(None)
+            libc.setprogname(b"PSPlot")
+        except Exception:
+            pass
+
+    # Set application identity
+    app.setApplicationName("PSPlot")
+    app.setApplicationDisplayName("PSPlot")
+    app.setOrganizationName("UGM")
+    
+    # Set global application icon
+    import os
+    from PyQt5.QtGui import QIcon
+    if hasattr(sys, '_MEIPASS'):
+        icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
+    else:
+        icon_path = os.path.join(os.path.dirname(__file__), "PSPlot_icon.png")
+        
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+    
     window = MainWindow()
     window.show()
     

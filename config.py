@@ -14,7 +14,7 @@ from typing import Dict, Tuple, Optional
 # Version info
 APP_NAME = "PSPlotter"
 APP_VERSION = "1.0.0"
-WINDOW_TITLE = f"{APP_NAME} - Power System Results Plotter"
+WINDOW_TITLE = "PSPlot: Professional Power System Output Plotter"
 
 # Window defaults
 DEFAULT_WINDOW_SIZE = (1200, 900)  # width, height in pixels
@@ -55,8 +55,14 @@ def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = Non
     
     # File handler with rotation
     if log_file is None:
-        # Use application directory for logs
-        log_dir = Path(__file__).parent
+        # Use application support directory for logs on macOS
+        import sys
+        if sys.platform == 'darwin':
+            log_dir = Path.home() / "Library" / "Application Support" / "PSPlot"
+        else:
+            log_dir = Path(__file__).parent
+        
+        log_dir.mkdir(parents=True, exist_ok=True)
         log_file = str(log_dir / "psplot.log")
     
     file_handler = logging.handlers.RotatingFileHandler(

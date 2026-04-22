@@ -14,6 +14,9 @@ class CanvasSizeDialog(QDialog):
         self.setup_ui()
         
     def setup_ui(self):
+        from theme import get_theme
+        theme = get_theme()
+        
         layout = QFormLayout()
         
         # Predefined sizes
@@ -64,12 +67,17 @@ class CanvasSizeDialog(QDialog):
         ok_button.clicked.connect(self.accept)
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
+        
+        ok_button.setStyleSheet(theme.get_button_ok_style())
+        cancel_button.setStyleSheet(theme.get_button_cancel_style())
+        
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         
         layout.addRow(button_layout)
         
         self.setLayout(layout)
+        self.setStyleSheet(theme.get_style_sheet())
         
         # Initially hide custom size inputs (this will be handled by on_size_changed)
         self.custom_widget.setHidden(False)

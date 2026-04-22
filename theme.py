@@ -42,13 +42,13 @@ class ThemeManager:
         from theme import ThemeManager
         
         theme = ThemeManager()
-        widget.setStyleSheet(f"background-color: {theme.colors.base}; color: {theme.colors.text}")
+        widget.setStyleSheet(theme.get_style_sheet())
     """
     
     DARK = ThemeColors(
         base="#2b2b2b",
         alt="#3a3a3a",
-        scroll_area="#3a3a3a",
+        scroll_area="#1e1e1e",
         text="#ffffff",
         border="#444",
         border_light="#555",
@@ -62,7 +62,7 @@ class ThemeManager:
     LIGHT = ThemeColors(
         base="#ffffff",
         alt="#fafafa",
-        scroll_area="#f0f0f0",  # Pale gray instead of white for scroll areas
+        scroll_area="#f0f0f0",
         text="#000000",
         border="#ccc",
         border_light="#ddd",
@@ -104,10 +104,18 @@ class ThemeManager:
         tab_bg = "#3a3a3a" if self.is_dark else "#f0f0f0"
         
         return f"""
-            QMainWindow {{
+            /* Global font and background */
+            QMainWindow, QDialog, QFrame, QWidget {{
                 background-color: {c.base};
                 color: {c.text};
             }}
+            
+            /* Clear background for specific containers to avoid double-painting */
+            QScrollArea, QScrollArea QWidget, QSplitter {{
+                background-color: {c.base};
+                border: none;
+            }}
+            
             QMenuBar {{
                 background-color: {c.base};
                 color: {c.text};
@@ -119,21 +127,17 @@ class ThemeManager:
             QMenuBar::item:selected {{
                 background: {hover_bg};
             }}
-            QMenuBar::item:pressed {{
-                background: {pressed_bg};
-            }}
+            
             QMenu {{
                 background-color: {c.base};
                 color: {c.text};
                 border: 1px solid {c.border_light};
             }}
-            QMenu::item {{
-                padding: 6px 20px;
-            }}
             QMenu::item:selected {{
                 background-color: {c.selection};
                 color: white;
             }}
+            
             QTabWidget::pane {{
                 border: 1px solid {c.border};
                 background-color: {c.base};
@@ -149,23 +153,69 @@ class ThemeManager:
                 background-color: {c.base};
                 border-bottom: 2px solid {c.selection};
             }}
-            QTabBar::tab:hover {{
-                background-color: {hover_bg};
-            }}
-            QStatusBar {{
-                background-color: {c.base};
-                color: {c.text};
-            }}
-            QScrollArea {{
-                background-color: {c.base};
-                border: 1px solid {c.border};
-            }}
+            
             QLabel {{
                 color: {c.text};
+                background: transparent;
             }}
-            QFrame {{
-                background-color: {c.base};
-                border: none;
+            
+            /* Table and Tree Widgets */
+            QTableWidget, QTreeWidget {{
+                background-color: {c.scroll_area};
+                alternate-background-color: {c.alt};
+                color: {c.text};
+                gridline-color: {c.border};
+                border: 1px solid {c.border};
+                selection-background-color: {c.selection};
+                selection-color: white;
+                outline: none;
+            }}
+            QHeaderView::section {{
+                background-color: {c.alt};
+                color: {c.text};
+                padding: 4px;
+                border: 1px solid {c.border};
+                font-weight: bold;
+            }}
+            
+            /* Input Widgets (The main issue) */
+            QLineEdit, QSpinBox, QDoubleSpinBox, QAbstractSpinBox {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+                padding: 5px;
+                border-radius: 4px;
+                selection-background-color: {c.selection};
+            }}
+            QLineEdit:focus, QDoubleSpinBox:focus {{
+                border: 1px solid {c.selection};
+            }}
+            
+            QCheckBox, QComboBox {{
+                color: {c.text};
+                background-color: transparent;
+            }}
+            QComboBox {{
+                background-color: {c.alt};
+                border: 1px solid {c.border};
+                border-radius: 4px;
+                padding: 3px 6px;
+            }}
+            
+            QStatusBar {{
+                background-color: {c.status_bg};
+                color: {c.text};
+            }}
+            
+            QPushButton {{
+                padding: 8px 16px;
+                border-radius: 4px;
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+            }}
+            QPushButton:hover {{
+                background-color: {hover_bg};
             }}
         """
     
@@ -179,40 +229,15 @@ class ThemeManager:
                 border: 1px solid {c.border};
                 padding: 4px;
             }}
-            QMenu::item {{
-                padding: 6px 24px;
-            }}
             QMenu::item:selected {{
                 background-color: {c.selection};
                 color: white;
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background-color: {c.border};
-                margin: 4px 0;
             }}
         """
     
     def get_tree_widget_style(self) -> str:
         """Get stylesheet for tree widgets (signal explorer)."""
-        c = self.colors
-        return f"""
-            QTreeWidget {{
-                border: 1px solid {c.border};
-                border-radius: 6px;
-                padding: 4px;
-                background-color: {c.base};
-                alternate-background-color: {c.alt};
-                color: {c.text};
-            }}
-            QTreeWidget::item {{
-                padding: 4px 0;
-            }}
-            QTreeWidget::item:selected {{
-                background-color: {c.selection};
-                color: white;
-            }}
-        """
+        return self.get_style_sheet()
     
     def get_button_ok_style(self) -> str:
         """Get stylesheet for OK/Confirm buttons."""
@@ -224,6 +249,7 @@ class ThemeManager:
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
+                font-weight: bold;
             }}
             QPushButton:hover {{
                 background-color: {self._darken(c.success)};
@@ -240,6 +266,7 @@ class ThemeManager:
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
+                font-weight: bold;
             }}
             QPushButton:hover {{
                 background-color: {self._darken(c.danger)};
