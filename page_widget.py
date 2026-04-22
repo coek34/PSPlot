@@ -32,7 +32,8 @@ class PageWidget(QWidget):
                     sig_ref = {
                         'name': signal.get('name'),
                         'channel_name': signal.get('channel_name'),
-                        'group_name': signal.get('group_name')
+                        'group_name': signal.get('group_name'),
+                        'scale': float(signal.get('scale', 1.0))
                     }
                     subplot_list.append(sig_ref)
                     logger.debug(f"  Subplot {subplot_idx}: Saving signal ref (chan-linked) - {sig_ref}")

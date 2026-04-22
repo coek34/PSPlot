@@ -37,8 +37,9 @@ class SignalHandlerMixin:
                 channel_name = meta.get('channel_name') or actual_signal_data.get('channel_name', 'Unknown')
                 group_name = meta.get('group_name') or actual_signal_data.get('group_name', 'Unknown')
                 file_path = meta.get('file_path') or actual_signal_data.get('file_path', '')
+                scale = actual_signal_data.get('scale', 1.0) if isinstance(actual_signal_data, dict) else getattr(actual_signal_data, 'scale', 1.0)
                 
-                logger.debug(f"  Plotting: {signal_name} (Chan: {channel_name}, Group: {group_name})")
+                logger.debug(f"  Plotting: {signal_name} (Chan: {channel_name}, Group: {group_name}, Scale: {scale})")
 
                 # Build legend label
                 parts = []
@@ -47,16 +48,22 @@ class SignalHandlerMixin:
                 if use_group_name and group_name and group_name != 'Unknown':
                     parts.append(str(group_name))
                 parts.append(str(signal_name))
+                
+                # Add scale to label if not 1.0
                 label = '.'.join(parts)
+                if scale != 1.0:
+                    label += f" (x{scale})"
                 
                 if actual_signal_data and 'x' in actual_signal_data and 'y' in actual_signal_data:
-                    line, = ax.plot(actual_signal_data['x'], actual_signal_data['y'], linewidth=2, label=label)
+                    # Apply scaling to the Y data for visualization
+                    line, = ax.plot(actual_signal_data['x'], actual_signal_data['y'] * scale, linewidth=2, label=label)
+                    
                     # Force set attributes for persistence
-                    # We use setattr to ensure these custom attributes are recognized and stored
                     setattr(line, '_original_signal_name', str(signal_name))
                     setattr(line, '_channel_name', str(channel_name))
                     setattr(line, '_group_name', str(group_name))
                     setattr(line, '_file_path', str(file_path))
+                    setattr(line, '_scale', float(scale))
                     setattr(line, '_units', str(actual_signal_data.get('units', '')))
                     
                     logger.debug(f"  Metadata attached to line: {signal_name} (Chan: {channel_name})")
@@ -69,20 +76,14 @@ class SignalHandlerMixin:
             
         ax.set_title('')
         
-        # Determine Y Label: 
-        # 1. Use existing manual label if it's not the default 'Amplitude'
-        # 2. Otherwise, use the unit of the first signal if available
-        # 3. Fallback to 'Amplitude'
+        # Determine Y Label
         existing_y = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
         
         if existing_y == 'Amplitude' and signal_data_list:
-            # Try to get unit from the first signal in the list
             first_sig = signal_data_list[0]
-            # Handle both nested and flat structure
             if isinstance(first_sig, dict):
                 unit = first_sig.get('units') or first_sig.get('signal_data', {}).get('units', '')
                 if unit:
-                    # Update internal y_labels dict and set on axes
                     if not hasattr(self, 'y_labels'): self.y_labels = {}
                     self.y_labels[subplot_index] = str(unit)
                     existing_y = str(unit)
@@ -95,13 +96,17 @@ class SignalHandlerMixin:
             ax.set_ylim(self.current_ylim_dict[subplot_index])
         
         selector = self._create_rectangle_selector(ax, subplot_index)
-        # If cursors are currently active, the new zoom selector must be disabled immediately
         if getattr(self, 'cursors_active', False):
             selector.set_active(False)
         self.rect_selectors[subplot_index] = selector
         
         self.draw()
-        self.round_x_to_grid()
+        try:
+            # Check if method exists in the target class
+            if hasattr(self, 'round_x_to_grid'):
+                self.round_x_to_grid()
+        except Exception:
+            pass
     
     def set_y_label(self, subplot_index, label):
         """Set custom y-label for a specific subplot"""
@@ -125,20 +130,34 @@ class SignalHandlerMixin:
         ax = self.axes[subplot_index]
         for line in ax.get_lines():
             if line.get_label() != '_nolegend_':
-                x_data = line.get_xdata()
-                y_data = line.get_ydata()
-                if len(x_data) > 0:
-                    signal_name = getattr(line, '_original_signal_name', line.get_label())
-                    channel_name = getattr(line, '_channel_name', 'Unknown')
-                    group_name = getattr(line, '_group_name', 'Unknown')
-                    file_path = getattr(line, '_file_path', '')
-                    
-                    existing_signals.append({
-                        'name': signal_name,
-                        'x': x_data,
-                        'y': y_data,
-                        'channel_name': channel_name,
-                        'group_name': group_name,
-                        'file_path': file_path
-                    })
+                # We need the original unscaled Y data if possible, or just the scale factor
+                # Here we retrieve the attributes we stored
+                signal_name = getattr(line, '_original_signal_name', line.get_label())
+                
+                # If the label contains the scale string, strip it to get the pure name for matching
+                if " (x" in signal_name:
+                    signal_name = signal_name.split(" (x")[0]
+                
+                channel_name = getattr(line, '_channel_name', 'Unknown')
+                group_name = getattr(line, '_group_name', 'Unknown')
+                file_path = getattr(line, '_file_path', '')
+                scale = getattr(line, '_scale', 1.0)
+                units = getattr(line, '_units', '')
+                
+                x_data = np.asarray(line.get_xdata())
+                y_data_plotted = np.asarray(line.get_ydata())
+                
+                # Retrieve original data by reversing scale if we only have plotted data
+                y_data_original = y_data_plotted / scale if scale != 0 else y_data_plotted
+                
+                existing_signals.append({
+                    'name': signal_name,
+                    'x': x_data,
+                    'y': y_data_original,
+                    'channel_name': channel_name,
+                    'group_name': group_name,
+                    'file_path': file_path,
+                    'scale': scale,
+                    'units': units
+                })
         return existing_signals

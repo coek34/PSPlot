@@ -1,102 +1,176 @@
 # main_window.py
-import sys, os
+import sys
+import os
 import logging
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                            QMenuBar, QMenu, QAction, QFileDialog, QDialog, QFormLayout, 
-                            QLineEdit, QPushButton, QComboBox, QSpinBox, QMessageBox, 
-                            QDoubleSpinBox, QTabWidget, QTabBar, QToolBar, QToolButton, 
-                            QInputDialog, QScrollArea, QCheckBox)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                             QTabWidget, QAction, QMessageBox, QLabel, QSplitter,
+                             QScrollArea, QFrame)
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QIcon
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Import from separate modules
-from config import WINDOW_TITLE, DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_POS
-from config import SUBPLOT_CONFIG, get_status_text
-from margin_dialog import MarginDialog
-from page_widget import PageWidget
-from plot_canvas import InteractivePlotCanvas
-from data_import import DataImportDialog
-from canvas_size_dialog import CanvasSizeDialog
 from page_manager import PageManager
 from canvas_manager import CanvasManager
+from data_manager import DataManager
 from action_manager import ActionManager
 from keyboard_manager import KeyboardManager
-from data_manager import DataManager
 from theme import get_theme
-from settings import get_settings
+from settings import get_settings, PageState
+import config
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(WINDOW_TITLE)
         
-        # Initialize settings
+        # Initialize logging
+        self.setup_logging()
+        logger = logging.getLogger(__name__)
+        logger.info("Initializing PSPlot Plotter Application...")
+        
+        self.setWindowTitle("PSPlot - Professional PSCAD Visualization")
+        
+        # 1. Load Settings & Preferences
         self.settings = get_settings()
-        
-        # Apply window geometry from settings if available
         if self.settings.preferences.window_geometry:
-            x, y, w, h = self.settings.preferences.window_geometry
-            self.setGeometry(x, y, w, h)
+            g = self.settings.preferences.window_geometry
+            self.setGeometry(g[0], g[1], g[2], g[3])
         else:
-            x, y = DEFAULT_WINDOW_POS
-            width, height = DEFAULT_WINDOW_SIZE
-            self.setGeometry(x, y, width, height)
-        
-        # Initialize managers
+            self.resize(1200, 800)
+            
+        # 2. Managers
+        self.data_manager = DataManager(self)
         self.page_manager = PageManager(self)
         self.canvas_manager = CanvasManager(self)
         self.action_manager = ActionManager(self)
         self.keyboard_manager = KeyboardManager(self)
-        self.data_manager = DataManager(self)
         
-        # Create menu bar
+        # 3. Main UI Layout
+        self.setup_ui()
+        
+        # 4. Global Flags/Options for all pages
+        self.group_name_in_legend = False
+        self.channel_name_in_legend = False
+        
+        self.apply_theme_style()
         self.create_menu_bar()
         
-        # Create main layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        # 5. Restore State (if exists)
+        self.restore_app_state()
         
-        # Create tab widget for pages
+        logger.info("Application initialized successfully.")
+
+    def setup_logging(self):
+        import logging.handlers
+        log_file = "psplot.log"
+        handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(handler)
+        
+        # Also add stdout for terminal debugging
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        root_logger.addHandler(console)
+
+    def setup_ui(self):
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        
+        # Tab widget for multiple pages/canvases
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.tabCloseRequested.connect(self.page_manager.close_page)
-        self.tab_widget.currentChanged.connect(self.page_manager.on_page_changed)
-        # Connect tab bar double-click to rename function
-        self.tab_widget.tabBar().tabBarDoubleClicked.connect(self.page_manager.rename_page)
-        main_layout.addWidget(self.tab_widget)
+        self.tab_widget.currentChanged.connect(self.on_tab_changed)
         
-        # Status bar for instructions
-        status_layout = QHBoxLayout()
-        self.status_label = QLabel(get_status_text())
-        status_layout.addWidget(self.status_label)
-        main_layout.addLayout(status_layout)
+        self.main_layout.addWidget(self.tab_widget)
         
-        # Plot count label
+        # Status Bar Replacement (Internal)
+        self.status_frame = QFrame()
+        self.status_frame.setFixedHeight(30)
+        self.status_layout = QHBoxLayout(self.status_frame)
+        self.status_layout.setContentsMargins(10, 0, 10, 0)
+        
+        self.status_help_label = QLabel("Ready")
+        self.status_layout.addWidget(self.status_help_label)
+        
+        # Plot count label (required by KeyboardManager)
         self.plot_count_label = QLabel("Plots: 1")
-        self.plot_count_label.setStyleSheet("QLabel { font-weight: bold; padding: 5px; }")
-        main_layout.addWidget(self.plot_count_label)
+        self.status_layout.addWidget(self.plot_count_label)
         
-        # Restore or Add initial page
-        if not self.restore_app_state():
-            self.page_manager.add_new_page()
+        self.status_layout.addStretch()
         
-        # Make sure window can receive focus
-        self.setFocusPolicy(Qt.StrongFocus)
-        self.setFocus()
+        # Cursor measurement info label (High contrast)
+        self.measurement_label = QLabel("")
+        self.measurement_label.setVisible(False) # Hide by default
+        self.status_layout.addWidget(self.measurement_label)
         
-        # Apply theme styling
-        self.apply_theme_style()
-        
-        # Group name in legend flag
-        self.group_name_in_legend = False
-        # Channel name in legend flag
-        self.channel_name_in_legend = False
+        self.main_layout.addWidget(self.status_frame)
 
-    def restore_app_state(self) -> bool:
+    def keyPressEvent(self, event):
+        """Pass keyboard events to KeyboardManager"""
+        self.keyboard_manager.keyPressEvent(event)
+
+    # --- Proxy Methods for KeyboardManager ---
+    def import_pscad_data(self):
+        self.data_manager.import_pscad_data()
+
+    def on_export_clicked(self):
+        self.action_manager.on_export_clicked()
+
+    def adjust_margins(self):
+        self.canvas_manager.adjust_margins()
+
+    def new_canvas(self):
+        self.canvas_manager.new_canvas()
+
+    def resize_current_page(self):
+        self.canvas_manager.resize_current_page()
+    # ----------------------------------------
+
+    def on_tab_changed(self, index):
+        """Update managers when current tab changes"""
+        if index >= 0:
+            current_page = self.tab_widget.widget(index)
+            self.update_status_bar()
+
+    def update_status_bar(self, message=None):
+        if message:
+            self.measurement_label.setText(message)
+            self.measurement_label.setVisible(True)
+        else:
+            # Check the current page's cursor status
+            page = self.get_current_page()
+            if page and page.plot_canvas and getattr(page.plot_canvas, 'cursors_active', False):
+                # If active but no specific message, it might be waiting for update
+                pass 
+            else:
+                # Clear and hide if no message and cursors are off
+                self.measurement_label.setText("")
+                self.measurement_label.setVisible(False)
+                
+            if page:
+                total_pages = self.tab_widget.count()
+                current_idx = self.tab_widget.currentIndex() + 1
+                help_text = "1-6 (plots) | A/D (pan) | R/Y (reset) | X (grid) | T (cursors) | E (export) | M (margins)"
+                self.status_help_label.setText(f"{help_text} | Page {current_idx}/{total_pages}")
+                if page.plot_canvas:
+                    self.plot_count_label.setText(f"Plots: {page.plot_canvas.subplot_count}")
+                    # Sync visibility of measurement label with canvas state
+                    is_active = getattr(page.plot_canvas, 'cursors_active', False)
+                    self.measurement_label.setVisible(is_active and self.measurement_label.text() != "")
+
+    def get_current_page(self):
+        idx = self.tab_widget.currentIndex()
+        if idx >= 0:
+            return self.tab_widget.widget(idx)
+        return None
+
+    def restore_app_state(self):
         """Restore application state from settings."""
         logger = logging.getLogger(__name__)
         state = self.settings.state
@@ -162,6 +236,8 @@ class MainWindow(QMainWindow):
                     rehydrated = self._find_signal_data(ref)
                     if rehydrated:
                         logger.info(f"      ✓ Rehydrated '{ref.get('name')}' from {ref.get('channel_name')}")
+                        # Apply scale factor from saved reference
+                        rehydrated['scale'] = float(ref.get('scale', 1.0))
                         page_signals.append(rehydrated)
                     else:
                         logger.warning(f"      ✗ FAILED to rehydrate '{ref.get('name')}' - signal not found!")
@@ -269,190 +345,121 @@ class MainWindow(QMainWindow):
         
     def apply_theme_style(self):
         """Apply theme-aware styling to the main window"""
+        from theme import get_theme
         theme = get_theme()
         
         # Apply full application stylesheet
         self.setStyleSheet(theme.get_style_sheet())
         
         # Update status label styling based on theme
-        self.status_label.setStyleSheet(theme.get_status_label_style())
+        self.status_frame.setStyleSheet(f"background-color: {theme.colors.status_bg}; border-top: 1px solid {theme.colors.border};")
+        self.status_help_label.setStyleSheet(theme.get_status_label_style())
+        self.plot_count_label.setStyleSheet(theme.get_status_label_style())
+        self.measurement_label.setStyleSheet(theme.get_status_label_style())
         
     def create_menu_bar(self):
         """Create menu bar with action items"""
         menubar = self.menuBar()
+        # Force native menu bar on macOS to ensure it appears at the top of the screen
+        menubar.setNativeMenuBar(True)
         
         # File menu
         file_menu = menubar.addMenu('File')
         
         new_plot_action = QAction('New Plot (N)', self)
         new_plot_action.setShortcut('N')
-        new_plot_action.triggered.connect(self.canvas_manager.new_canvas)
+        new_plot_action.triggered.connect(self.new_canvas)
         file_menu.addAction(new_plot_action)
         
-        # Add data import action
         import_data_action = QAction('Import Data (C)', self)
         import_data_action.setShortcut('C')
-        import_data_action.triggered.connect(self.data_manager.import_pscad_data)
+        import_data_action.triggered.connect(self.import_pscad_data)
         file_menu.addAction(import_data_action)
         
         file_menu.addSeparator()
         
-        export_action = QAction('Export All Pages (E)', self)
+        export_action = QAction('Export to PDF (E)', self)
         export_action.setShortcut('E')
-        export_action.triggered.connect(self.action_manager.on_export_clicked)
+        export_action.triggered.connect(self.on_export_clicked)
         file_menu.addAction(export_action)
         
-        # View menu
+        file_menu.addSeparator()
+        
+        exit_action = QAction('Exit', self)
+        exit_action.setShortcut('Ctrl+Q')
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # View Menu
         view_menu = menubar.addMenu('View')
         
-        reset_x_action = QAction('Reset X-Zoom (R)', self)
+        reset_x_action = QAction('Reset X-Axis (R)', self)
         reset_x_action.setShortcut('R')
-        reset_x_action.triggered.connect(self.action_manager.on_reset_x_clicked)
+        reset_x_action.triggered.connect(lambda: self._call_canvas_method('reset_x_zoom'))
         view_menu.addAction(reset_x_action)
         
-        reset_y_action = QAction('Reset Y-Zoom (Y)', self)
+        reset_y_action = QAction('Reset Y-Axis (Y)', self)
         reset_y_action.setShortcut('Y')
-        reset_y_action.triggered.connect(self.action_manager.on_reset_y_clicked)
+        reset_y_action.triggered.connect(lambda: self._call_canvas_method('reset_y_zoom'))
         view_menu.addAction(reset_y_action)
         
-        round_x_action = QAction('Round X to Grid (X)', self)
-        round_x_action.setShortcut('X')
-        round_x_action.triggered.connect(self.action_manager.on_round_x_clicked)
-        view_menu.addAction(round_x_action)
+        view_menu.addSeparator()
         
-        # Settings menu
+        grid_action = QAction('Round X to Grid (X)', self)
+        grid_action.setShortcut('X')
+        grid_action.triggered.connect(lambda: self._call_canvas_method('round_x_to_grid'))
+        view_menu.addAction(grid_action)
+        
+        cursor_action = QAction('Toggle Cursors (T)', self)
+        cursor_action.setShortcut('T')
+        cursor_action.triggered.connect(lambda: self._call_canvas_method('toggle_measurement_cursors'))
+        view_menu.addAction(cursor_action)
+
+        # Settings Menu
         settings_menu = menubar.addMenu('Settings')
         
-        # Add margin adjustment
-        margin_action = QAction('Adjust Margins (M)', self)
-        margin_action.setShortcut('M')
-        margin_action.triggered.connect(self.canvas_manager.adjust_margins)
-        settings_menu.addAction(margin_action)
+        adjust_margins_action = QAction('Adjust Margins (M)', self)
+        adjust_margins_action.setShortcut('M')
+        adjust_margins_action.triggered.connect(self.adjust_margins)
+        settings_menu.addAction(adjust_margins_action)
         
-        # In create_menu_bar(), add:
-        reset_margins_action = QAction('Reset Margins to Defaults', self)
-        reset_margins_action.triggered.connect(self.canvas_manager.reset_current_margins)
-        settings_menu.addAction(reset_margins_action)
+        settings_menu.addSeparator()
         
-        # Add group name in legend checkbox
-        self.group_name_in_legend_action = QAction('Group name in legend', self)
-        self.group_name_in_legend_action.setCheckable(True)
-        self.group_name_in_legend_action.setChecked(False)
-        self.group_name_in_legend_action.triggered.connect(self.toggle_group_name_in_legend)
-        settings_menu.addAction(self.group_name_in_legend_action)
+        # Checkable items for legends
+        self.group_name_action = QAction('Group name in legend', self, checkable=True)
+        self.group_name_action.setChecked(self.group_name_in_legend)
+        self.group_name_action.triggered.connect(self.toggle_group_name_in_legend)
+        settings_menu.addAction(self.group_name_action)
         
-        # Add channel name in legend checkbox  
-        self.channel_name_in_legend_action = QAction('Channel name in legend', self)
-        self.channel_name_in_legend_action.setCheckable(True)
-        self.channel_name_in_legend_action.setChecked(False)
-        self.channel_name_in_legend_action.triggered.connect(self.toggle_channel_name_in_legend)
-        settings_menu.addAction(self.channel_name_in_legend_action)
-    
-    # Delegate methods to page_manager
-    def add_new_page(self, width=8.27, height=11.69):
-        return self.page_manager.add_new_page(width, height)
-    
-    def get_current_page(self):
-        return self.page_manager.get_current_page()
-    
-    def get_current_page_widget(self):
-        return self.page_manager.get_current_page_widget()
-    
-    def update_status_bar(self):
-        self.page_manager.update_status_bar()
-    
-    # Delegate methods to canvas_manager
-    def new_canvas(self):
-        self.canvas_manager.new_canvas()
-    
-    def resize_current_page(self):
-        self.canvas_manager.resize_current_page()
-    
-    def get_current_margins(self):
-        return self.canvas_manager.get_current_margins()
-    
-    def adjust_margins(self):
-        self.canvas_manager.adjust_margins()
-    
-    def reset_current_margins(self):
-        self.canvas_manager.reset_current_margins()
-    
-    # Delegate methods to data_manager
-    def import_pscad_data(self):
-        self.data_manager.import_pscad_data()
-    
-    # Delegate methods to action_manager
-    def on_reset_x_clicked(self):
-        self.action_manager.on_reset_x_clicked()
-    
-    def on_reset_y_clicked(self):
-        self.action_manager.on_reset_y_clicked()
-    
-    def on_round_x_clicked(self):
-        self.action_manager.on_round_x_clicked()
-    
-    def on_export_clicked(self):
-        self.action_manager.on_export_clicked()
-    
-    # Override keyPressEvent to use keyboard_manager
-    def keyPressEvent(self, event):
-        self.keyboard_manager.keyPressEvent(event)
-    
+        self.channel_name_action = QAction('Channel name in legend', self, checkable=True)
+        self.channel_name_action.setChecked(self.channel_name_in_legend)
+        self.channel_name_action.triggered.connect(self.toggle_channel_name_in_legend)
+        settings_menu.addAction(self.channel_name_action)
+
     def toggle_group_name_in_legend(self, checked):
-        """Toggle group name in legend"""
-        logger.debug(f"Toggle group name in legend: {checked}")
         self.group_name_in_legend = checked
-        logger.debug(f"Updated group_name_in_legend flag to: {self.group_name_in_legend}")
-        
-        # Update all pages to reflect the new setting
-        for page in self.page_manager.pages:
-            if page.plot_canvas:
-                logger.debug(f"Updating page {page.page_index} with new legend setting")
-                # Get existing signals for each subplot
-                signals_to_restore = []
-                for i in range(len(page.plot_canvas.axes)):
-                    existing_signals = page.plot_canvas.get_existing_signals_for_subplot(i)
-                    signals_to_restore.append(existing_signals)
-                
-                # Replot all signals with new legend format
-                for i, signals in enumerate(signals_to_restore):
-                    if i < len(page.plot_canvas.axes) and signals:
-                        logger.debug(f"Replotting signals for subplot {i}")
-                        # Replot with new legend format via page_widget (reads the flag from main_window)
-                        page.set_subplot_signals(i, signals)
-        
-        logger.info(f"Legend update complete. group_name_in_legend = {self.group_name_in_legend}")
+        self._refresh_all_plots()
 
     def toggle_channel_name_in_legend(self, checked):
-        """Toggle channel name in legend"""
-        logger.debug(f"Toggle channel name in legend: {checked}")
         self.channel_name_in_legend = checked
-        logger.debug(f"Updated channel_name_in_legend flag to: {self.channel_name_in_legend}")
-        
-        # Update all pages to reflect the new setting
+        self._refresh_all_plots()
+
+    def _refresh_all_plots(self):
+        """Helper to refresh all subplots across all pages when legend settings change"""
         for page in self.page_manager.pages:
             if page.plot_canvas:
-                logger.debug(f"Updating page {page.page_index} with new channel legend setting")
-                # Get existing signals for each subplot
-                signals_to_restore = []
-                for i in range(len(page.plot_canvas.axes)):
-                    existing_signals = page.plot_canvas.get_existing_signals_for_subplot(i)
-                    signals_to_restore.append(existing_signals)
-                
-                # Replot all signals with new legend format
-                for i, signals in enumerate(signals_to_restore):
-                    if i < len(page.plot_canvas.axes) and signals:
-                        logger.debug(f"Replotting signals for subplot {i}")
-                        # Replot with new legend format via page_widget (reads the flag from main_window)
-                        page.set_subplot_signals(i, signals)
-        
-        logger.info(f"Legend update complete. channel_name_in_legend = {self.channel_name_in_legend}")
+                for i in range(page.plot_canvas.subplot_count):
+                    # Re-get signals to refresh labels based on new flags
+                    signals = page.plot_canvas.get_existing_signals_for_subplot(i)
+                    if signals:
+                        page.plot_canvas.set_subplot_signals(
+                            i, signals, 
+                            use_group_name=self.group_name_in_legend,
+                            use_channel_name=self.channel_name_in_legend
+                        )
 
-if __name__ == '__main__':
-    from PyQt5.QtWidgets import QApplication
-    import sys
-    
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    def _call_canvas_method(self, method_name):
+        """Helper to call a method on the current plot canvas"""
+        page = self.get_current_page()
+        if page and page.plot_canvas and hasattr(page.plot_canvas, method_name):
+            getattr(page.plot_canvas, method_name)()

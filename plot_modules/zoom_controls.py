@@ -29,7 +29,7 @@ class ZoomControlMixin:
             lines = ax.get_lines()
             for line in lines:
                 if line.get_label() != '_nolegend_':
-                    xd = line.get_xdata()
+                    xd = np.asarray(line.get_xdata())
                     if len(xd) > 0:
                         all_x_min.append(np.min(xd))
                         all_x_max.append(np.max(xd))
@@ -64,8 +64,8 @@ class ZoomControlMixin:
             for line in lines:
                 # Skip lines with '_nolegend_' label (these are from rectangle selectors)
                 if line.get_label() != '_nolegend_':
-                    x_data = line.get_xdata()
-                    y_data = line.get_ydata()
+                    x_data = np.asarray(line.get_xdata())
+                    y_data = np.asarray(line.get_ydata())
                     
                     # Find indices within current x-range
                     mask = (x_data >= x_min) & (x_data <= x_max)

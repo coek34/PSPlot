@@ -34,6 +34,7 @@ class Signal:
         line_style: Optional line style ('solid', 'dashed', 'dotted', 'dashdot')
         visible: Whether signal should be displayed
         label: Optional custom label for legend (if None, uses name)
+        scale: Scaling factor for Y-axis data (default 1.0)
     """
     name: str
     channel_name: str = "Unknown"
@@ -44,6 +45,7 @@ class Signal:
     line_style: Optional[str] = None
     visible: bool = True
     label: Optional[str] = None
+    scale: float = 1.0
     
     def __post_init__(self) -> None:
         """Validate data after initialization."""
@@ -122,6 +124,7 @@ class Signal:
             'line_style': self.line_style,
             'visible': self.visible,
             'label': self.label,
+            'scale': self.scale,
         }
     
     @classmethod
@@ -150,6 +153,7 @@ class Signal:
                 line_style=data.get('line_style'),
                 visible=data.get('visible', True),
                 label=data.get('label'),
+                scale=data.get('scale', 1.0),
             )
         except ValidationError:
             raise

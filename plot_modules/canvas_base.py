@@ -1,7 +1,9 @@
 # plot_modules/canvas_base.py
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QWidget, QMenu, QAction, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QMenuBar, QFileDialog
+from PyQt5.QtWidgets import (QWidget, QMenu, QAction, QMessageBox, QDialog, 
+                             QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, 
+                             QLabel, QMenuBar, QFileDialog, QInputDialog, QComboBox, QListView)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
@@ -67,6 +69,20 @@ class BaseInteractiveCanvas(FigureCanvas):
     def update_plots(self, subplot_count):
         self.subplot_count = max(1, min(6, subplot_count))
         self.fig.clear()
+        
+        # Reset cursor state - cursors must be re-enabled after layout change
+        self.cursors_active = False
+        self.cursor_lines_a = []
+        self.cursor_lines_b = []
+        self.cursor_texts_a = []
+        self.cursor_texts_b = []
+        
+        # Explicitly clear status info when changing plots
+        if hasattr(self, 'main_window') and self.main_window:
+            if hasattr(self.main_window, 'measurement_label'):
+                self.main_window.measurement_label.setText("")
+                self.main_window.measurement_label.setVisible(False)
+        
         self.axes = []
         self.rect_selectors = []
         
@@ -238,22 +254,35 @@ class BaseInteractiveCanvas(FigureCanvas):
             
             self._update_cursor_positions() # Initial info update
         else:
-            # Remove lines and texts
-            for obj in self.cursor_lines_a + self.cursor_lines_b + self.cursor_texts_a + self.cursor_texts_b:
-                obj.remove()
+            # Explicitly hide and remove all cursor-related artists
+            all_objs = self.cursor_lines_a + self.cursor_lines_b + self.cursor_texts_a + self.cursor_texts_b
+            for obj in all_objs:
+                try:
+                    obj.set_visible(False)
+                    if hasattr(obj, 'remove'):
+                        obj.remove()
+                except Exception:
+                    pass
+
             self.cursor_lines_a = []
             self.cursor_lines_b = []
             self.cursor_texts_a = []
             self.cursor_texts_b = []
             
-            # Reset status bar to default help text
+            # Reset status bar info to empty for this canvas
             if hasattr(self, 'main_window') and self.main_window:
+                if hasattr(self.main_window, 'measurement_label'):
+                    self.main_window.measurement_label.setText("")
+                    self.main_window.measurement_label.setVisible(False)
                 self.main_window.update_status_bar()
             
         self.draw()
 
     def _update_cursor_positions(self):
         """Sync line positions and update delta info in status bar and on-plot labels"""
+        if not hasattr(self, 'axes') or not self.axes or not self.cursors_active:
+            return
+            
         xlim = self.axes[0].get_xlim()
         x_range = xlim[1] - xlim[0]
         
@@ -262,8 +291,8 @@ class BaseInteractiveCanvas(FigureCanvas):
             lines = ax.get_lines()
             for line in lines:
                 if line.get_label() != '_nolegend_' and not hasattr(line, '_cursor_marker'):
-                    xd = line.get_xdata()
-                    yd = line.get_ydata()
+                    xd = np.asarray(line.get_xdata())
+                    yd = np.asarray(line.get_ydata())
                     if len(xd) > 1:
                         # Use interpolation for precision between data points
                         try:
@@ -302,7 +331,7 @@ class BaseInteractiveCanvas(FigureCanvas):
         
         if hasattr(self, 'main_window') and self.main_window:
             msg = f"A: {self.cursor_pos_a:.4f}s | B: {self.cursor_pos_b:.4f}s | Δt: {dx:.4f}s | f: {freq:.2f}Hz"
-            self.main_window.status_label.setText(msg)
+            self.main_window.update_status_bar(msg)
             
         self.draw_idle()
 
@@ -323,8 +352,163 @@ class BaseInteractiveCanvas(FigureCanvas):
         if self.last_clicked_subplot is not None:
             y_label_action = menu.addAction("Change Y-Label")
             y_label_action.triggered.connect(self.change_y_label)
+            
+            # Add scaling action
+            scale_action = menu.addAction("Scale")
+            scale_action.triggered.connect(self.change_signal_scale)
         
         menu.exec_(self.mapToGlobal(position))
+
+    def _apply_dialog_style(self, dialog):
+        """Helper to apply consistent theme styling with high contrast selection views"""
+        if not get_theme:
+            return
+            
+        theme = get_theme()
+        c = theme.colors
+        
+        # Use a high-contrast selection color for dropdowns (Standard Windows/macOS Blue)
+        selection_bg = "#0078D7" 
+        
+        dialog_style = f"""
+            QDialog {{ 
+                background-color: {c.base}; 
+            }}
+            QLabel {{ 
+                color: {c.text}; 
+                font-size: 11pt; 
+            }}
+            QComboBox {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+                border-radius: 4px;
+                padding: 4px;
+                min-height: 25px;
+            }}
+            /* High-contrast list styling for the dropdown popup */
+            QComboBox QAbstractItemView, QListView {{
+                background-color: {c.base};
+                color: {c.text};
+                border: 1px solid {c.border};
+                selection-background-color: {selection_bg};
+                selection-color: white;
+                outline: none;
+            }}
+            /* Specific fix for white-on-white text selection in dropdowns */
+            QComboBox QAbstractItemView::item:selected {{
+                background-color: {selection_bg};
+                color: white;
+            }}
+            QLineEdit {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 11pt;
+            }}
+        """
+        dialog.setStyleSheet(dialog_style)
+        
+        # Set persistent view style for combo boxes to avoid platform native hijacking
+        for combo in dialog.findChildren(QComboBox):
+            view = QListView()
+            view.setStyleSheet(f"selection-background-color: {selection_bg}; selection-color: white; background-color: {c.base}; color: {c.text};")
+            combo.setView(view)
+        
+        # Style buttons with explicit high-contrast colors and visible text
+        for button in dialog.findChildren(QPushButton):
+            btn_text = button.text().replace("&", "").strip()
+            if btn_text in ["Select", "Apply", "OK"]:
+                button.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {c.success};
+                        color: white !important;
+                        font-weight: bold;
+                        border: none;
+                        padding: 8px 20px;
+                        border-radius: 5px;
+                        min-width: 100px;
+                    }}
+                    QPushButton:hover {{
+                        background-color: {theme._darken(c.success, 0.8)};
+                    }}
+                """)
+            elif btn_text in ["Cancel"]:
+                button.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {c.danger};
+                        color: white !important;
+                        font-weight: bold;
+                        border: none;
+                        padding: 8px 20px;
+                        border-radius: 5px;
+                        min-width: 100px;
+                    }}
+                    QPushButton:hover {{
+                        background-color: {theme._darken(c.danger, 0.8)};
+                    }}
+                """)
+
+    def change_signal_scale(self):
+        """Show custom dialog to change the scaling factor for a signal in the current subplot"""
+        if self.last_clicked_subplot is not None:
+            # Get existing signals for this subplot
+            existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)
+            if not existing_signals:
+                QMessageBox.information(self, "Info", "No signals found in this subplot.")
+                return
+
+            # Let user choose signal if more than one
+            selected_signal = None
+            if len(existing_signals) == 1:
+                selected_signal = existing_signals[0]
+            else:
+                items = [f"{s.get('name')} (Scale: {s.get('scale', 1.0)})" for s in existing_signals]
+                
+                dialog = QInputDialog(self)
+                dialog.setWindowTitle("Select Signal")
+                dialog.setLabelText("Which signal do you want to scale?")
+                dialog.setComboBoxItems(items)
+                dialog.setOkButtonText("Select")
+                self._apply_dialog_style(dialog)
+                
+                if dialog.exec_() == QDialog.Accepted:
+                    idx = items.index(dialog.textValue())
+                    selected_signal = existing_signals[idx]
+                else:
+                    return
+
+            if selected_signal:
+                # Get new scale factor using a styled numeric dialog
+                current_scale = float(selected_signal.get('scale', 1.0))
+                
+                dialog = QInputDialog(self)
+                dialog.setWindowTitle("Scale Factor")
+                dialog.setLabelText(f"Enter scale factor for {selected_signal['name']}:")
+                dialog.setDoubleValue(current_scale)
+                dialog.setDoubleDecimals(4)
+                dialog.setDoubleRange(-1e12, 1e12)
+                dialog.setOkButtonText("Apply")
+                self._apply_dialog_style(dialog)
+                
+                if dialog.exec_() == QDialog.Accepted:
+                    new_scale = dialog.doubleValue()
+                    # Update the scale in metadata
+                    selected_signal['scale'] = new_scale
+                    
+                    # Re-plot all signals in this subplot with updated scale
+                    if hasattr(self, 'set_subplot_signals'):
+                        use_group_name = False
+                        use_channel_name = False
+                        if hasattr(self, 'main_window') and self.main_window:
+                            use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
+                            use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
+                        
+                        self.set_subplot_signals(self.last_clicked_subplot, existing_signals, 
+                                               use_group_name=use_group_name, 
+                                               use_channel_name=use_channel_name)
     
     def change_y_label(self):
         """Show dialog to change the y-label for the last clicked subplot"""
@@ -348,6 +532,11 @@ class BaseInteractiveCanvas(FigureCanvas):
 
     def show_signal_selector(self, position):
         """Show signal selector dialog for the clicked subplot"""
+        # Automatically disable measurement cursors before opening selector
+        # to prevent interaction issues and clear existing markers
+        if getattr(self, 'cursors_active', False):
+            self.toggle_measurement_cursors()
+
         # If position is exactly (0,0), it might be an automated trigger from import
         # In that case, we should default to subplot 0 if none was clicked
         if self.last_clicked_subplot is None:
@@ -479,28 +668,12 @@ class YLabelDialog(QDialog):
         content_layout.addLayout(button_layout)
         layout.addLayout(content_layout)
         
-        # Apply theme-aware stylesheet
-        self.apply_theme_style()
-        
-        # Focus on input field
-        self.label_input.setFocus()
-        
-    def apply_theme_style(self):
-        """Apply theme-aware styling to the dialog"""
+        # Apply theme-aware styling
         if get_theme:
-            c = get_theme().colors
-            style = f"""
-                QWidget {{
-                    background-color: {c.base};
-                    color: {c.text};
-                }}
-            """
-            self.setStyleSheet(style)
-        
+            self.setStyleSheet(get_theme().get_style_sheet())
+
     def say_hi(self):
-        """Sample function like in Test4.py"""
-        QMessageBox.information(self, "Message", "Hi!")
-        
+        QMessageBox.information(self, "Hi", "Hello from PSPlot!")
+
     def get_label(self):
-        """Return the entered label"""
         return self.label_input.text()
