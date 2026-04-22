@@ -26,7 +26,8 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 10| **Kursor Measurement Fix** | ✅ | Fixed crash when removing kursor artists after ax.clear() |
     | 11| **NumPy Array Conversion** | ✅ | Fixed TypeError in Reset Y Zoom by forcing np.asarray() |
     | 12| **Search & Filter in Signal Tree** | ✅ | Added search bar to Signal Explorer for rapid signal discovery |
-    | 13| **Quick Scaling** | ✅ | Implemented per-signal scaling via right-click 'Skala' with .psp persistence |
+    | 13| **Quick Scaling** | ✅ | Implemented per-signal scaling via right-click 'Scale' with .psp persistence |
+    | 14| **COMTRADE Support** | ✅ | Added support for IEEE COMTRADE (C37.111) files in data import |
     
     ---
 

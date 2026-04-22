@@ -2,7 +2,9 @@
 from PyQt5.QtWidgets import QMessageBox
 import os
 import logging
+import numpy as np
 from pscad_reader import PSCADReader
+from comtrade_reader import ComtradeReader
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +15,7 @@ class DataManager:
         self.channel_signals = {}  # Dictionary to store loaded actual data per channel
         self.available_signals = [] # Hierarchical structure for SignalExplorer
         self.pscad_reader = PSCADReader()
+        self.comtrade_reader = ComtradeReader()
     
     def get_imported_paths_info(self):
         """Get information about imported files for persistence"""
@@ -20,9 +23,9 @@ class DataManager:
 
     def get_all_available_data(self):
         """Get all data formatted for SignalExplorerDialog. 
-        Rebuilds from .inf files to ensure the latest signal list is available."""
+        Rebuilds from .inf/.cfg files to ensure the latest signal list is available."""
         if self.imported_data:
-            logger.info("Rebuilding available_signals from .inf files...")
+            logger.info("Rebuilding available_signals from data files...")
             self._rebuild_available_signals()
             
         return self.available_signals
@@ -41,14 +44,18 @@ class DataManager:
         for data in self.imported_data:
             path = data['path']
             label = data['label']
+            ftype = data.get('type', 'pscad')
             
-            # Use path without extension for reader
-            base_path = path
-            if base_path.lower().endswith('.inf'):
-                base_path = base_path[:-4]
-            
-            # List signals from .inf file
-            signals = self.pscad_reader.list_signals(base_path, verbose=False)
+            # Extract signals using appropriate reader
+            signals = []
+            if ftype == 'comtrade' or path.lower().endswith('.cfg'):
+                signals = self.comtrade_reader.list_signals(path, verbose=False)
+            else:
+                # Use base path without extension for PSCAD
+                base_path = path
+                if base_path.lower().endswith('.inf'):
+                    base_path = base_path[:-4]
+                signals = self.pscad_reader.list_signals(base_path, verbose=False)
             
             if signals:
                 # Organize by group
@@ -63,7 +70,8 @@ class DataManager:
                         'name': sig['desc'],
                         'index': sig['index'],
                         'units': sig['units'],
-                        'file_path': base_path # Store base path to read data later
+                        'file_path': path, # Store full path
+                        'type': 'comtrade' if (ftype == 'comtrade' or path.lower().endswith('.cfg')) else 'pscad'
                     })
                 
                 # Create groups list
@@ -78,15 +86,16 @@ class DataManager:
                 self.available_signals.append({
                     'name': label,
                     'groups': groups,
-                    'path': path
+                    'path': path,
+                    'type': ftype
                 })
 
     def import_pscad_data(self):
-        """Import PSCAD data using the data import dialog"""
+        """Import PSCAD/COMTRADE data using the data import dialog"""
         from data_import import DataImportDialog
         dialog = DataImportDialog(self.main_window, existing_data=self.imported_data)
         if dialog.exec_() == dialog.Accepted:
-            # Get the imported data (list of paths/labels)
+            # Get the imported data (list of paths/labels/types)
             self.imported_data = dialog.get_imported_data()
             
             # Rebuild the available signals tree
@@ -94,13 +103,12 @@ class DataManager:
             
             # Check if any signals were actually found
             if not self.available_signals:
-                QMessageBox.warning(self.main_window, "Warning", "No valid signals found in the selected .inf files.")
+                QMessageBox.warning(self.main_window, "Warning", "No valid signals found in the selected files.")
             else:
                 logger.info(f"Imported {len(self.available_signals)} channels with hierarchical signals.")
                 # Automatically open Signal Explorer if data was imported
                 page = self.main_window.get_current_page()
                 if page and page.plot_canvas:
-                    # Provide an empty position or a default one if needed
                     from PyQt5.QtCore import QPoint
                     page.plot_canvas.show_signal_selector(QPoint(0, 0))
 
@@ -109,16 +117,29 @@ class DataManager:
         Loads actual x, y data for a selected signal.
         signal_info is the dict stored in the tree node data.
         """
-        base_path = signal_info.get('file_path')
+        file_path = signal_info.get('file_path')
         sgn_name = signal_info.get('name')
         grp_name = signal_info.get('group_name')
         chn_name = signal_info.get('channel_name')
+        ftype = signal_info.get('type')
         
-        if not base_path or not sgn_name or not grp_name:
+        if not file_path or not sgn_name or not grp_name:
             logger.error(f"Incomplete signal info: {signal_info}")
             return None
             
-        t, data = self.pscad_reader.read_signal(base_path, sgn_name, grp_name)
+        # Detect type if missing
+        if not ftype:
+            ftype = 'comtrade' if file_path.lower().endswith('.cfg') else 'pscad'
+            
+        t, data = np.array([]), np.array([])
+        if ftype == 'comtrade':
+            t, data = self.comtrade_reader.read_signal(file_path, sgn_name, grp_name)
+        else:
+            # PSCADReader uses base path (no extension)
+            base_path = file_path
+            if base_path.lower().endswith('.inf'):
+                base_path = base_path[:-4]
+            t, data = self.pscad_reader.read_signal(base_path, sgn_name, grp_name)
         
         if t.size > 0:
             return {
@@ -128,6 +149,7 @@ class DataManager:
                 'channel_name': chn_name or 'Unknown',
                 'units': signal_info.get('units', ''),
                 'group_name': grp_name,
-                'file_path': base_path
+                'file_path': file_path,
+                'type': ftype
             }
         return None

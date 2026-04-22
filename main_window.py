@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
             if page:
                 total_pages = self.tab_widget.count()
                 current_idx = self.tab_widget.currentIndex() + 1
-                help_text = "1-6 (plots) | A/D (pan) | R/Y (reset) | X (grid) | T (cursors) | E (export) | M (margins)"
+                help_text = "1-6: #Plots | C:Import Data | N:New page | E:Export | A/D:Pan | R/Y:Reset view | X:Horizontal limits | T:Cursor | M:Margins | P: Page size"
                 self.status_help_label.setText(f"{help_text} | Page {current_idx}/{total_pages}")
                 if page.plot_canvas:
                     self.plot_count_label.setText(f"Plots: {page.plot_canvas.subplot_count}")

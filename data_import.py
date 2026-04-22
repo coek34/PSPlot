@@ -10,9 +10,9 @@ from PyQt5.QtCore import Qt
 class DataImportDialog(QDialog):
     def __init__(self, parent=None, existing_data=None):
         super().__init__(parent)
-        self.setWindowTitle("Import PSCAD Data")
+        self.setWindowTitle("Import Data (PSCAD/COMTRADE)")
         self.setModal(True)
-        self.resize(800, 400)  # Increased width for better visibility
+        self.resize(800, 400)
         
         # Store imported data
         self.imported_data = []
@@ -25,12 +25,12 @@ class DataImportDialog(QDialog):
         # Load existing data into the table
         if self.existing_data:
             self.load_existing_data()
-        
+
     def load_existing_data(self):
         """Load existing data into the table"""
         for data in self.existing_data:
-            row = data['channel'] - 1  # Convert to 0-based index
-            if row < 6:  # Only load if within table bounds
+            row = data.get('channel', 1) - 1 # Use get() as channel might be missing in some versions
+            if row < 6:
                 # Set path
                 path_item = self.table.item(row, 0)
                 if path_item:
@@ -44,13 +44,18 @@ class DataImportDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
+        # Instructions
+        instr = QLabel("Double-click a row in 'Path' to select a PSCAD (.inf) or COMTRADE (.cfg) file.")
+        instr.setStyleSheet("font-weight: bold; color: #555; padding-bottom: 5px;")
+        layout.addWidget(instr)
+
         # Table for showing imported data (6 channels)
         self.table = QTableWidget(6, 2)
         self.table.setHorizontalHeaderLabels(["Path", "Label"])
         
         # Set column widths to be more user-friendly
-        self.table.setColumnWidth(0, 400)  # Path column
-        self.table.setColumnWidth(1, 200)  # Label column
+        self.table.setColumnWidth(0, 480)  # Path column
+        self.table.setColumnWidth(1, 240)  # Label column
         
         # Allow manual resizing of columns
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
@@ -69,6 +74,7 @@ class DataImportDialog(QDialog):
             
             # Label column
             label_input = QLineEdit()
+            label_input.setPlaceholderText(f"Channel {row+1} Name")
             self.table.setCellWidget(row, 1, label_input)
         
         # Connect cell click to browse functionality
@@ -77,16 +83,29 @@ class DataImportDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         ok_button = QPushButton("OK")
+        ok_button.setMinimumWidth(100)
         ok_button.clicked.connect(self.accept_data)
         cancel_button = QPushButton("Cancel")
+        cancel_button.setMinimumWidth(100)
         cancel_button.clicked.connect(self.reject)
         
+        # Style buttons if possible (standard look)
+        from theme import get_theme
+        theme = get_theme()
+        if theme:
+            ok_button.setStyleSheet(theme.get_button_ok_style())
+            cancel_button.setStyleSheet(theme.get_button_cancel_style())
+
+        button_layout.addStretch()
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
-        button_layout.addStretch()
         
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
+        
+        # Apply theme to dialog
+        if theme:
+            self.setStyleSheet(f"QDialog {{ background-color: {theme.colors.base}; }} QLabel {{ color: {theme.colors.text}; }}")
         
     def on_cell_clicked(self, row, column):
         """Handle cell click - allow browsing for file paths"""
@@ -94,12 +113,13 @@ class DataImportDialog(QDialog):
             self.browse_file(row)
     
     def browse_file(self, row):
-        """Browse for PSCAD .inf file"""
+        """Browse for PSCAD .inf or COMTRADE .cfg file"""
+        last_dir = "" # Could get from settings
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select PSCAD .inf File",
-            "",
-            "PSCAD Files (*.inf);;All Files (*)"
+            "Select Data File (PSCAD or COMTRADE)",
+            last_dir,
+            "Combined Files (*.inf *.cfg *.CFG);;PSCAD Files (*.inf);;COMTRADE Files (*.cfg *.CFG);;All Files (*)"
         )
         
         if file_path:
@@ -110,8 +130,12 @@ class DataImportDialog(QDialog):
             
             # Auto-fill label based on filename
             filename = os.path.basename(file_path)
-            if filename.endswith('.inf'):
-                filename = filename[:-4]  # Remove .inf extension
+            # Remove extensions
+            for ext in ['.inf', '.cfg', '.CFG']:
+                if filename.lower().endswith(ext):
+                    filename = filename[:-len(ext)]
+                    break
+            
             label_input = self.table.cellWidget(row, 1)
             if label_input and not label_input.text():
                 label_input.setText(filename)
@@ -132,15 +156,20 @@ class DataImportDialog(QDialog):
             
             # Only add if path exists
             if path:
+                # Detect type
+                ftype = 'pscad'
+                if path.lower().endswith('.cfg'):
+                    ftype = 'comtrade'
+                
                 self.imported_data.append({
                     'channel': row + 1,
                     'path': path,
-                    'label': label or f"Channel {row + 1}"
+                    'label': label or f"Channel {row + 1}",
+                    'type': ftype
                 })
         
         # Validate that at least one channel has data
-        has_data = any(data['path'] for data in self.imported_data)
-        if not has_data:
+        if not self.imported_data:
             QMessageBox.warning(self, "Warning", "Please select at least one data file")
             return
             

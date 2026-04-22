@@ -23,14 +23,14 @@ class CanvasManager:
                 # Get selected size in inches
                 width_inch, height_inch = dialog.get_selected_size()
                 # Create new page with selected size
-                self.main_window.add_new_page(width_inch, height_inch)
+                self.main_window.page_manager.add_new_page(width_inch, height_inch)
         else:
             # If no current page, use default size
             from canvas_size_dialog import CanvasSizeDialog
             dialog = CanvasSizeDialog(self.main_window)
             if dialog.exec_() == QDialog.Accepted:
                 width_inch, height_inch = dialog.get_selected_size()
-                self.main_window.add_new_page(width_inch, height_inch)
+                self.main_window.page_manager.add_new_page(width_inch, height_inch)
     
     def resize_current_page(self):
         """Resize the current page while preserving signals and x-limits"""
