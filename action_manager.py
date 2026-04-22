@@ -152,6 +152,59 @@ class ActionManager:
             print(traceback.format_exc())
             QMessageBox.critical(self.main_window, "Error", f"Failed to load template: {e}")
 
+    def on_filter_clicked(self):
+        """Open the signal filter tool"""
+        from filter_dialog import FilterDialog
+        
+        page = self.main_window.get_current_page()
+        if not page or not page.plot_canvas:
+            QMessageBox.warning(self.main_window, "Wait", "No active plot to filter signals from.")
+            return
+            
+        # Gather all signals from all subplots of the current page
+        all_signals = []
+        for i in range(page.plot_canvas.subplot_count):
+            sigs = page.plot_canvas.get_existing_signals_for_subplot(i)
+            # Tag them with source subplot index
+            for s in sigs:
+                s['source_subplot'] = i
+                all_signals.append(s)
+                
+        if not all_signals:
+            QMessageBox.warning(self.main_window, "Wait", "No signals found on the current page to filter.")
+            return
+            
+        dialog = FilterDialog(all_signals, self.main_window)
+        if dialog.exec_() == dialog.Accepted:
+            result = dialog.result_signal
+            if result:
+                # Add to destination
+                dest_idx = result['destination'] # 0: current, 1: new
+                source_subplot = result.get('source_subplot', 0)
+                
+                if dest_idx == 0:
+                    # Append to existing
+                    current_sigs = page.plot_canvas.get_existing_signals_for_subplot(source_subplot)
+                    current_sigs.append(result)
+                    page.plot_canvas.set_subplot_signals(source_subplot, current_sigs, 
+                                                       use_group_name=self.main_window.group_name_in_legend,
+                                                       use_channel_name=self.main_window.channel_name_in_legend)
+                else:
+                    # New subplot
+                    new_idx = page.plot_canvas.subplot_count
+                    if new_idx < 6:
+                        page.update_plots(new_idx + 1)
+                        page.plot_canvas.set_subplot_signals(new_idx, [result],
+                                                           use_group_name=self.main_window.group_name_in_legend,
+                                                           use_channel_name=self.main_window.channel_name_in_legend)
+                    else:
+                        QMessageBox.warning(self.main_window, "Full", "Maximum 6 subplots reached. Adding to current instead.")
+                        current_sigs = page.plot_canvas.get_existing_signals_for_subplot(source_subplot)
+                        current_sigs.append(result)
+                        page.plot_canvas.set_subplot_signals(source_subplot, current_sigs,
+                                                           use_group_name=self.main_window.group_name_in_legend,
+                                                           use_channel_name=self.main_window.channel_name_in_legend)
+
     def _sync_all_signals(self):
         """Sync signals from canvas to storage (internal helper)"""
         import logging

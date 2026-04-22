@@ -34,6 +34,7 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 15| **Fieldwork UI Polish** | ✅ | Full macOS Dark Mode support, high-contrast tree selection, and status bar help labels |
 | 16| **Documentation Polish** | ✅ | Comprehensive README.md and technical COMTRADE Standard Comparison guide |
 | 17| **Keyboard Audit** | ✅ | Restored/fixed and documented all 11+ rapid-analysis keyboard shortcuts |
+| 18| **Filtering Modules** | ✅ | Implemented Zero-Phase Low-pass, High-pass, and Moving Average filters |
 
 ### Phase 3: Deployment & Identity (Pekanbaru Updates)
 | # | Improvement | Status | Details |
@@ -48,10 +49,9 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 ## 🚧 Pending Improvements
 
 ### 🔴 HIGH PRIORITY: Research & Analysis
+*   **Filtering Modules**: ✅ Implemented Low-pass, High-pass Butterworth (Zero-Phase), and Moving Average filters with UI integration.
 *   **CLI & Batch Processing**: Implement a Command Line Interface to process multiple PSCAD files automatically using layout templates (.psp), enabling high-throughput analysis without manual GUI interaction.
 *   **FFT Analysis Window**: Add a dedicated window/pane for Fast Fourier Transform (FFT) analysis of zoomed signals.
-*   **THD Calculation**: Automatic Total Harmonic Distortion calculation on measurement cursors.
-*   **Filtering Modules**: Implementation of Low-pass, High-pass, and Moving Average filters in the UI.
 *   **SCR Estimation Integration**: Special visualization mode for Short-Circuit Ratio (SCR) time-series estimation data.
 
 ### 🟡 MEDIUM PRIORITY: UX & Workflow

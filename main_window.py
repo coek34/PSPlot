@@ -437,6 +437,13 @@ class MainWindow(QMainWindow):
         self.channel_name_action.triggered.connect(self.toggle_channel_name_in_legend)
         settings_menu.addAction(self.channel_name_action)
 
+        # Tools Menu
+        tools_menu = menubar.addMenu('Tools')
+        
+        filter_action = QAction('Filter Signal...', self)
+        filter_action.triggered.connect(self.action_manager.on_filter_clicked)
+        tools_menu.addAction(filter_action)
+
     def toggle_group_name_in_legend(self, checked):
         self.group_name_in_legend = checked
         self._refresh_all_plots()
