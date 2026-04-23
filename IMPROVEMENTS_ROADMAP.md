@@ -2,9 +2,9 @@
 
 This document tracks planned improvements and technical debt for the PSPlot application.
 
-**Last Updated:** 2026-04-22  
-**Current Version:** 1.3.0 (Pekanbaru Edition)  
-**Status:** Active Development
+**Last Updated:** 2026-04-24  
+**Current Version:** 1.3.1 (Pekanbaru Edition)  
+**Status:** Feature Freeze/Partial Pending
 
 ---
 
@@ -48,8 +48,10 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 
 ## 🚧 Pending Improvements
 
+### 🔘 ON HOLD: Feature Pause
+*   **Signal Filtering Integration**: ❌ *Removed from Current Build* - Reverted to pre-filtering version per user request; logic remains in archive/history.
+
 ### 🔴 HIGH PRIORITY: Research & Analysis
-*   **Filtering Modules**: ✅ Implemented Low-pass, High-pass Butterworth (Zero-Phase), and Moving Average filters with UI integration.
 *   **CLI & Batch Processing**: Implement a Command Line Interface to process multiple PSCAD files automatically using layout templates (.psp), enabling high-throughput analysis without manual GUI interaction.
 *   **FFT Analysis Window**: Add a dedicated window/pane for Fast Fourier Transform (FFT) analysis of zoomed signals.
 *   **SCR Estimation Integration**: Special visualization mode for Short-Circuit Ratio (SCR) time-series estimation data.
