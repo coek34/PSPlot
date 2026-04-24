@@ -10,6 +10,7 @@ PSPlot is a high-performance, PyQt5-based visualization and analysis tool design
 - **Multi-Format Support**: 
   - **PSCAD**: Native support for `.inf` and `.out` file pairs.
   - **IEEE COMTRADE**: Full compatibility with C37.111-1991, 1999, and 2013 standards (ASCII and Binary formats).
+  - **CSV**: Import standard CSV files with flexible column mapping.
 - **Advanced Visualization**: 
   - Synchronized multi-subplot scrolling and zooming.
   - Interactive measurement cursors (Shortcut: `T`).
@@ -46,6 +47,7 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
 Launch the application and click **File > Import Data** (Shortcut: `C`). 
 - For PSCAD: Select the `.inf` file.
 - For COMTRADE: Select the `.cfg` file.
+- For CSV: Select the `.csv` file.
 
 ![![Data Import Dialog]](screenshots/final_02_import.png)
 

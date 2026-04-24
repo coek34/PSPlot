@@ -486,7 +486,7 @@ class MainWindow(QMainWindow):
             "<b>Organization:</b> Department of Electrical Engineering,<br>"
             "Faculty of Engineering, Universitas Gadjah Mada<br><br>"
             "PSPlot is a professional tool for plotting and exporting<br>"
-            "power system signals from PSCAD and COMTRADE data formats.<br><br>"
+            "power system signals from PSCAD, COMTRADE, and CSV data formats.<br><br>"
             "Copyright 2026 PSPlot - All rights reserved."
         )
         dialog.setStandardButtons(QMessageBox.Ok)
