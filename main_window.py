@@ -37,6 +37,9 @@ class MainWindow(QMainWindow):
 
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
+            self.icon_path = icon_path
+        else:
+            self.icon_path = None
 
         # 1. Load Settings & Preferences
         self.settings = get_settings()
@@ -447,9 +450,22 @@ class MainWindow(QMainWindow):
             getattr(page.plot_canvas, method_name)()
 
     def show_about_dialog(self):
-        """Show the About dialog with application and creator information."""
+        """Show the About dialog with icon and creator info."""
         dialog = QMessageBox(self)
         dialog.setWindowTitle("About PSPlot")
+        
+        # Load and set application icon
+        ip = getattr(self, "icon_path", None)
+        if ip and os.path.exists(ip):
+            pm = QPixmap(ip)
+            if pm.width() > 0:
+                sp = pm.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                dialog.setIconPixmap(sp)
+            else:
+                dialog.setIcon(QMessageBox.Information)
+        else:
+            dialog.setIcon(QMessageBox.Information)
+        
         dialog.setText("PSPlot: Professional Power System Output Plotter")
         dialog.setInformativeText(
             "<b>Version:</b> 1.0.0<br>"
