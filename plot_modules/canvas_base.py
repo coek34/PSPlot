@@ -289,41 +289,48 @@ class BaseInteractiveCanvas(FigureCanvas):
         xlim = self.axes[0].get_xlim()
         x_range = xlim[1] - xlim[0]
         
-        # Helper to get interpolated value at X
-        def get_val_at(ax, x_pos):
-            lines = ax.get_lines()
-            for line in lines:
+        # Helper to get all interpolated values at X for all data lines in this subplot
+        def get_all_vals_at(ax, x_pos):
+            vals = []
+            for line in ax.get_lines():
                 if line.get_label() != '_nolegend_' and not hasattr(line, '_cursor_marker'):
                     xd = np.asarray(line.get_xdata())
                     yd = np.asarray(line.get_ydata())
                     if len(xd) > 1:
-                        # Use interpolation for precision between data points
                         try:
-                            return np.interp(x_pos, xd, yd)
+                            label = line.get_label().strip('_nolegend_')
+                            vals.append((label, np.interp(x_pos, xd, yd)))
                         except:
                             pass
-            return None
+            return vals
 
         for i, (ax, la, lb, ta, tb) in enumerate(zip(self.axes, self.cursor_lines_a, self.cursor_lines_b, self.cursor_texts_a, self.cursor_texts_b)):
             # Update Vertical Lines
             la.set_xdata([self.cursor_pos_a, self.cursor_pos_a])
             lb.set_xdata([self.cursor_pos_b, self.cursor_pos_b])
             
-            # Update Text A
-            val_a = get_val_at(ax, self.cursor_pos_a)
-            if val_a is not None:
-                ta.set_text(f"{val_a:.4f}")
-                ta.set_position((self.cursor_pos_a + x_range*0.01, val_a))
+            # Update Text A - Display ALL signals values
+            all_vals_a = get_all_vals_at(ax, self.cursor_pos_a)
+            if all_vals_a:
+                lines_a = [f"{name}: {val:.4f}" for name, val in all_vals_a]
+                ta.set_text("\n".join(lines_a))
+                # Position near the first/average value
+                y_vals_a = [v for _, v in all_vals_a]
+                avg_y_a = sum(y_vals_a) / len(y_vals_a)
+                ta.set_position((self.cursor_pos_a + x_range*0.01, avg_y_a))
                 ta.set_visible(True)
             else:
                 ta.set_visible(False)
                 
-            # Update Text B
-            val_b = get_val_at(ax, self.cursor_pos_b)
-            if val_b is not None:
-                tb.set_text(f"{val_b:.4f}")
-                # Offset slightly to the right of the line
-                tb.set_position((self.cursor_pos_b + x_range*0.01, val_b))
+            # Update Text B - Display ALL signals values
+            all_vals_b = get_all_vals_at(ax, self.cursor_pos_b)
+            if all_vals_b:
+                lines_b = [f"{name}: {val:.4f}" for name, val in all_vals_b]
+                tb.set_text("\n".join(lines_b))
+                # Position near the first/average value
+                y_vals_b = [v for _, v in all_vals_b]
+                avg_y_b = sum(y_vals_b) / len(y_vals_b)
+                tb.set_position((self.cursor_pos_b + x_range*0.01, avg_y_b))
                 tb.set_visible(True)
             else:
                 tb.set_visible(False)
