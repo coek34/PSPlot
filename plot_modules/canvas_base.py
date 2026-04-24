@@ -283,66 +283,63 @@ class BaseInteractiveCanvas(FigureCanvas):
 
     def _update_cursor_positions(self):
         """Sync line positions and update delta info in status bar and on-plot labels"""
-        if not hasattr(self, 'axes') or not self.axes or not self.cursors_active:
+        if not hasattr(self, "axes") or not self.axes or not self.cursors_active:
             return
-            
         xlim = self.axes[0].get_xlim()
         x_range = xlim[1] - xlim[0]
         
-        # Helper to get all interpolated values at X for all data lines in this subplot
-        def get_all_vals_at(ax, x_pos):
-            vals = []
-            for line in ax.get_lines():
-                if line.get_label() != '_nolegend_' and not hasattr(line, '_cursor_marker'):
-                    xd = np.asarray(line.get_xdata())
-                    yd = np.asarray(line.get_ydata())
-                    if len(xd) > 1:
+        # Clear old cursor signal labels
+        for ax in self.axes:
+            if hasattr(ax, "_cursor_signal_labels"):
+                for lbl_pairs in ax._cursor_signal_labels:
+                    for lbl in lbl_pairs:
                         try:
-                            label = line.get_label().strip('_nolegend_')
-                            vals.append((label, np.interp(x_pos, xd, yd)))
-                        except:
+                            lbl.remove()
+                        except Exception:
                             pass
-            return vals
-
-        for i, (ax, la, lb, ta, tb) in enumerate(zip(self.axes, self.cursor_lines_a, self.cursor_lines_b, self.cursor_texts_a, self.cursor_texts_b)):
+            ax._cursor_signal_labels = []
+        
+        for i, ax in enumerate(self.axes):
             # Update Vertical Lines
-            la.set_xdata([self.cursor_pos_a, self.cursor_pos_a])
-            lb.set_xdata([self.cursor_pos_b, self.cursor_pos_b])
-            
-            # Update Text A - Display ALL signals values
-            all_vals_a = get_all_vals_at(ax, self.cursor_pos_a)
-            if all_vals_a:
-                lines_a = [f"{name}: {val:.4f}" for name, val in all_vals_a]
-                ta.set_text("\n".join(lines_a))
-                # Position near the first/average value
-                y_vals_a = [v for _, v in all_vals_a]
-                avg_y_a = sum(y_vals_a) / len(y_vals_a)
-                ta.set_position((self.cursor_pos_a + x_range*0.01, avg_y_a))
-                ta.set_visible(True)
-            else:
-                ta.set_visible(False)
-                
-            # Update Text B - Display ALL signals values
-            all_vals_b = get_all_vals_at(ax, self.cursor_pos_b)
-            if all_vals_b:
-                lines_b = [f"{name}: {val:.4f}" for name, val in all_vals_b]
-                tb.set_text("\n".join(lines_b))
-                # Position near the first/average value
-                y_vals_b = [v for _, v in all_vals_b]
-                avg_y_b = sum(y_vals_b) / len(y_vals_b)
-                tb.set_position((self.cursor_pos_b + x_range*0.01, avg_y_b))
-                tb.set_visible(True)
-            else:
-                tb.set_visible(False)
+            if i < len(self.cursor_lines_a):
+                self.cursor_lines_a[i].set_xdata([self.cursor_pos_a, self.cursor_pos_a])
+            if i < len(self.cursor_lines_b):
+                self.cursor_lines_b[i].set_xdata([self.cursor_pos_b, self.cursor_pos_b])
+            # Get all signals and create per-signal labels
+            sig_labels_a = []
+            sig_labels_b = []
+            for line in ax.get_lines():
+                if line.get_label() == "_nolegend_":
+                    continue
+                xd = np.asarray(line.get_xdata())
+                yd = np.asarray(line.get_ydata())
+                if len(xd) <= 1:
+                    continue
+                try:
+                    y_val_a = np.interp(self.cursor_pos_a, xd, yd)
+                    y_val_b = np.interp(self.cursor_pos_b, xd, yd)
+                    bbox_a = dict(boxstyle="round,pad=0.2,rounding_size=0.3", fc="white", ec="red", alpha=0.9, lw=0.8)
+                    lbl_a = ax.text(self.cursor_pos_a + x_range*0.02, y_val_a, f"{y_val_a:.4f}",
+                                    color="red", fontsize=7, fontweight="bold",
+                                    bbox=bbox_a, zorder=5)
+                    bbox_b = dict(boxstyle="round,pad=0.2,rounding_size=0.3", fc="white", ec="blue", alpha=0.9, lw=0.8)
+                    lbl_b = ax.text(self.cursor_pos_b + x_range*0.02, y_val_b, f"{y_val_b:.4f}",
+                                    color="blue", fontsize=7, fontweight="bold",
+                                    bbox=bbox_b, zorder=5)
+                    sig_labels_a.append(lbl_a)
+                    sig_labels_b.append(lbl_b)
+                except Exception:
+                    pass
+            ax._cursor_signal_labels.append(sig_labels_a)
+            ax._cursor_signal_labels.append(sig_labels_b)
         
         # Calculate Delta for status bar
         dx = abs(self.cursor_pos_b - self.cursor_pos_a)
         freq = 1.0/dx if dx > 0 else 0
         
-        if hasattr(self, 'main_window') and self.main_window:
+        if hasattr(self, "main_window") and self.main_window:
             msg = f"A: {self.cursor_pos_a:.4f}s | B: {self.cursor_pos_b:.4f}s | Δt: {dx:.4f}s | f: {freq:.2f}Hz"
             self.main_window.update_status_bar(msg)
-            
         self.draw_idle()
 
     def show_context_menu(self, position):
