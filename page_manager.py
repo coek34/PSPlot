@@ -102,13 +102,14 @@ class RenameDialog(QDialog):
                 background-color: {theme._darken(c.success)};
             }}
             QPushButton#cancel_btn {{
-                background-color: {c.alt};
-                color: {c.text};
-                border: 1px solid {c.border};
+                background-color: {c.danger};
+                color: white;
+                border: none;
                 border-radius: 4px;
+                font-weight: bold;
             }}
             QPushButton#cancel_btn:hover {{
-                background-color: {hover_bg};
+                background-color: {theme._darken(c.danger)};
             }}
         """
         self.setStyleSheet(sheet)
