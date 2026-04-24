@@ -81,6 +81,8 @@ class MainWindow(QMainWindow):
         # Tab widget for multiple pages/canvases
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
+        self.tab_widget.setTabsEditable(True)
+        self.tab_widget.tabBarDoubleClicked.connect(self._on_tab_double_clicked)
         self.tab_widget.tabCloseRequested.connect(self.page_manager.close_page)
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
@@ -442,6 +444,10 @@ class MainWindow(QMainWindow):
                             use_group_name=self.group_name_in_legend,
                             use_channel_name=self.channel_name_in_legend
                         )
+
+    def _on_tab_double_clicked(self, index):
+        if 0 <= index < len(self.page_manager.pages):
+            self.page_manager.rename_page(index)
 
     def _call_canvas_method(self, method_name):
         """Helper to call a method on the current plot canvas"""
