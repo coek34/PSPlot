@@ -1,7 +1,7 @@
 <img src="PSPlot_icon.png" width="150" height="150">
 #PSPlot: Power System Signal Analysis Tool
 
-![Main Interface](final_01_main.png)
+![![Main Interface]](screenshots/final_01_main.png)
 
 PSPlot is a high-performance, PyQt5-based visualization and analysis tool designed for electrical engineers and researchers. It specializes in processing large-scale transient data from simulation environments (PSCAD) and field recordings (IEEE COMTRADE).
 
@@ -47,7 +47,7 @@ Launch the application and click **File > Import Data** (Shortcut: `C`).
 - For PSCAD: Select the `.inf` file.
 - For COMTRADE: Select the `.cfg` file.
 
-![Data Import Dialog](final_02_import.png)
+![![Data Import Dialog]](screenshots/final_02_import.png)
 
 ### 2. Signal Explorer
 The **Signal Explorer** on the left allows you to:
@@ -55,7 +55,7 @@ The **Signal Explorer** on the left allows you to:
 - Drag and drop signals directly into any subplot.
 - Right-click for **Quick Scale** (Multiplier/Gain setup).
 
-![Signal Explorer](final_03_explorer.png)
+![![Signal Explorer]](screenshots/final_03_explorer.png)
 
 ### 3. Managing Layouts
 Double-click a signal in the tree to add it to a new plot, or use keyboard shortcuts to change the window layout instantly.
@@ -68,7 +68,7 @@ Quickly adjust layouts and prepare reports using dedicated dialogs:
 
 | Margins (M) | Page Size (P) 
 | :---: | :---: 
-| ![Margins Setup](shot_m_margins.png) | ![Page Dimension Setup](shot_p_size.png) 
+| ![![Margins Setup]](screenshots/shot_m_margins.png) | ![![Page Dimension Setup]](screenshots/shot_p_size.png) 
 ---
 
 | Key | Action |
