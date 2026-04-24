@@ -116,9 +116,14 @@ class BaseInteractiveCanvas(FigureCanvas):
             ax.legend(fontsize=8, loc='upper right')
             ax.grid(True, alpha=0.3)
             
-            # Restore previous y-limits if they exist
+              # Restore previous y-limits if they exist, otherwise auto-fit from data
             if i in self.current_ylim_dict:
                 ax.set_ylim(self.current_ylim_dict[i])
+            else:
+                ylim = self._auto_y_limits_from_subplot(i)
+                if ylim:
+                    self.current_ylim_dict[i] = ylim
+                    ax.set_ylim(ylim)
             
             # Add rectangle selector for zooming
             selector = RectangleSelector(
@@ -151,7 +156,28 @@ class BaseInteractiveCanvas(FigureCanvas):
             self.fig.tight_layout(pad=2.0)
         
         self.draw()
-    
+
+    def _auto_y_limits_from_subplot(self, subplot_idx):
+        """Auto-calculate y-limits from all visible data lines in a subplot."""
+        if subplot_idx >= len(self.axes):
+            return None
+        ax = self.axes[subplot_idx]
+        all_y = []
+        for line in ax.get_lines():
+            if line.get_label() == '_nolegend_':
+                continue
+            yd = np.asarray(line.get_ydata())
+            if yd.size > 0:
+                valid = yd[~np.isnan(yd)]
+                if len(valid) > 0:
+                    all_y.extend(valid)
+        if not all_y:
+            return None
+        y_array = np.array(all_y)
+        y_range = y_array.max() - y_array.min()
+        y_margin = y_range * 0.05 if y_range > 0 else 0.1
+        return (float(y_array.min() - y_margin), float(y_array.max() + y_margin))
+
     def on_select(self, eclick, erelease):
         """Handle rectangle selection for zooming"""
         if eclick.xdata is None or erelease.xdata is None:
@@ -272,6 +298,19 @@ class BaseInteractiveCanvas(FigureCanvas):
             self.cursor_texts_a = []
             self.cursor_texts_b = []
             
+            # Also hide/remove all signal labels from cursor
+            for ax in self.axes:
+                if hasattr(ax, "_cursor_signal_labels"):
+                    for lbls in ax._cursor_signal_labels:
+                        for lbl in lbls:
+                            try:
+                                lbl.set_visible(False)
+                                if hasattr(lbl, "remove"):
+                                    lbl.remove()
+                            except Exception:
+                                pass
+                    ax._cursor_signal_labels = []
+
             # Reset status bar info to empty for this canvas
             if hasattr(self, 'main_window') and self.main_window:
                 if hasattr(self.main_window, 'measurement_label'):
@@ -309,15 +348,40 @@ class BaseInteractiveCanvas(FigureCanvas):
             sig_labels_a = []
             sig_labels_b = []
             for line in ax.get_lines():
-                if line.get_label() == "_nolegend_":
+                label = line.get_label()
+                if not label or label == "_nolegend_":
                     continue
                 xd = np.asarray(line.get_xdata())
                 yd = np.asarray(line.get_ydata())
-                if len(xd) <= 1:
+                if xd.size == 0 or yd.size == 0:
+                    continue
+                if len(xd) < 2:
                     continue
                 try:
+                    if np.ptp(xd) < 1e-5:
+                        continue
+                except Exception:
+                    continue
+                try:
+                    if line.get_visible() is False:
+                        continue
+                except Exception:
+                    continue
+                try:
+                    if np.all(np.isnan(np.asarray(yd))):
+                        continue
+                except Exception:
+                    continue
+                try:
+                     # Compute first y-value and validate
                     y_val_a = np.interp(self.cursor_pos_a, xd, yd)
+                    if np.isnan(y_val_a):
+                        continue
+                     # Compute second y-value
                     y_val_b = np.interp(self.cursor_pos_b, xd, yd)
+                     # Skip if both are NaN at their positions
+                    if np.isnan(y_val_a) and np.isnan(y_val_b):
+                        continue
                     bbox_a = dict(boxstyle="round,pad=0.2,rounding_size=0.3", fc="white", ec="red", alpha=0.9, lw=0.8)
                     lbl_a = ax.text(self.cursor_pos_a + x_range*0.02, y_val_a, f"{y_val_a:.4f}",
                                     color="red", fontsize=7, fontweight="bold",

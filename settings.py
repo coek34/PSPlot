@@ -29,6 +29,8 @@ class PageState:
     x_limits: Optional[List[float]] = None
     # Custom y-labels for each subplot index
     y_labels: Dict[int, str] = field(default_factory=dict)
+    # Custom y-limits for each subplot index: {subplot_index: [ymin, ymax]}
+    y_lims: Dict[int, List[float]] = field(default_factory=dict)
     # List of subplots, each contains a list of signal references
     # Signal ref: {"file_path": str, "channel": str, "group": str, "name": str}
     subplots_signals: List[List[Dict[str, str]]] = field(default_factory=list)

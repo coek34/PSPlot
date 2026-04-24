@@ -81,7 +81,6 @@ class MainWindow(QMainWindow):
         # Tab widget for multiple pages/canvases
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
-        self.tab_widget.setTabsEditable(True)
         self.tab_widget.tabBarDoubleClicked.connect(self._on_tab_double_clicked)
         self.tab_widget.tabCloseRequested.connect(self.page_manager.close_page)
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
@@ -213,6 +212,13 @@ class MainWindow(QMainWindow):
                 y_labels = {int(k): str(v) for k, v in p_state.y_labels.items()}
                 page.plot_canvas.y_labels = y_labels
                 logger.info(f"  Restored y-labels: {y_labels}")
+
+            if p_state.y_lims and page.plot_canvas:
+                y_lims = {int(k): tuple(v) for k, v in p_state.y_lims.items()}
+                page.plot_canvas.current_ylim_dict = y_lims
+                logger.info(f"  Restored y-limits: {y_lims}")
+            else:
+                logger.info("  No y-limits to restore (will auto-fit on data load)")
 
             page.update_plots(p_state.subplot_count)
 
