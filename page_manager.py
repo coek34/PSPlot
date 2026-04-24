@@ -1,8 +1,118 @@
 # page_manager.py
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox, QInputDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QDialog, QPushButton, QScrollArea,
+                             QMessageBox, QInputDialog)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QFont
 from page_widget import PageWidget
 from settings import PageState
+from theme import get_theme
+
+
+class RenameDialog(QDialog):
+    """Custom themed dialog for renaming pages."""
+
+    def __init__(self, parent, current_name):
+        super().__init__(parent)
+        self.setWindowTitle("Rename Page")
+        self.setModal(True)
+        self.setFixedSize(350, 140)
+        self.current_name = current_name
+        self.result_text = ""
+
+        self._build_ui()
+        self._apply_theme()
+        # Focus the QLineEdit
+        self.line_edit.setFocus()
+        self.line_edit.selectAll()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        lbl = QLabel("Enter new page name:")
+        layout.addWidget(lbl)
+
+        self.line_edit = QLineEdit(self)
+        self.line_edit.setText(self.current_name)
+        layout.addWidget(self.line_edit)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
+
+        self.ok_btn = QPushButton("OK", self)
+        self.ok_btn.setObjectName("ok_btn")
+        self.ok_btn.setMinimumHeight(35)
+        self.ok_btn.clicked.connect(self._on_ok)
+
+        self.cancel_btn = QPushButton("Cancel", self)
+        self.cancel_btn.setObjectName("cancel_btn")
+        self.cancel_btn.setMinimumHeight(35)
+        self.cancel_btn.clicked.connect(self.reject)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.ok_btn)
+        btn_layout.addWidget(self.cancel_btn)
+        layout.addLayout(btn_layout)
+
+        # Support Enter/Return key
+        self.line_edit.returnPressed.connect(self._on_ok)
+
+    def _on_ok(self):
+        text = self.line_edit.text().strip()
+        if text:
+            self.result_text = text
+            self.accept()
+        else:
+            self.line_edit.setStyleSheet(
+                "QLineEdit { border: 2px solid #f44336; "
+                "border-radius: 4px; background-color: #ffe6e6; }}"
+            )
+
+    def _apply_theme(self):
+        theme = get_theme()
+        c = theme.colors
+        hover_bg = "#555" if theme.is_dark else "#e0e0e0"
+        sheet = f"""
+            QDialog, QWidget {{
+                background-color: {c.base};
+                color: {c.text};
+                font-size: 13px;
+            }}
+            QLabel {{
+                color: {c.text};
+                background: transparent;
+            }}
+            QLineEdit {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+                border-radius: 4px;
+                padding: 8px;
+            }}
+            QPushButton#ok_btn {{
+                background-color: {c.success};
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }}
+            QPushButton#ok_btn:hover {{
+                background-color: {theme._darken(c.success)};
+            }}
+            QPushButton#cancel_btn {{
+                background-color: {c.alt};
+                color: {c.text};
+                border: 1px solid {c.border};
+                border-radius: 4px;
+            }}
+            QPushButton#cancel_btn:hover {{
+                background-color: {hover_bg};
+            }}
+        """
+        self.setStyleSheet(sheet)
+
 
 class PageManager:
     def __init__(self, main_window):
@@ -98,14 +208,14 @@ class PageManager:
         self.main_window.update_status_bar()
     
     def rename_page(self, index):
-        """Rename a page"""
+        """Rename a page using a themed custom dialog."""
         if index < 0 or index >= len(self.pages):
             return
-            
+
         page = self.pages[index]
         old_name = page.page_name
-        new_name, ok = QInputDialog.getText(self.main_window, "Rename Page", "Enter new page name:", text=old_name)
-        
-        if ok and new_name:
+        dialog = RenameDialog(self.main_window, old_name)
+        if dialog.exec():
+            new_name = dialog.result_text
             page.page_name = new_name
             self.main_window.tab_widget.setTabText(index, new_name)
