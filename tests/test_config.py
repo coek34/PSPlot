@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-import config
-from config import (
+from core import config
+from core.config import (
     APP_NAME,
     APP_VERSION,
     DEFAULT_WINDOW_SIZE,

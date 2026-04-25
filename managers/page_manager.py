@@ -4,9 +4,9 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QMessageBox, QInputDialog)
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont
-from page_widget import PageWidget
-from settings import PageState
-from theme import get_theme
+from gui.page_widget import PageWidget
+from core.settings import PageState
+from core.theme import get_theme
 
 
 class RenameDialog(QDialog):

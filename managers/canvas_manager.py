@@ -1,8 +1,8 @@
 # canvas_manager.py
 from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
-from signal_explorer import SignalExplorerDialog
-from theme import get_theme
+from gui.signal_explorer import SignalExplorerDialog
+from core.theme import get_theme
 
 class CanvasManager:
     def __init__(self, main_window):
@@ -17,7 +17,7 @@ class CanvasManager:
             current_width_mm, current_height_mm = current_page.plot_canvas.get_canvas_size_mm()
             
             # Show canvas size dialog
-            from canvas_size_dialog import CanvasSizeDialog
+            from gui.canvas_size_dialog import CanvasSizeDialog
             dialog = CanvasSizeDialog(self.main_window, (current_width_mm, current_height_mm))
             if dialog.exec_() == QDialog.Accepted:
                 # Get selected size in inches
@@ -26,7 +26,7 @@ class CanvasManager:
                 self.main_window.page_manager.add_new_page(width_inch, height_inch)
         else:
             # If no current page, use default size
-            from canvas_size_dialog import CanvasSizeDialog
+            from gui.canvas_size_dialog import CanvasSizeDialog
             dialog = CanvasSizeDialog(self.main_window)
             if dialog.exec_() == QDialog.Accepted:
                 width_inch, height_inch = dialog.get_selected_size()
@@ -42,7 +42,7 @@ class CanvasManager:
         current_width_mm, current_height_mm = current_page.plot_canvas.get_canvas_size_mm()
         
         # Show canvas size dialog with current size as default
-        from canvas_size_dialog import CanvasSizeDialog
+        from gui.canvas_size_dialog import CanvasSizeDialog
         dialog = CanvasSizeDialog(self.main_window, (current_width_mm, current_height_mm))
         if dialog.exec_() == QDialog.Accepted:
             # Get selected size in inches
@@ -121,7 +121,7 @@ class CanvasManager:
         current_margins = current_page.get_current_margins()
         
         # Create margin dialog with current values
-        from margin_dialog import MarginDialog
+        from gui.margin_dialog import MarginDialog
         dialog = MarginDialog(self.main_window, current_margins)
         if dialog.exec_() == QDialog.Accepted:
             margins = dialog.get_margins()

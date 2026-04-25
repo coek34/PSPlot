@@ -3,7 +3,7 @@
 This document tracks planned improvements and technical debt for the PSPlot application.
 
 **Last Updated:** 2026-04-25  
-**Current Version:** 1.3.1 (Pekanbaru Edition)  
+**Current Version:** 1.3.2 (Pekanbaru Edition)  
 **Status:** Feature Freeze/Partial Pending
 
 ---
@@ -43,9 +43,10 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 19| **macOS Standard Paths** | ✅ | Migrated settings and logs to `~/Library/Application Support/PSPlot/` |
 | 20| **Session Templating** | ✅ | Full export/import of `.psp` layouts to apply configurations to new datasets |
 | 21| **Bundled Deployment** | 🔄 | PyInstaller configuration for macOS .app generation with custom metadata |
-| 22| **CSV Support** | ✅ | Added generic CSV import with flexible column mapping (`csv_reader.py`, updated `data_import.py` and `README.md`) |
+| 22| **CSV Support** | ✅ | Full support for generic and proprietary CSV formats with flexible column mapping, integration into `data_import.py`, and comprehensive unit tests. |
 | 23| **COMTRADE Custom Group Name** | ✅ | Channel names with `:` format (e.g. `VSC:V_ia`) split into group (`VSC`) and signal name (`V_ia`), replacing default `Analog`/`Digital` group |
 | 24| **Blank Subplot on Init** | ✅ | Removed dummy signal lines from fresh subplots — subplots start empty until signals are plotted via `set_subplot_signals` |
+| 25| **CSV Generic Import Dialog** | ✅ | Implementation of `csv_reader.py` and modular integration for generic structured CSV files. |
 
 ---
 
@@ -60,7 +61,6 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 *   **SCR Estimation Integration**: Special visualization mode for Short-Circuit Ratio (SCR) time-series estimation data.
 
 ### 🟡 MEDIUM PRIORITY: UX & Workflow
-*   **CSV Generic Import**: Support for importing any structured CSV file via a column-mapping dialog.
 *   **Multi-File Comparison (Overlay)**: Automated mode to plot signals from multiple `.out` files on a single subplot for comparison.
 *   **Unit Tests**: (tests/test_models.py, test_validation.py) - Verify core logic and prevent regressions.
 

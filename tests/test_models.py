@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import logging
 
-from models import (
+from core.models import (
     ValidationError,
     Signal,
     SignalGroup,

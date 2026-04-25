@@ -130,7 +130,7 @@ class ActionManager:
                 data = json.load(f)
                 
             # Temporarily override settings state and restore
-            from settings import AppState, PageState, UserPreferences
+            from core.settings import AppState, PageState, UserPreferences
             
             state_data = data.get("state", {})
             pages_data = state_data.get("pages", [])

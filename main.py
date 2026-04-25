@@ -12,8 +12,8 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 from PyQt5.QtWidgets import QApplication
 
-from config import APP_NAME, setup_logging
-from main_window import MainWindow
+from core.config import APP_NAME, setup_logging
+from gui.main_window import MainWindow
 
 
 def main() -> NoReturn:

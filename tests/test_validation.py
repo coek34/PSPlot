@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from validation import (
+from core.validation import (
     ValidationError,
     FileValidationError,
     validate_signal_name,

@@ -39,7 +39,7 @@ class ThemeManager:
     """Centralized theme management for PSPlot.
     
     Usage:
-        from theme import ThemeManager
+        from core.theme import ThemeManager
         
         theme = ThemeManager()
         widget.setStyleSheet(theme.get_style_sheet())

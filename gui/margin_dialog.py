@@ -10,7 +10,7 @@ class MarginDialog(QDialog):
         self.setup_ui()
         
     def setup_ui(self):
-        from theme import get_theme
+        from core.theme import get_theme
         theme = get_theme()
         
         layout = QFormLayout()

@@ -9,14 +9,14 @@ from PyQt5.QtGui import QFont, QPixmap, QIcon
 from PyQt5.QtCore import Qt, QSize, QPoint, QUrl
 from PyQt5.QtGui import QIcon, QDesktopServices
 
-from page_manager import PageManager
-from canvas_manager import CanvasManager
-from data_manager import DataManager
-from action_manager import ActionManager
-from keyboard_manager import KeyboardManager
-from theme import get_theme
-from settings import get_settings, PageState
-import config
+from managers.page_manager import PageManager
+from managers.canvas_manager import CanvasManager
+from core.data_manager import DataManager
+from managers.action_manager import ActionManager
+from managers.keyboard_manager import KeyboardManager
+from core.theme import get_theme
+from core.settings import get_settings, PageState
+from core import config
 
 
 class MainWindow(QMainWindow):
@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
 
     def apply_theme_style(self):
         """Apply theme-aware styling to the main window"""
-        from theme import get_theme
+        from core.theme import get_theme
         theme = get_theme()
 
         self.setStyleSheet(theme.get_style_sheet())

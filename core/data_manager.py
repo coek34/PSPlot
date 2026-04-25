@@ -3,19 +3,21 @@ from PyQt5.QtWidgets import QMessageBox
 import os
 import logging
 import numpy as np
-from pscad_reader import PSCADReader
-from comtrade_reader import ComtradeReader
+from readers.pscad_reader import PSCADReader
+from readers.comtrade_reader import ComtradeReader
+from readers.csv_reader import CSVReader
 
 logger = logging.getLogger(__name__)
 
 class DataManager:
     def __init__(self, main_window):
         self.main_window = main_window
-        self.imported_data = []  # Stores path info from DataImportDialog
-        self.channel_signals = {}  # Dictionary to store loaded actual data per channel
+        self.imported_data = []   # Stores path info from DataImportDialog
+        self.channel_signals = {}   # Dictionary to store loaded actual data per channel
         self.available_signals = [] # Hierarchical structure for SignalExplorer
         self.pscad_reader = PSCADReader()
         self.comtrade_reader = ComtradeReader()
+        self.csv_reader = CSVReader()
     
     def get_imported_paths_info(self):
         """Get information about imported files for persistence"""
@@ -44,12 +46,21 @@ class DataManager:
         for data in self.imported_data:
             path = data['path']
             label = data['label']
-            ftype = data.get('type', 'pscad')
+            
+            # Always detect type from file extension first (prioritize over stored type)
+            if path.lower().endswith('.cfg'):
+                ftype = 'comtrade'
+            elif path.lower().endswith('.csv'):
+                ftype = 'csv'
+            else:
+                ftype = data.get('type', 'pscad')
             
             # Extract signals using appropriate reader
             signals = []
-            if ftype == 'comtrade' or path.lower().endswith('.cfg'):
+            if ftype == 'comtrade':
                 signals = self.comtrade_reader.list_signals(path, verbose=False)
+            elif ftype == 'csv':
+                signals = self.csv_reader.list_signals(path, verbose=False)
             else:
                 # Use base path without extension for PSCAD
                 base_path = path
@@ -70,8 +81,8 @@ class DataManager:
                         'name': sig['desc'],
                         'index': sig['index'],
                         'units': sig['units'],
-                        'file_path': path, # Store full path
-                        'type': 'comtrade' if (ftype == 'comtrade' or path.lower().endswith('.cfg')) else 'pscad'
+                        'file_path': path,    # Store full path
+                        'type': ftype
                     })
                 
                 # Create groups list
@@ -92,7 +103,7 @@ class DataManager:
 
     def import_pscad_data(self):
         """Import PSCAD/COMTRADE data using the data import dialog"""
-        from data_import import DataImportDialog
+        from readers.data_import import DataImportDialog
         dialog = DataImportDialog(self.main_window, existing_data=self.imported_data)
         if dialog.exec_() == dialog.Accepted:
             # Get the imported data (list of paths/labels/types)
@@ -127,13 +138,20 @@ class DataManager:
             logger.error(f"Incomplete signal info: {signal_info}")
             return None
             
-        # Detect type if missing
+         # Detect type if missing (e.g., during reload/rehydration)
         if not ftype:
-            ftype = 'comtrade' if file_path.lower().endswith('.cfg') else 'pscad'
+            if file_path.lower().endswith('.cfg'):
+                ftype = 'comtrade'
+            elif file_path.lower().endswith('.csv'):
+                ftype = 'csv'
+            else:
+                ftype = 'pscad'
             
         t, data = np.array([]), np.array([])
         if ftype == 'comtrade':
             t, data = self.comtrade_reader.read_signal(file_path, sgn_name, grp_name)
+        elif ftype == 'csv':
+            t, data = self.csv_reader.read_signal(file_path, sgn_name, grp_name)
         else:
             # PSCADReader uses base path (no extension)
             base_path = file_path

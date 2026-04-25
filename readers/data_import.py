@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt
 class DataImportDialog(QDialog):
     def __init__(self, parent=None, existing_data=None):
         super().__init__(parent)
-        self.setWindowTitle("Import Data (PSCAD/COMTRADE)")
+        self.setWindowTitle("Import Data (PSCAD/COMTRADE/CSV)")
         self.setModal(True)
         self.resize(800, 400)
         
@@ -45,7 +45,7 @@ class DataImportDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Instructions
-        instr = QLabel("Double-click a row in 'Path' to select a PSCAD (.inf) or COMTRADE (.cfg) file.")
+        instr = QLabel("Double-click a row in 'Path' to select a PSCAD (.inf), Comtrade (.cfg), or CSV file.")
         instr.setStyleSheet("font-weight: bold; padding-bottom: 5px;")
         layout.addWidget(instr)
 
@@ -54,8 +54,8 @@ class DataImportDialog(QDialog):
         self.table.setHorizontalHeaderLabels(["Path", "Label"])
         
         # Set column widths to be more user-friendly
-        self.table.setColumnWidth(0, 480)  # Path column
-        self.table.setColumnWidth(1, 240)  # Label column
+        self.table.setColumnWidth(0, 480)   # Path column
+        self.table.setColumnWidth(1, 240)   # Label column
         
         # Allow manual resizing of columns
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
@@ -90,7 +90,7 @@ class DataImportDialog(QDialog):
         cancel_button.clicked.connect(self.reject)
         
         # Style buttons if possible (standard look)
-        from theme import get_theme
+        from core.theme import get_theme
         theme = get_theme()
         if theme:
             ok_button.setStyleSheet(theme.get_button_ok_style())
@@ -109,17 +109,17 @@ class DataImportDialog(QDialog):
         
     def on_cell_clicked(self, row, column):
         """Handle cell click - allow browsing for file paths"""
-        if column == 0:  # Path column
+        if column == 0:   # Path column
             self.browse_file(row)
     
     def browse_file(self, row):
-        """Browse for PSCAD .inf or COMTRADE .cfg file"""
-        last_dir = "" # Could get from settings
+        """Browse for PSCAD .inf, COMTRADE .cfg, or CSV file"""
+        last_dir = ""  # Could get from settings
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select Data File (PSCAD or COMTRADE)",
+            "Select Data File (PSCAD, COMTRADE, or CSV)",
             last_dir,
-            "Combined Files (*.inf *.cfg *.CFG);;PSCAD Files (*.inf);;COMTRADE Files (*.cfg *.CFG);;All Files (*)"
+            "Combined Files (*.inf *.cfg *.CSV *.csv *.CFG);;PSCAD Files (*.inf);;COMTRADE Files (*.cfg *.CSV);;CSV Files (*.csv);;All Files (*)"
         )
         
         if file_path:
@@ -131,7 +131,7 @@ class DataImportDialog(QDialog):
             # Auto-fill label based on filename
             filename = os.path.basename(file_path)
             # Remove extensions
-            for ext in ['.inf', '.cfg', '.CFG']:
+            for ext in ['.inf', '.cfg', '.CSV', '.csv', '.CFG']:
                 if filename.lower().endswith(ext):
                     filename = filename[:-len(ext)]
                     break
@@ -160,6 +160,8 @@ class DataImportDialog(QDialog):
                 ftype = 'pscad'
                 if path.lower().endswith('.cfg'):
                     ftype = 'comtrade'
+                elif path.lower().endswith('.csv'):
+                    ftype = 'csv'
                 
                 self.imported_data.append({
                     'channel': row + 1,

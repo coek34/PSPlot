@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTreeWidget,
                             QFrame, QMenuBar, QAction, QMessageBox, QLineEdit)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
-import theme
+from core import theme
 
 class SignalExplorerDialog(QDialog):
     signal_selected = pyqtSignal(str, str)  # signal_name, channel_label

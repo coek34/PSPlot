@@ -10,7 +10,7 @@ from matplotlib.widgets import RectangleSelector
 from PyQt5.QtCore import Qt
 
 try:
-    from theme import get_theme
+    from core.theme import get_theme
 except ImportError:
     get_theme = None
 
@@ -613,7 +613,7 @@ class BaseInteractiveCanvas(FigureCanvas):
         if self.last_clicked_subplot is None:
             self.last_clicked_subplot = 0
             
-        from signal_explorer import SignalExplorerDialog
+        from gui.signal_explorer import SignalExplorerDialog
         
         # Get existing signals for this subplot to show in the dialog
         existing_signals = self.get_existing_signals_for_subplot(self.last_clicked_subplot)

@@ -3,8 +3,8 @@ import logging
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QMessageBox
 from PyQt5.QtCore import Qt
 from plot_canvas import InteractivePlotCanvas
-from theme import get_theme
-from settings import PageState
+from core.theme import get_theme
+from core.settings import PageState
 
 class PageWidget(QWidget):
     def __init__(self, page_index, width=8.27, height=11.69, parent=None):
