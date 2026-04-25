@@ -98,8 +98,8 @@ class BaseInteractiveCanvas(FigureCanvas):
         
         # Plot different data for each subplot
         for i, ax in enumerate(self.axes):
-            # Initially plot nothing (blank plot)
-            ax.plot([], [], linewidth=2, label=f'Subplot {i+1}')
+            # Initially leave blank; signals will be plotted via set_subplot_signals
+            pass
             
             # Only show x-label on the bottom subplot
             if i == len(self.axes) - 1:  # Last subplot
