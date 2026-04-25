@@ -1,4 +1,4 @@
-<img src="PSPlot_icon.png" width="150" height="150">
+<img src="psplot/assets/PSPlot_icon.png" width="150" height="150">
 #PSPlot: Power System Signal Analysis Tool
 
 ![![Main Interface]](screenshots/final_01_main.png)
@@ -36,10 +36,36 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
    ```
 
 3. **Dependencies**:
-   - Python 3.10+
-   - PyQt5
-   - NumPy
-   - Matplotlib
+    - Python 3.10+
+    - PyQt5
+    - NumPy
+    - Matplotlib
+
+## 📁 Project Structure
+
+```
+PSPlot/
+├── pyproject.toml          # Package configuration (build, dependencies, entry point)
+├── requirements.txt        # Dependencies for uv/virtualenv setup
+├── run.py                  # Application entry point (python run.py)
+├── README.md               # This file
+│
+├── psplot/                 # Main Python package
+│   ├── __init__.py
+│   ├── plot_canvas.py      # Central canvas with zoom, cursor, signal handler
+│   ├── assets/             # Visual resources
+│   │   └── PSPlot_icon.png # Application icon
+│   ├── core/               # Data models, validation, config, settings
+│   ├── gui/                # PyQt5 UI components (MainWindow, dialogs, widgets)
+│   ├── managers/           # Interaction logic (zoom, keyboard, page, action)
+│   ├── plot_modules/       # Mixin modules (Zoom, Cursor, Signal Handler, Layout)
+│   └── readers/            # Data import (PSCAD, COMTRADE, CSV)
+│
+├── screenshots/            # Application screenshots for README
+└── Trash/                  # Build artifacts & old files (git-ignored)
+```
+
+**Key Changes**: All modules reorganized into the `psplot/` package with `pyproject.toml` for modern packaging. Icons and assets moved to `psplot/assets/`. Entry point renamed from `main.py` to `run.py`.
 
 ## 📖 How to Use
 

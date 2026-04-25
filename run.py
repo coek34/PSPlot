@@ -41,10 +41,18 @@ def main() -> NoReturn:
     # Set global application icon
     import os
     from PyQt5.QtGui import QIcon
+    
+    # Resolve icon path: bundled (PyInstaller) -> installed package assets -> dev fallback
     if hasattr(sys, '_MEIPASS'):
         icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
     else:
-        icon_path = os.path.join(os.path.dirname(__file__), "PSPlot_icon.png")
+        try:
+            # When installed via `pip install -e .` or pip, load from package
+            import importlib.resources
+            icon_path = str(importlib.resources.files("psplot").joinpath("assets", "PSPlot_icon.png"))
+        except Exception:
+            # Development fallback: look relative to this file
+            icon_path = os.path.join(os.path.dirname(__file__), "psplot", "assets", "PSPlot_icon.png")
         
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
