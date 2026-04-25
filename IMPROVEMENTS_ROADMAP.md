@@ -2,7 +2,7 @@
 
 This document tracks planned improvements and technical debt for the PSPlot application.
 
-**Last Updated:** 2026-04-24  
+**Last Updated:** 2026-04-25  
 **Current Version:** 1.3.1 (Pekanbaru Edition)  
 **Status:** Feature Freeze/Partial Pending
 
@@ -42,7 +42,10 @@ This document tracks planned improvements and technical debt for the PSPlot appl
 | 18| **Application Identity** | ✅ | Native macOS Dock label (PSPlot), Custom Icon, and high-formality window titles |
 | 19| **macOS Standard Paths** | ✅ | Migrated settings and logs to `~/Library/Application Support/PSPlot/` |
 | 20| **Session Templating** | ✅ | Full export/import of `.psp` layouts to apply configurations to new datasets |
-| 21| **Bundled Deployment** | ✅ | PyInstaller configuration for macOS .app generation with custom metadata |
+| 21| **Bundled Deployment** | 🔄 | PyInstaller configuration for macOS .app generation with custom metadata |
+| 22| **CSV Support** | ✅ | Added generic CSV import with flexible column mapping (`csv_reader.py`, updated `data_import.py` and `README.md`) |
+| 23| **COMTRADE Custom Group Name** | ✅ | Channel names with `:` format (e.g. `VSC:V_ia`) split into group (`VSC`) and signal name (`V_ia`), replacing default `Analog`/`Digital` group |
+| 24| **Blank Subplot on Init** | ✅ | Removed dummy signal lines from fresh subplots — subplots start empty until signals are plotted via `set_subplot_signals` |
 
 ---
 
