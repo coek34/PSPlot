@@ -149,17 +149,41 @@ class ComtradeReader:
             
         signals = []
         for ch in info['analog']:
+            channel_name = ch['name']
+            if ':' in channel_name:
+                group_part, signal_part = channel_name.split(':', 1)
+                grp = group_part.strip()
+                sig_name = signal_part.strip()
+                if not grp:
+                    grp = 'Analog'
+                if not sig_name:
+                    sig_name = channel_name
+            else:
+                grp = 'Analog'
+                sig_name = channel_name
             signals.append({
                 'index': ch['index'],
-                'desc': ch['name'],
-                'group': 'Analog',
+                'desc': sig_name,
+                'group': grp,
                 'units': ch['unit']
             })
         for ch in info['digital']:
+            channel_name = ch['name']
+            if ':' in channel_name:
+                group_part, signal_part = channel_name.split(':', 1)
+                grp = group_part.strip()
+                sig_name = signal_part.strip()
+                if not grp:
+                    grp = 'Digital'
+                if not sig_name:
+                    sig_name = channel_name
+            else:
+                grp = 'Digital'
+                sig_name = channel_name
             signals.append({
                 'index': ch['index'],
-                'desc': ch['name'],
-                'group': 'Digital',
+                'desc': sig_name,
+                'group': grp,
                 'units': ''
             })
             
