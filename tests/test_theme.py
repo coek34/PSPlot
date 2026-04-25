@@ -9,7 +9,7 @@ sys.modules['darkdetect'] = MagicMock()
 sys.modules['darkdetect'].theme = MagicMock(return_value='Dark')
 sys.modules['darkdetect'].isDark = MagicMock(return_value=True)
 
-from core.theme import (
+from psplot.core.theme import (
     ThemeColors,
     ThemeManager,
     is_dark_mode,

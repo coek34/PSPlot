@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psplot"
+version = "1.0.0"
+description = "Professional Power System Output Plotter"
+readme = "README.md"
+authors = [
+    { name = "Roni Irnawan", email = "roniirnawan@ugm.ac.id" }
+]
+dependencies = [
+    "PyQt5",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scipy",
+    "darkdetect"
+]
+requires-python = ">=3.11"
+
+[project.scripts]
+psplot = "run:main"
+
+[tool.setuptools]
+packages = ["psplot", "psplot.core", "psplot.gui", "psplot.readers", "psplot.managers", "psplot.plot_modules"]
+
+[tool.setuptools.package-data]
+psplot = ["assets/*.png"]

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from core.validation import (
+from psplot.core.validation import (
     ValidationError,
     FileValidationError,
     validate_signal_name,

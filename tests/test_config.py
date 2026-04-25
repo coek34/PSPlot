@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from core import config
-from core.config import (
+from psplot.core import config
+from psplot.core.config import (
     APP_NAME,
     APP_VERSION,
     DEFAULT_WINDOW_SIZE,

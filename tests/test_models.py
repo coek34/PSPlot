@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import logging
 
-from core.models import (
+from psplot.core.models import (
     ValidationError,
     Signal,
     SignalGroup,
