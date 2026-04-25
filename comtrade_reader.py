@@ -206,10 +206,16 @@ class ComtradeReader:
             return np.array([]), np.array([])
             
         target_ch = None
-        target_list = info['analog'] if grp_name.lower() == 'analog' else info['digital']
-        
-        for ch in target_list:
-            if ch['name'] == sgn_name:
+        # Search across ALL channels (both analog and digital) to handle custom group names
+        all_ch = info['analog'] + info['digital']
+        for ch in all_ch:
+            channel_name = ch['name']
+            # Extract the signal name part (after ':') for matching
+            if ':' in channel_name:
+                match_name = channel_name.split(':', 1)[1].strip()
+            else:
+                match_name = channel_name
+            if match_name == sgn_name:
                 target_ch = ch
                 break
                 
