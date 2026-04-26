@@ -8,13 +8,24 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Use the standard macOS Application Support directory for settings
+# Use platform-appropriate Application Support directory:
+# macOS: ~/Library/Application Support/PSPlot
+# Windows: %APPDATA%/PSPlot
+# Linux/Other: ~/.local/share/psplot (XDG) or fallback
 if sys.platform == 'darwin':
     # ~/Library/Application Support/PSPlot
     SETTINGS_DIR = Path.home() / "Library" / "Application Support" / "PSPlot"
+elif sys.platform == 'win32':
+    # %APPDATA%/PSPlot (Windows AppData/Local)
+    import os
+    appdata = os.environ.get("APPDATA", "")
+    if appdata:
+        SETTINGS_DIR = Path(appdata) / "PSPlot"
+    else:
+        SETTINGS_DIR = Path.home() / "AppData" / "Local" / "PSPlot"
 else:
-    # Fallback/Default
-    SETTINGS_DIR = Path(__file__).parent
+    # Linux: ~/.local/share/psplot (XDG Base Directory)
+    SETTINGS_DIR = Path.home() / ".local" / "share" / "psplot"
 
 SETTINGS_FILE = SETTINGS_DIR / "settings.psp"
 

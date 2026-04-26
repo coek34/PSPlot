@@ -55,12 +55,22 @@ def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = Non
     
     # File handler with rotation
     if log_file is None:
-        # Use application support directory for logs on macOS
+         # Use platform-appropriate Application Support directory for logs:
+         # macOS: ~/Library/Application Support/PSPlot
+         # Windows: %APPDATA%/PSPlot
+         # Linux/Other: ~/.local/share/psplot (XDG) or fallback
         import sys
         if sys.platform == 'darwin':
             log_dir = Path.home() / "Library" / "Application Support" / "PSPlot"
+        elif sys.platform == 'win32':
+            import os
+            appdata = os.environ.get("APPDATA", "")
+            if appdata:
+                log_dir = Path(appdata) / "PSPlot"
+            else:
+                log_dir = Path.home() / "AppData" / "Local" / "PSPlot"
         else:
-            log_dir = Path(__file__).parent
+            log_dir = Path.home() / ".local" / "share" / "psplot"
         
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = str(log_dir / "psplot.log")
