@@ -69,8 +69,6 @@ PSPlot/
 └── Samples/                # Example data files for testing
 ```
 
-**Key Changes**: All modules reorganized into the `psplot/` package with `pyproject.toml` for modern packaging. Icons and assets moved to `psplot/assets/`. Entry point renamed from `main.py` to `run.py`.
-
 ## 📖 How to Use
 
 ### 1. Importing Data
