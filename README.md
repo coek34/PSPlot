@@ -25,7 +25,7 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/irnawan/PSPlot.git
+   git clone https://github.com/coek34/PSPlot.git
    cd PSPlot
    ```
 
@@ -33,22 +33,17 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
    ```bash
    # Using uv (Recommended)
    uv venv
+   source .venv/bin/activate  # On macOS/Linux
    uv pip install -r requirements.txt
    ```
 
-38|3. **Dependencies**:
-39|    - Python 3.11+
-40|    - PyQt5, Matplotlib
-41|    - NumPy, SciPy (for transient data processing)
-42|    - Pandas (for CSV and Metadata handling)
-43|    - Darkdetect (for automated theme sensing)
+3. **Dependencies**:
+   - Python 3.11+
+   - PyQt5, Matplotlib
+   - NumPy, SciPy (for transient data processing)
+   - Pandas (for CSV and Metadata handling)
+   - Darkdetect (for automated theme sensing)
 
-## 📁 Project Structure
-
-```
-PSPlot/
-├── pyproject.toml          # Package configuration (build, dependencies, entry point)
-├── requirements.txt        # Dependencies for uv/virtualenv setup
 ├── run.py                  # Application entry point (python run.py)
 ├── README.md               # This file
 │
