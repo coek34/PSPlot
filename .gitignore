@@ -1,25 +1,35 @@
-# Python cache
+# Python bytecode
 __pycache__/
-*.pyc
-*.pyo
-*.egg-info/
+*.py[cod]
+*$py.class
 
-# Application artifacts
-Output/
-*.png
-*.pdf
-*.svg
-out.log
-
-# IDE/AI assistant
-.aider*
-.letta/
-
-# OS files
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
 
-# Project specific
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Hermes & Agentic AI artifacts
+.hermes/
+.aider/
+letta.log
+*.log
+
+# PSPlot sessions & local data
+*.psp
 settings.psp
-psplot.log
-Samples/
+
+# Build & Distribution
+build/
+dist/
+*.spec
+*.zip
+
+# Ide/Editor
+.vscode/
+.idea/
