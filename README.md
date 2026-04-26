@@ -44,6 +44,12 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
    - Pandas (for CSV and Metadata handling)
    - Darkdetect (for automated theme sensing)
 
+## 📁 Project Structure
+
+```
+PSPlot/
+├── pyproject.toml          # Package configuration (build, dependencies, entry point)
+├── requirements.txt        # Dependencies for uv/virtualenv setup
 ├── run.py                  # Application entry point (python run.py)
 ├── README.md               # This file
 │
@@ -56,12 +62,12 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
 │   ├── gui/                # PyQt5 UI components (MainWindow, dialogs, widgets)
 │   ├── managers/           # Interaction logic (zoom, keyboard, page, action)
 │   ├── plot_modules/       # Mixin modules (Zoom, Cursor, Signal Handler, Layout)
-62|   └── readers/            # Data import (PSCAD, COMTRADE, CSV)
-63|│
-64|├── tests/                # Unit tests & validation suite
-65|├── screenshots/          # Application screenshots for README
-66|└── Samples/              # Example data files for testing
-67|```
+│   └── readers/            # Data import (PSCAD, COMTRADE, CSV)
+│
+├── tests/                  # Unit tests & validation suite
+├── screenshots/            # Application screenshots for README
+└── Samples/                # Example data files for testing
+```
 
 **Key Changes**: All modules reorganized into the `psplot/` package with `pyproject.toml` for modern packaging. Icons and assets moved to `psplot/assets/`. Entry point renamed from `main.py` to `run.py`.
 
@@ -95,6 +101,7 @@ Quickly adjust layouts and prepare reports using dedicated dialogs:
 | Margins (M) | Page Size (P) |
 | :---: | :---: |
 | ![Margins Setup](screenshots/shot_m_margins.png) | ![Page Dimension Setup](screenshots/shot_p_size.png) |
+
 ---
 
 | Key | Action |
@@ -103,11 +110,11 @@ Quickly adjust layouts and prepare reports using dedicated dialogs:
 | **`1` - `6`** | Change number of subplots (1 to 6) |
 | **`A` / `D`** | Pan Left / Right |
 | **`R` / `Y`** | Reset Zoom (R = X-Axis, Y = Y-Axis) |
-108|**`X`** | Snap/Round X-Axis to Grid |
-109|**`C`** | Import Data Dialog |
-110|**`*Double-Click*`** | On measurement label (status bar) to **reset cursors** to view |
-111|**`N`** | Add a new blank page/canvas |
-
+| **`X`** | Snap/Round X-Axis to Grid |
+| **`C`** | Import Data Dialog |
+| **`*Double-Click*`** | On measurement label (status bar) to **reset cursors** to view |
+| **`N`** | Add a new blank page/canvas |
+| **`E`** | Export current page to PDF |
 | **`M`** | Adjust Plot Margins |
 | **`P`** | Resize canvas/page dimensions |
 | **`Ctrl+Q`** | Exit Application |
