@@ -35,11 +35,12 @@ PSPlot uses the `uv` package manager for fast, reproducible environment setup.
    uv pip install -r requirements.txt
    ```
 
-3. **Dependencies**:
-    - Python 3.10+
-    - PyQt5
-    - NumPy
-    - Matplotlib
+38|3. **Dependencies**:
+39|    - Python 3.11+
+40|    - PyQt5, Matplotlib
+41|    - NumPy, SciPy (for transient data processing)
+42|    - Pandas (for CSV and Metadata handling)
+43|    - Darkdetect (for automated theme sensing)
 
 ## 📁 Project Structure
 
@@ -59,11 +60,12 @@ PSPlot/
 │   ├── gui/                # PyQt5 UI components (MainWindow, dialogs, widgets)
 │   ├── managers/           # Interaction logic (zoom, keyboard, page, action)
 │   ├── plot_modules/       # Mixin modules (Zoom, Cursor, Signal Handler, Layout)
-│   └── readers/            # Data import (PSCAD, COMTRADE, CSV)
-│
-├── screenshots/            # Application screenshots for README
-└── Trash/                  # Build artifacts & old files (git-ignored)
-```
+62|   └── readers/            # Data import (PSCAD, COMTRADE, CSV)
+63|│
+64|├── tests/                # Unit tests & validation suite
+65|├── screenshots/          # Application screenshots for README
+66|└── Samples/              # Example data files for testing
+67|```
 
 **Key Changes**: All modules reorganized into the `psplot/` package with `pyproject.toml` for modern packaging. Icons and assets moved to `psplot/assets/`. Entry point renamed from `main.py` to `run.py`.
 
@@ -105,10 +107,11 @@ Quickly adjust layouts and prepare reports using dedicated dialogs:
 | **`1` - `6`** | Change number of subplots (1 to 6) |
 | **`A` / `D`** | Pan Left / Right |
 | **`R` / `Y`** | Reset Zoom (R = X-Axis, Y = Y-Axis) |
-| **`X`** | Snap/Round X-Axis to Grid |
-| **`C`** | Import Data Dialog |
-| **`N`** | Add a new blank page/canvas |
-| **`E`** | Export current page to PDF |
+108|**`X`** | Snap/Round X-Axis to Grid |
+109|**`C`** | Import Data Dialog |
+110|**`*Double-Click*`** | On measurement label (status bar) to **reset cursors** to view |
+111|**`N`** | Add a new blank page/canvas |
+
 | **`M`** | Adjust Plot Margins |
 | **`P`** | Resize canvas/page dimensions |
 | **`Ctrl+Q`** | Exit Application |
