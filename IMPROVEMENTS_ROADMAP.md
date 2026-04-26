@@ -2,83 +2,58 @@
 
 This document tracks planned improvements and technical debt for the PSPlot application.
 
-**Last Updated:** 2026-04-25  
-**Current Version:** 1.3.2 (Pekanbaru Edition)  
-**Status:** Feature Freeze/Partial Pending
+**Last Updated:** 2026-04-26  
+**Current Version:** 1.5.0 (Pakuwon Jogja Edition)  
+**Status:** Active Development
 
 ---
 
 ## ✅ Completed Improvements
 
-### Phase 1: Core Stability & Refactoring
+### Phase 4: Professional Packaging & UI Polish (April 2026)
 | # | Improvement | Status | Details |
 |---|-------------|--------|---------|
-| 1 | **Theme Consolidation** | ✅ | Centralized ThemeManager with ThemeColors dataclass |
-| 2 | **Configuration Module** | ✅ | Extracted constants and config singletons to config.py |
-| 3 | **Signal Dataclass** | ✅ | Replaced fragile dict-based signal data with Signal dataclass |
-| 4 | **Logging Infrastructure** | ✅ | setup_logging() with rotating file handlers |
-| 5 | **Type Hints** | ✅ | Full type annotations across major modules |
-| 6 | **Input Validation** | ✅ | New validation.py with comprehensive validators |
-| 7 | **Fix Mutable Defaults** | ✅ | Cleaned up mutable defaults in dataclasses |
-| 8 | **Configuration Persistence** | ✅ | Save/Restore window geometry via settings.psp |
-| 9 | **Auto-save Plot State** | ✅ | Automatic state gathering and saving on application close |
+| 26| **Modular Packaging** | ✅ | Restructured code into a formal `psplot/` namespace package with `pyproject.toml` |
+| 27| **Cross-Platform Support** | ✅ | Standard paths for Settings/Logs on macOS, Windows (%APPDATA%), and Linux |
+| 28| **"Scorched Earth" Clear** | ✅ | Guaranteed clean subplot after clearing signals (flushing artists & legends) |
+| 29| **Legend Persistence** | ✅ | "Channel/Group name in legend" settings now persist in `.psp` state files |
+| 30| **Measurement Reset** | ✅ | Double-click status bar measurement label to reset cursors to 25%/75% view |
+| 31| **Interactive Debug Mode** | ✅ | Toggleable Log level (WARNING/INFO) via Settings menu with session persistence |
+| 32| **UI Bug Squashing** | ✅ | Fixed ghost cursors during layout change, locked keys 1-6 in Cursor Mode, and fixed About icon |
+| 33| **Asset Consolidation** | ✅ | Centralized all images/icons into `psplot/assets/` using `importlib.resources` |
+| 34| **Git/GitHub Hygiene** | ✅ | Streamlined `requirements.txt` from 161 to 6 essential libs and tightened `.gitignore` |
 
-### Phase 2: Fieldwork & Analysis Features
-| # | Improvement | Status | Details |
-|---|-------------|--------|---------|
-| 10| **Kursor Measurement Fix** | ✅ | Fixed crash when removing kursor artists after ax.clear() |
-| 11| **NumPy Array Conversion** | ✅ | Fixed TypeError in Reset Y Zoom by forcing np.asarray() |
-| 12| **Search & Filter in Signal Tree** | ✅ | Added search bar to Signal Explorer for rapid signal discovery |
-| 13| **Quick Scaling** | ✅ | Implemented per-signal scaling via right-click 'Scale' with .psp persistence |
-| 14| **COMTRADE Support** | ✅ | Full support for IEEE COMTRADE (C37.111-1991/1999/2013) reading |
-| 15| **Fieldwork UI Polish** | ✅ | Full macOS Dark Mode support, high-contrast tree selection, and status bar help labels |
-| 16| **Documentation Polish** | ✅ | Comprehensive README.md and technical COMTRADE Standard Comparison guide |
-| 17| **Keyboard Audit** | ✅ | Restored/fixed and documented all 11+ rapid-analysis keyboard shortcuts |
-| 18| **Filtering Modules** | ✅ | Implemented Zero-Phase Low-pass, High-pass, and Moving Average filters |
-
-### Phase 3: Deployment & Identity (Pekanbaru Updates)
-| # | Improvement | Status | Details |
-|---|-------------|--------|---------|
-| 18| **Application Identity** | ✅ | Native macOS Dock label (PSPlot), Custom Icon, and high-formality window titles |
-| 19| **macOS Standard Paths** | ✅ | Migrated settings and logs to `~/Library/Application Support/PSPlot/` |
-| 20| **Session Templating** | ✅ | Full export/import of `.psp` layouts to apply configurations to new datasets |
-| 21| **Bundled Deployment** | 🔄 | PyInstaller configuration for macOS .app generation with custom metadata |
-| 22| **CSV Support** | ✅ | Full support for generic and proprietary CSV formats with flexible column mapping, integration into `data_import.py`, and comprehensive unit tests. |
-| 23| **COMTRADE Custom Group Name** | ✅ | Channel names with `:` format (e.g. `VSC:V_ia`) split into group (`VSC`) and signal name (`V_ia`), replacing default `Analog`/`Digital` group |
-| 24| **Blank Subplot on Init** | ✅ | Removed dummy signal lines from fresh subplots — subplots start empty until signals are plotted via `set_subplot_signals` |
-| 25| **CSV Generic Import Dialog** | ✅ | Implementation of `csv_reader.py` and modular integration for generic structured CSV files. |
+### Phase 1-3: Core Stability & Fieldwork Features
+*(Previous milestones including PSCAD, COMTRADE, CSV support, Theme centralization, and Keyboard Shortcuts audit are fully completed and validated in previous sprints).*
 
 ---
 
 ## 🚧 Pending Improvements
 
-### 🔘 ON HOLD: Feature Pause
-*   **Signal Filtering Integration**: ❌ *Removed from Current Build* - Reverted to pre-filtering version per user request; logic remains in archive/history.
+### 🔴 HIGH PRIORITY: Advanced Visualization
+*   **Bar Chart Mode**: Implement bar chart visualization for statistical analysis and harmonic magnitudes.
+*   **Dual Y-Axis Support**: Allow sharing the same X-axis with two independent Y-axes for signals with different units (e.g., Voltage and Current).
+*   **X-Y Plot (Trajectory)**: Add a mode to plot one signal against another (X vs Y) for Phase Portrait or Lissajous-style analysis.
+*   **FFT & Harmonic Analysis**: Dedicated window for real-time Fast Fourier Transform and harmonic spectrum visualization.
 
-### 🔴 HIGH PRIORITY: Research & Analysis
-*   **CLI & Batch Processing**: Implement a Command Line Interface to process multiple PSCAD files automatically using layout templates (.psp), enabling high-throughput analysis without manual GUI interaction.
-*   **FFT Analysis Window**: Add a dedicated window/pane for Fast Fourier Transform (FFT) analysis of zoomed signals.
-*   **SCR Estimation Integration**: Special visualization mode for Short-Circuit Ratio (SCR) time-series estimation data.
+### 🔴 HIGH PRIORITY: Research & Automation
+*   **CLI & Batch Processing**: Command Line Interface to apply `.psp` templates to batches of PSCAD/COMTRADE files for mass-export.
+*   **SCR Estimation Integration**: Visualization module for time-series Short-Circuit Ratio estimations in weak grid studies.
 
 ### 🟡 MEDIUM PRIORITY: UX & Workflow
-*   **Multi-File Comparison (Overlay)**: Automated mode to plot signals from multiple `.out` files on a single subplot for comparison.
-*   **Unit Tests**: (tests/test_models.py, test_validation.py) - Verify core logic and prevent regressions.
-
-### 🔵 LOW PRIORITY: Interface Polish
-*   **Hover Tooltip/Data Inquiry**: Display (x, y) coordinates on mouse hover over plot lines.
-*   **Drag & Drop Signals**: UI interaction to drag signals from tree to axes or between subplots.
-*   **Adjustable Subplot Heights**: Interactive resizing of subplot row heights.
-*   **Recent Files (MRU)**: Submenu in 'File' menu for recently opened PSCAD files.
-*   **Background Data Loading**: Move heavy CSV/OUT reading to a separate thread to prevent UI freezing.
+*   **Multi-File Overlay Comparison**: Automated comparison mode to overlay signals from multiple studies/files on a single subplot.
+*   **Hover Data Inquiry**: Real-time (x, y) coordinate tooltips on mouse hover.
+*   **Draggable Subplot Rows**: Interactive GUI to adjust individual subplot vertical spacing.
 
 ---
 
 ## 📊 Technical Debt
-1. **Matplotlib Font Performance**: Optimizing startup time spent on font cache scanning.
-2. **PSCAD Importer Robustness**: Further refining .inf parsing for edge cases in signal names.
-3. **Signal Tree Sync**: Ensuring real-time sync if underlying .inf files change during a session.
+1. **GitHub Documentation Ops**: Automating screenshot updates when UI changes.
+2. **Matplotlib Backend Optimization**: Ensuring maximum FPS on high-Hz displays (ProMotion/Windows VRR).
+3. **Data Threading**: Refactoring file readers into QThreads to prevent UI blocking during 500MB+ COMTRADE loads.
 
 ---
 
+*Developed by Dr. Roni Irnawan - Universitas Gadjah Mada*  
 *Last updated by: Hermes Agent*  
-*Status: Roadmap updated following the Pekanbaru Fieldwork sprint.*
+*Status: Roadmap updated following the "Pakuwon Jogja" UI & Data Handling Sprint.*
