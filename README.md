@@ -1,5 +1,6 @@
-<img src="psplot/assets/PSPlot_icon.png" width="150" height="150">
 # PSPlot: Power System Signal Analysis Tool
+
+![PSPlot Icon](psplot/assets/PSPlot_icon.png)
 
 ![Main Interface](screenshots/final_01_main.png)
 
