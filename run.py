@@ -38,24 +38,42 @@ def main() -> NoReturn:
     app.setApplicationDisplayName("PSPlot")
     app.setOrganizationName("UGM")
     
-    # Set global application icon
+     # Set global application icon
     import os
     from PyQt5.QtGui import QIcon
     
-    # Resolve icon path: bundled (PyInstaller) -> installed package assets -> dev fallback
+     # Resolve icon path for cross-platform support (macOS, Windows, Linux)
     if hasattr(sys, '_MEIPASS'):
+         # PyInstaller bundled mode
         icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
     else:
+         # Always use importlib.resources for package-installed mode; fallback for dev
         try:
-            # When installed via `pip install -e .` or pip, load from package
             import importlib.resources
-            icon_path = str(importlib.resources.files("psplot").joinpath("assets", "PSPlot_icon.png"))
+            res = importlib.resources.files("psplot").joinpath("assets", "PSPlot_icon.png")
+            icon_path = str(res)
         except Exception:
-            # Development fallback: look relative to this file
+             # Dev fallback: look relative to this file
             icon_path = os.path.join(os.path.dirname(__file__), "psplot", "assets", "PSPlot_icon.png")
-        
+    
+     # For Windows: importlib.resources may return a Traversable path that QIcon can't read directly
+     # If file doesn't exist as-is, extract to a temp location
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
+    else:
+        try:
+             # Try reading via resources API (handles zip/pyz bundles)
+            import importlib.resources
+            res = importlib.resources.files("psplot").joinpath("assets", "PSPlot_icon.png")
+            with res.open("rb") as f:
+                icon_data = f.read()
+            from PyQt5.QtGui import QPixmap
+            pixmap = QPixmap()
+            pixmap.loadFromData(icon_data, format="PNG")
+            if pixmap.width() > 0:
+                app.setWindowIcon(QIcon(pixmap))
+        except Exception:
+            pass  # Run without icon if loading fails
     
     window = MainWindow()
     window.show()

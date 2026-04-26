@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # main_window.py
 import sys
 import os
@@ -29,19 +30,12 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("PSPlot: Professional Power System Output Plotter")
 
-        # Set Window Icon
-        if hasattr(sys, '_MEIPASS'):
-            icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
-        else:
-            icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "PSPlot_icon.png")
-
-        if os.path.exists(icon_path):
-            self.setWindowIcon(QIcon(icon_path))
-            self.icon_path = icon_path
-        else:
-            self.icon_path = None
-
-        # 1. Load Settings & Preferences
+          # Load Application Icon (cross-platform: macOS, Windows, Linux)
+        self.icon_path = None   # filepath for UI widgets (About dialog, etc.)
+        self.icon_data = None   # raw bytes from importlib.resources
+        self._load_app_icon()
+        
+          # 1. Load Settings & Preferences
         self.settings = get_settings()
         if self.settings.preferences.window_geometry:
             g = self.settings.preferences.window_geometry
@@ -460,6 +454,57 @@ class MainWindow(QMainWindow):
         page = self.get_current_page()
         if page and page.plot_canvas and hasattr(page.plot_canvas, method_name):
             getattr(page.plot_canvas, method_name)()
+
+    def _load_app_icon(self):
+        """Load application icon for cross-platform support (macOS, Windows, Linux).
+        
+        Handles 3 modes:
+        1. PyInstaller bundled (_MEIPASS) — file on disk
+        2. Package-installed (importlib.resources) — from psplot/assets/
+        3. Development (fallback to file path relative to this module)
+        """
+        import sys
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QApplication
+        
+        logger = logging.getLogger(__name__)
+        
+        # Mode 1: PyInstaller bundled (--icon works via _MEIPASS)
+        if hasattr(sys, '_MEIPASS'):
+            icon_path = os.path.join(sys._MEIPASS, "PSPlot_icon.png")
+            if os.path.exists(icon_path):
+                self.icon_path = icon_path
+                logger.info(f"Icon loaded from _MEIPASS: {icon_path}")
+                return
+        
+        # Mode 2: Package-installed (pip install -e . / pip install)
+        try:
+            import importlib.resources
+            res = importlib.resources.files("psplot").joinpath("assets", "PSPlot_icon.png")
+            self.icon_data = res.read_bytes()
+            
+            pixmap = QPixmap()
+            pixmap.loadFromData(self.icon_data, format="PNG")
+            if pixmap.width() > 0:
+                logger.info("Icon loaded from importlib.resources (package mode)")
+                QApplication.instance().setWindowIcon(QIcon(pixmap))
+                return
+        except Exception:
+            pass  # Fall through to dev mode
+        
+        # Mode 3: Development (file-based fallback)
+        dev_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "..", "psplot", "assets", "PSPlot_icon.png"
+        )
+        dev_path = os.path.normpath(dev_path)
+        
+        if os.path.exists(dev_path):
+            self.icon_path = dev_path
+            logger.info(f"Icon loaded from dev fallback: {dev_path}")
+            self.setWindowIcon(QIcon(dev_path))
+        else:
+            logger.warning("Icon not found — application will use default Qt icon")
 
     def show_about_dialog(self):
         """Show the About dialog with icon and creator info."""
