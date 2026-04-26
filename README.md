@@ -118,4 +118,4 @@ Quickly adjust layouts and prepare reports using dedicated dialogs:
 | **`Ctrl+Q`** | Exit Application |
 
 ---
-*Developed by Roni Irnawan, Ph.D. - Universitas Gadjah Mada*
+*Developed by Dr. Roni Irnawan - Universitas Gadjah Mada*
