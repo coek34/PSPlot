@@ -117,8 +117,9 @@ class SignalHandlerMixin:
 
         ax.set_ylabel(existing_y)
         
-        # Only show legend if there are signals
-        if signal_data_list:
+        # Only show legend if there are signals with valid labels
+        has_visible_signals = any(line.get_label() and not line.get_label().startswith('_') for line in ax.get_lines())
+        if signal_data_list and has_visible_signals:
             ax.legend(fontsize=8, loc='upper right')
         else:
             leg = ax.get_legend()

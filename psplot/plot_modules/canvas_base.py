@@ -118,7 +118,7 @@ class BaseInteractiveCanvas(FigureCanvas):
             # Show y-label on all subplots
             y_label = getattr(self, 'y_labels', {}).get(i, 'Amplitude')
             ax.set_ylabel(y_label)
-            ax.legend(fontsize=8, loc='upper right')
+            # Removed redundant ax.legend() call that caused UserWarnings
             ax.grid(True, alpha=0.3)
             
               # Restore previous y-limits if they exist, otherwise auto-fit from data

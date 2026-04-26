@@ -60,6 +60,7 @@ class UserPreferences:
     last_import_dir: str = str(Path.home())
     last_export_dir: str = str(Path.home())
     window_geometry: Optional[List[int]] = None # [x, y, w, h]
+    debug_mode: bool = False
 
 class SettingsManager:
     _instance = None

@@ -21,7 +21,7 @@ DEFAULT_WINDOW_SIZE = (1200, 900)  # width, height in pixels
 DEFAULT_WINDOW_POS = (100, 100)    # x, y position
 
 # Logging configuration
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.WARNING
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 MAX_LOG_BYTES = 10 * 1024 * 1024  # 10 MB
 BACKUP_COUNT = 5
@@ -83,10 +83,14 @@ def setup_logging(log_level: Optional[int] = None, log_file: Optional[str] = Non
     file_handler.setFormatter(file_formatter)
     root_logger.addHandler(file_handler)
     
-    # Reduce matplotlib debug spam
+    # Reduce matplotlib and related spam
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.WARNING)
+    
+    # SILENCE UserWarnings from matplotlib (like the "No artists with labels found" warning)
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
     
     # Log startup
     logger = logging.getLogger(__name__)

@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
                         use_channel_name=self.channel_name_in_legend
                     )
                 else:
-                    logger.warning(f"    No signals available to plot in subplot {subplot_idx}")
+                    logger.info(f"    No signals available to plot in subplot {subplot_idx}")
 
         self.tab_widget.setCurrentIndex(state.current_page_index)
         logger.info("=== RESTORE COMPLETE ===")
@@ -437,6 +437,16 @@ class MainWindow(QMainWindow):
         self.channel_name_action.triggered.connect(self.toggle_channel_name_in_legend)
         settings_menu.addAction(self.channel_name_action)
 
+        settings_menu.addSeparator()
+
+        self.debug_mode_action = QAction('Debug Mode (Log INFO)', self, checkable=True)
+        self.debug_mode_action.setChecked(self.settings.preferences.debug_mode)
+        self.debug_mode_action.triggered.connect(self.toggle_debug_mode)
+        settings_menu.addAction(self.debug_mode_action)
+        
+        # Apply initial log level based on saved preference
+        self._update_log_level(self.settings.preferences.debug_mode)
+
         # Help Menu
         help_menu = menubar.addMenu('Help')
 
@@ -456,6 +466,28 @@ class MainWindow(QMainWindow):
         self.settings.save()
         self._refresh_all_plots()
 
+    def toggle_debug_mode(self, checked):
+        """Toggle between WARNING (False) and INFO (True) logging levels"""
+        self.settings.preferences.debug_mode = checked
+        self.settings.save()
+        self._update_log_level(checked)
+        
+        level_name = "INFO" if checked else "WARNING"
+        print(f"\n>>> LOG LEVEL CHANGED TO: {level_name}\n")
+        logging.getLogger(__name__).warning(f"Logging level set to {level_name}")
+
+    def _update_log_level(self, debug_enabled):
+        """Update root and all handlers to the appropriate level"""
+        import logging
+        new_level = logging.INFO if debug_enabled else logging.WARNING
+        
+        # Update root logger
+        logging.getLogger().setLevel(new_level)
+        
+        # Update all existing handlers (StreamHandler, RotatingFileHandler, etc.)
+        for handler in logging.getLogger().handlers:
+            handler.setLevel(new_level)
+            
     def _refresh_all_plots(self):
         """Helper to refresh all subplots across all pages when legend settings change"""
         for page in self.page_manager.pages:
@@ -557,10 +589,12 @@ class MainWindow(QMainWindow):
             "<b>Version:</b> 1.0.0<br>"
             "<b>Developer:</b> Dr. Roni Irnawan<br>"
             "<b>Email:</b> roniirnawan@ugm.ac.id<br>"
-            "<b>Organization:</b> Department of Electrical Engineering,<br>"
+            "<b>Organization:</b> Department of Electrical and Information Engineering,<br>"
             "Faculty of Engineering, Universitas Gadjah Mada<br><br>"
             "PSPlot is a professional tool for plotting and exporting<br>"
             "power system signals from PSCAD, COMTRADE, and CSV data formats.<br><br>"
+            "This program was developed using collective agentic AI systems<br>"
+            "(Aider, Letta-Agent, and Hermes-Agent).<br><br>"
             "Copyright 2026 PSPlot - All rights reserved."
         )
         dialog.setStandardButtons(QMessageBox.Ok)
