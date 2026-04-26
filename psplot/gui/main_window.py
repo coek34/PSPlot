@@ -511,15 +511,20 @@ class MainWindow(QMainWindow):
         dialog = QMessageBox(self)
         dialog.setWindowTitle("About PSPlot")
         
-        # Load and set application icon
+        # Load and set application icon (supports all 3 modes: PyInstaller, package-installed, dev mode)
+        pm = None
         ip = getattr(self, "icon_path", None)
+        ib = getattr(self, "icon_data", None)
+        
         if ip and os.path.exists(ip):
             pm = QPixmap(ip)
-            if pm.width() > 0:
-                sp = pm.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                dialog.setIconPixmap(sp)
-            else:
-                dialog.setIcon(QMessageBox.Information)
+        elif ib is not None:
+            pm = QPixmap()
+            pm.loadFromData(ib, format="PNG")
+        
+        if pm is not None and pm.width() > 0:
+            sp = pm.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            dialog.setIconPixmap(sp)
         else:
             dialog.setIcon(QMessageBox.Information)
         
