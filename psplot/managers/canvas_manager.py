@@ -151,19 +151,29 @@ class CanvasManager:
         
     def show_signal_selector(self, position):
         """Show signal selector dialog for the clicked subplot"""
-        # Use the stored last clicked subplot
         current_page = self.main_window.get_current_page()
         if current_page and current_page.plot_canvas.last_clicked_subplot is not None:
-            # Get existing signals for this subplot to show in the dialog
-            existing_signals = current_page.plot_canvas.get_existing_signals_for_subplot(current_page.plot_canvas.last_clicked_subplot)
+            subplot_idx = current_page.plot_canvas.last_clicked_subplot
             
-            # Create a dialog with dummy signals and existing signals
+            existing_signals = current_page.plot_canvas.get_existing_signals_for_subplot(subplot_idx)
+            
             dialog = SignalExplorerDialog(current_page.plot_canvas.dummy_signals, existing_signals, parent=self.main_window)
-            if dialog.exec_() == dialog.Accepted:
+            result = dialog.exec_()
+            
+            if result == QDialog.Accepted:
                 selected_signals = dialog.get_selected_signals()
-                if selected_signals:
-                    # Plot all selected signals in the same subplot
-                    current_page.plot_canvas.set_subplot_signals(current_page.plot_canvas.last_clicked_subplot, selected_signals)
+                
+                # Force visual update
+                current_page.plot_canvas.set_subplot_signals(
+                    subplot_idx, 
+                    selected_signals,
+                    use_group_name=self.main_window.group_name_in_legend,
+                    use_channel_name=self.main_window.channel_name_in_legend
+                )
+                
+                # Force memory state update
+                current_page.subplot_signals[subplot_idx] = selected_signals
+                
+                current_page.plot_canvas.draw()
         else:
-            # If no subplot was clicked, show a message
             QMessageBox.information(self.main_window, "Info", "Please click on a subplot first to select a signal.")

@@ -14,16 +14,38 @@ class SignalHandlerMixin:
         self.set_subplot_signals(subplot_index, [signal_data])
 
     def set_subplot_signals(self, subplot_index, signal_data_list, use_group_name=False, use_channel_name=False):
-
-        logger.info(f"  Subplot: {subplot_index}, Signals Count: {len(signal_data_list)}")
+        """Set signals for a subplot. Pass empty list to clear all signals."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if subplot_index < 0 or subplot_index >= len(self.axes):
             return
             
         ax = self.axes[subplot_index]
+        
+        # 1. VISUAL CLEAR: Always clear the axes assets
         ax.clear()
         
-        if signal_data_list:
-            for signal_data in signal_data_list:
+        # Deep cleaning of all matplotlib internal lists for this axes
+        for attr in ['lines', 'patches', 'collections', 'artists']:
+            if hasattr(ax, attr):
+                coll = getattr(ax, attr)
+                while coll:
+                    coll[0].remove()
+        
+        if ax.get_legend():
+            ax.get_legend().remove()
+
+        # 2. SHORT CIRCUIT FOR EMPTY LIST:
+        if not signal_data_list:
+            ax.set_ylabel(getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude'))
+            ax.grid(True, alpha=0.3)
+            self.draw()
+            return
+
+        # 3. PLOTTING LOGIC
+        for signal_data in signal_data_list:
+
                 # Handle potential nesting vs flat data
                 if isinstance(signal_data, dict) and 'signal_data' in signal_data:
                     meta = signal_data
@@ -79,7 +101,7 @@ class SignalHandlerMixin:
         # Determine Y Label
         existing_y = getattr(self, 'y_labels', {}).get(subplot_index, 'Amplitude')
         
-        if existing_y == 'Amplitude' and signal_data_list:
+        if existing_y in ['Amplitude', ''] and signal_data_list:
             first_sig = signal_data_list[0]
             if isinstance(first_sig, dict):
                 unit = first_sig.get('units') or first_sig.get('signal_data', {}).get('units', '')
@@ -87,9 +109,22 @@ class SignalHandlerMixin:
                     if not hasattr(self, 'y_labels'): self.y_labels = {}
                     self.y_labels[subplot_index] = str(unit)
                     existing_y = str(unit)
+        elif not signal_data_list:
+            # If no signals, reset label to Amplitude or empty
+            existing_y = 'Amplitude'
+            if not hasattr(self, 'y_labels'): self.y_labels = {}
+            self.y_labels[subplot_index] = 'Amplitude'
 
         ax.set_ylabel(existing_y)
-        ax.legend(fontsize=8, loc='upper right')
+        
+        # Only show legend if there are signals
+        if signal_data_list:
+            ax.legend(fontsize=8, loc='upper right')
+        else:
+            leg = ax.get_legend()
+            if leg:
+                leg.remove()
+                
         ax.grid(True, alpha=0.3)
         
         if subplot_index in self.current_ylim_dict:

@@ -324,10 +324,17 @@ class SignalExplorerDialog(QDialog):
     def clear_selected_signals(self):
         """Clear all selected signals"""
         self.selected_signals_tree.clear()
+        # CRITICAL: We MUST also clear self.existing_signals!
+        # Because get_selected_signals() only crawls the TREE.
+        # But if the tree is cleared, but someone didn't re-read it, 
+        # this ensures we are starting from a truly blank slate.
+        self.existing_signals = []
+        # Update the UI state immediately
+        self.update()
     
     def get_selected_signals(self):
         """Get the list of selected signals"""
-        signals = []
+        signals_data = []
         
         # Recursively collect signals from the tree structure
         def collect_signals_from_tree(parent_item):
@@ -335,9 +342,9 @@ class SignalExplorerDialog(QDialog):
                 child = parent_item.child(i)
                 # If this is a leaf node (signal), get its data
                 if child.childCount() == 0:
-                    signal_data = child.data(0, Qt.UserRole)
-                    if signal_data:
-                        signals.append(signal_data)
+                    data = child.data(0, Qt.UserRole)
+                    if data:
+                        signals_data.append(data)
                 else:
                     # Recursively process child nodes
                     collect_signals_from_tree(child)
@@ -348,29 +355,23 @@ class SignalExplorerDialog(QDialog):
         
         # Extract actual signal data from the nested structure
         actual_signals = []
-        for signal_data in signals:
-            if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
-                actual_signal_data = signal_data['signal_data'].copy()
-                actual_signal_data['channel_name'] = signal_data['channel_name']
-                actual_signal_data['group_name'] = signal_data['group_name']
-                actual_signals.append(actual_signal_data)
+        for signal_item in signals_data:
+            if isinstance(signal_item, dict) and 'signal_data' in signal_item:
+                # This is the nested structure from available signals tree
+                actual_sig = signal_item['signal_data'].copy()
+                actual_sig['channel_name'] = signal_item.get('channel_name', 'Unknown')
+                actual_sig['group_name'] = signal_item.get('group_name', 'Unknown')
+                actual_signals.append(actual_sig)
             else:
-                actual_signals.append(signal_data.copy())
+                # This is already a flat dictionary (from existing_signals)
+                actual_signals.append(signal_item.copy())
         
         return actual_signals
-    
+
     def accept(self):
         """Handle dialog accept"""
-        selected_signals = self.get_selected_signals()
-        if selected_signals:
-            for signal_data in selected_signals:
-                if 'signal_data' in signal_data and isinstance(signal_data['signal_data'], dict):
-                    actual_signal_data = signal_data['signal_data']
-                    channel_name = signal_data['channel_name']
-                else:
-                    actual_signal_data = signal_data
-                    channel_name = signal_data.get('channel_name', 'Unknown')
-                
-                signal_name = actual_signal_data['name']
-                self.signal_selected.emit(signal_name, channel_name)
+        # We process the selection before closing
+        # However, the actual plotting is triggered by the caller (CanvasManager)
+        # by calling get_selected_signals() after exec_() returns Accepted.
+        # So we just need to ensure we call the base accept() to return the correct code.
         super().accept()

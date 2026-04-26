@@ -139,7 +139,35 @@ class DataImportDialog(QDialog):
             label_input = self.table.cellWidget(row, 1)
             if label_input and not label_input.text():
                 label_input.setText(filename)
-    
+
+    def keyPressEvent(self, event):
+        """Handle key press events - specifically the Delete key"""
+        if event.key() == Qt.Key_Delete:
+            # Get selected ranges
+            selected_items = self.table.selectedItems()
+            if selected_items:
+                # Group by row
+                rows = set()
+                for item in selected_items:
+                    rows.add(item.row())
+                
+                for row in rows:
+                    self._clear_row_data(row)
+        else:
+            super().keyPressEvent(event)
+
+    def _clear_row_data(self, row):
+        """Clear path and label for a specific row"""
+        # Clear Path column
+        path_item = self.table.item(row, 0)
+        if path_item:
+            path_item.setText("")
+        
+        # Clear Label column
+        label_input = self.table.cellWidget(row, 1)
+        if label_input:
+            label_input.setText("")
+
     def accept_data(self):
         """Accept the data configuration"""
         self.imported_data = []

@@ -51,6 +51,8 @@ class AppState:
     pages: List[PageState] = field(default_factory=list)
     current_page_index: int = 0
     imported_files: List[str] = field(default_factory=list)
+    group_name_in_legend: bool = False
+    channel_name_in_legend: bool = False
 
 @dataclass
 class UserPreferences:
@@ -100,7 +102,9 @@ class SettingsManager:
             self.state = AppState(
                 pages=pages,
                 current_page_index=state_data.get("current_page_index", 0),
-                imported_files=state_data.get("imported_files", [])
+                imported_files=state_data.get("imported_files", []),
+                group_name_in_legend=state_data.get("group_name_in_legend", False),
+                channel_name_in_legend=state_data.get("channel_name_in_legend", False)
             )
             logger.info("Settings loaded successfully")
         except Exception as e:

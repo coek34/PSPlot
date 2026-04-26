@@ -54,8 +54,8 @@ class MainWindow(QMainWindow):
         self.setup_ui()
 
         # 4. Global Flags/Options for all pages
-        self.group_name_in_legend = False
-        self.channel_name_in_legend = False
+        self.group_name_in_legend = self.settings.state.group_name_in_legend
+        self.channel_name_in_legend = self.settings.state.channel_name_in_legend
 
         self.apply_theme_style()
         self.create_menu_bar()
@@ -99,6 +99,9 @@ class MainWindow(QMainWindow):
         # Cursor measurement info label (High contrast)
         self.measurement_label = QLabel("")
         self.measurement_label.setVisible(False)
+        self.measurement_label.setToolTip("Double-click to reset cursors to fit view")
+        # Direct event injection for double click
+        self.measurement_label.mouseDoubleClickEvent = self._on_measurement_label_double_click
         self.status_layout.addWidget(self.measurement_label)
 
         self.main_layout.addWidget(self.status_frame)
@@ -123,6 +126,12 @@ class MainWindow(QMainWindow):
     def resize_current_page(self):
         self.canvas_manager.resize_current_page()
     # ----------------------------------------
+
+    def _on_measurement_label_double_click(self, event):
+        """Reset cursors to fit current x-limits on double click of status label"""
+        page = self.get_current_page()
+        if page and page.plot_canvas:
+            page.plot_canvas.reset_cursors_to_limits()
 
     def on_tab_changed(self, index):
         """Update managers when current tab changes"""
@@ -232,7 +241,13 @@ class MainWindow(QMainWindow):
 
                 if page_signals:
                     logger.info(f"    Plotting {len(page_signals)} signals to subplot {subplot_idx}")
-                    page.set_subplot_signals(subplot_idx, page_signals)
+                    # CRITICAL: Use the flags from MainWindow during rehydration
+                    page.plot_canvas.set_subplot_signals(
+                        subplot_idx, 
+                        page_signals,
+                        use_group_name=self.group_name_in_legend,
+                        use_channel_name=self.channel_name_in_legend
+                    )
                 else:
                     logger.warning(f"    No signals available to plot in subplot {subplot_idx}")
 
@@ -304,6 +319,11 @@ class MainWindow(QMainWindow):
 
             self.settings.state.current_page_index = self.tab_widget.currentIndex()
             logger.info(f"Current page index: {self.settings.state.current_page_index}")
+
+            # Persist legend settings to state
+            self.settings.state.group_name_in_legend = self.group_name_in_legend
+            self.settings.state.channel_name_in_legend = self.channel_name_in_legend
+            logger.info(f"Saved legend settings: group={self.group_name_in_legend}, channel={self.channel_name_in_legend}")
 
             logger.info("Getting page states...")
             page_states = self.page_manager.get_all_pages_state()
@@ -426,10 +446,14 @@ class MainWindow(QMainWindow):
 
     def toggle_group_name_in_legend(self, checked):
         self.group_name_in_legend = checked
+        self.settings.state.group_name_in_legend = checked
+        self.settings.save()
         self._refresh_all_plots()
 
     def toggle_channel_name_in_legend(self, checked):
         self.channel_name_in_legend = checked
+        self.settings.state.channel_name_in_legend = checked
+        self.settings.save()
         self._refresh_all_plots()
 
     def _refresh_all_plots(self):

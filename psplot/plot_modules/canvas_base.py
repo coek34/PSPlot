@@ -247,6 +247,27 @@ class BaseInteractiveCanvas(FigureCanvas):
     def on_mouse_release(self, event):
         """Stop dragging cursor"""
         self.active_cursor = None
+        self.draw()
+
+    def reset_cursors_to_limits(self):
+        """Reset cursor positions to fit within current x-limits"""
+        if not self.axes:
+            return
+        
+        ax = self.axes[0]
+        xlim = ax.get_xlim()
+        span = xlim[1] - xlim[0]
+        
+        # Position cursors at 25% and 75% of current view
+        self.cursor_pos_a = xlim[0] + span * 0.25
+        self.cursor_pos_b = xlim[0] + span * 0.75
+        
+        # Force refresh of cursor visual state
+        if getattr(self, 'cursors_active', False):
+            # Refresh cursor positions by triggering move logic
+            self._update_cursor_positions()
+        
+        self.draw()
 
     def toggle_measurement_cursors(self):
         """Enable/Disable measurement vertical lines and toggle zoom availability"""
@@ -633,46 +654,54 @@ class BaseInteractiveCanvas(FigureCanvas):
         
         # Create a dialog with dummy + imported signals and existing signals
         dialog = SignalExplorerDialog(available_data, existing_signals, parent=self)
-        if dialog.exec_() == dialog.Accepted:
+        if dialog.exec_() == QDialog.Accepted:
             selected_ref = dialog.get_selected_signals()
             final_signals = []
             
-            if selected_ref:
-                for ref in selected_ref:
-                    # If ref doesn't have 'x' and 'y' data (meaning it's just metadata from .inf), load it
-                    if ('x' not in ref or 'y' not in ref) and data_manager:
-                        # Load data via data_manager
-                        loaded_data = data_manager.load_signal_data(ref)
-                        if loaded_data:
-                            # Merge original ref with loaded data to preserve metadata
-                            merged = {**ref, **loaded_data}
-                            final_signals.append(merged)
-                    else:
-                        # Data already exists (e.g., dummy signals or already loaded)
-                        final_signals.append(ref)
+            # Extract and load signal data
+            for ref in (selected_ref or []):
+                # If ref doesn't have 'x' and 'y' data (meaning it's just metadata from .inf), load it
+                if ('x' not in ref or 'y' not in ref) and data_manager:
+                    # Load data via data_manager
+                    loaded_data = data_manager.load_signal_data(ref)
+                    if loaded_data:
+                        # Merge original ref with loaded data to preserve metadata
+                        merged = {**ref, **loaded_data}
+                        final_signals.append(merged)
+                else:
+                    # Data already exists (e.g., dummy signals or already loaded)
+                    final_signals.append(ref)
+            
+            # AGGRESSIVE FIX: Always update signals, even if the list is empty!
+            # Use set_subplot_signals if available (via mixin), otherwise fallback
+            if hasattr(self, 'set_subplot_signals'):
+                # Check for flags in main_window
+                use_group_name = False
+                use_channel_name = False
+                if hasattr(self, 'main_window') and self.main_window:
+                    use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
+                    use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
                 
-                if final_signals:
-                    # Plot all selected signals in the same subplot
-                    # Use set_subplot_signals if available (via mixin), otherwise fallback
-                    if hasattr(self, 'set_subplot_signals'):
-                        # Check for flags in main_window
-                        use_group_name = False
-                        use_channel_name = False
-                        if hasattr(self, 'main_window') and self.main_window:
-                            use_group_name = getattr(self.main_window, 'group_name_in_legend', False)
-                            use_channel_name = getattr(self.main_window, 'channel_name_in_legend', False)
-                        
-                        self.set_subplot_signals(self.last_clicked_subplot, final_signals, 
-                                               use_group_name=use_group_name, 
-                                               use_channel_name=use_channel_name)
-                    else:
-                        # Fallback for base class if mixin not correctly initialized
-                        ax = self.axes[self.last_clicked_subplot]
-                        ax.clear()
-                        for sig in final_signals:
-                            ax.plot(sig['x'], sig['y'], label=sig['name'])
-                        ax.legend()
-                        self.draw()
+                self.set_subplot_signals(self.last_clicked_subplot, final_signals, 
+                                       use_group_name=use_group_name, 
+                                       use_channel_name=use_channel_name)
+                
+                # SINKRONISASI KE PAGE STATE (untuk Item 1)
+                # Cari PageWidget yang membungkus canvas ini
+                parent_widget = self.parent()
+                while parent_widget and not hasattr(parent_widget, 'subplot_signals'):
+                    parent_widget = parent_widget.parent()
+                
+                if parent_widget and hasattr(parent_widget, 'subplot_signals'):
+                    parent_widget.subplot_signals[self.last_clicked_subplot] = final_signals
+            else:
+                # Fallback for base class if mixin not correctly initialized
+                ax = self.axes[self.last_clicked_subplot]
+                ax.clear()
+                for sig in final_signals:
+                    ax.plot(sig['x'], sig['y'], label=sig['name'])
+                ax.legend()
+                self.draw()
 
 
 class YLabelDialog(QDialog):
